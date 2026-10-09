@@ -1,0 +1,93 @@
+# Decision log
+
+One entry per decision: what we decided, why, and what we rejected. Add new
+entries at the bottom. When a decision changes, add a new entry that names
+the one it replaces; do not edit the old entry.
+
+---
+
+### D1. App stack: React + TypeScript + Vite + D3, static site (2026-10-09)
+
+- **Why**: the project needs 3+ linked views with brushing and selection
+  between them. With D3 we control every view; React and a shared store
+  handle the linking. A static build needs no server: we run it mainly
+  locally and also publish it on free GitHub Pages, which gives us the
+  deployed link for the submission.
+- **Rejected**: Plotly Dash (needs a hosted server, and custom linking
+  between views is awkward); Observable Framework (cross-view state is
+  harder); Svelte (the team chose React).
+
+### D2. Pipeline in Python, frozen snapshots (2026-10-09)
+
+- **Why**: the main table has 1.25M rows. `polars` handles it in seconds.
+  Scraping and fuzzy matching are easiest in Python. We freeze the data as
+  of 2026-10-01 (Netflix up to 2026-09-27) so numbers do not change while we
+  write the report.
+- **Rejected**: daily refresh of the Kaggle data (numbers would change under
+  us, with no benefit for the course).
+
+### D3. Which data goes into git (2026-10-09)
+
+- Committed: scrape results (`data/scraped/`), reference tables and hand
+  fixes (`data/reference/`, `data/overrides/`), app data
+  (`app/public/data/`).
+- Not committed: raw downloads (`data/raw/`), the HTTP cache (`data/cache/`),
+  intermediate files (`data/interim/`), course PDFs, and IS pages (they
+  contain personal data).
+- **Why**: scrapes take hours and are rate-limited, so a teammate should not
+  have to repeat them. Raw Kaggle files are too large, and anyone can
+  download them again. CI deploys from the committed app data without
+  downloading anything.
+
+### D4. Key and unit conventions (2026-10-09)
+
+- Film key `imdb_id`; country key ISO-2; money in constant 2025 USD (nominal
+  values kept as well); every rating rescaled to 0–100; a missing value is
+  null, never 0.
+- **Why**: one join key across all sources, one scale for comparing
+  critics and audiences, and no silent zeros in the averages.
+
+### D5. Money is enriched, never imputed (2026-10-09)
+
+- Missing budgets and grosses are filled only with real values from other
+  sources, and each value records its source. No mean or nearest-neighbour
+  imputation.
+- **Why**: an imputed box-office number would be a made-up fact about a
+  real film, and the money coverage gap is itself something the views
+  should show.
+
+### D6. Two ways to count genres (2026-10-09)
+
+- Fractional weight 1/n for shares and composition; full membership for
+  distributions per genre.
+- **Why**: shares must add up to 100 %, while a box plot of "Horror ROI"
+  should contain every horror film.
+
+### D7. Hosting: local first, public GitHub repo with Pages (2026-10-09)
+
+- The repo is **public on Štefan's GitHub account**; Matúš and Emma join as
+  collaborators. We run the app mainly locally and publish it on free
+  GitHub Pages for the submission link.
+- **Why**: free Pages needs a public repo. A static build runs the same way
+  in both places.
+- **Watch**: a public repo means the committed scrape results and app data
+  are public too. Commit only derived scores and aggregates, never raw
+  pages or review texts.
+- **Rejected**: private repo with the Student Developer Pack (more setup,
+  nothing to hide); a GitHub organisation (not needed for three people).
+
+### D8. Design sheets on paper (2026-10-09)
+
+- The Five Design Sheets are drawn on paper and scanned into
+  `docs/design-sheets/`.
+- **Why**: the FDS method is meant for fast hand sketching; tools slow
+  brainstorming down.
+
+### D9. Letterboxd included (2026-10-09)
+
+- `letterboxd_avg` (0.5–5, rescaled ×20 to 0–100) is a third audience score
+  next to the RT audience score and IMDb. It is scraped from
+  `letterboxd.com/tmdb/{tmdb_id}` for the notable subset, under the usual
+  scraping rules.
+- **Why**: Letterboxd users are a different audience (cinephiles) from
+  IMDb and RT users, which adds a contrast for T3.

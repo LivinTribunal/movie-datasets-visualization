@@ -1,0 +1,32 @@
+# data that is never committed (see docs/decisions.md D3)
+data/raw/
+data/cache/
+data/interim/
+
+# course materials: copyrighted PDFs and IS pages with personal data
+# (public repo: lecture text and course templates stay local only)
+materials/is_export.zip
+materials/is_export/
+materials/*.html
+materials/Project_Data___Task_Template.md
+
+# secrets and personal data
+.env
+*.local.md
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# node
+node_modules/
+app/dist/
+
+# misc
+.DS_Store
+.Rhistory
+.idea/
+.vscode/
