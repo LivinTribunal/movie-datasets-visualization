@@ -10,6 +10,8 @@ and audience ratings**, and **genre taste over time and per country**
 (cinemas and Netflix) relate.
 
 - Plan, timeline and visualization draft: `docs/PLAN.md`. Read it first.
+- Every dataset, its version, licence, path and status: `DATASETS.md`. Update
+  it whenever a source is added or its status changes.
 - Design sheets are drawn on paper and scanned into `docs/design-sheets/`
   (`sheet-1.jpg`, …). Describe what a scan shows before you rely on it.
 - Decisions and why we made them: `docs/decisions.md`. Add an entry when you
