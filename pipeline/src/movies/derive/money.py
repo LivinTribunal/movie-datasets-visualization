@@ -35,6 +35,10 @@ def wikidata_pick(money: pl.DataFrame, currencies: pl.DataFrame) -> pl.DataFrame
             | pl.col("place_qid").is_null()
             | (pl.col("place_qid") == WORLDWIDE_QID)
         )
+        .filter(
+            pl.col("amount")
+            >= pl.when(pl.col("property") == "budget").then(MIN_BUDGET).otherwise(MIN_REVENUE)
+        )
         .sort(
             [
                 pl.col("currency") != "USD",
@@ -180,6 +184,11 @@ def run() -> None:
     )
     fx = pl.read_parquet(paths.INTERIM / "fx.parquet")
     cpi = pl.read_parquet(paths.INTERIM / "cpi.parquet")
+    unknown = wiki.filter(~pl.col("unit_qid").is_in(currencies["currency_qid"]))
+    top = unknown["unit_qid"].value_counts(sort=True).head(10)
+    print(
+        f"wikidata statements in a unit not in currencies.csv, by unit_qid: {dict(top.iter_rows())}"
+    )
     out = money(films, wiki, currencies, fx, cpi)
     src = source_values(films, wiki, currencies, fx)
     out.write_parquet(paths.INTERIM / "money.parquet")
