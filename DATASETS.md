@@ -129,3 +129,15 @@ rate and commit only derived numbers, never page contents.
 
 `numbers_match` / `numbers_match_score` and the Netflix `method` / `score`
 columns say how each value was linked, so the app can mark fuzzy matches.
+
+## Derive stage
+
+`movies derive` computes analysis columns from the joined tables and writes
+them to `data/interim/` (D15). Counts from the run on 2026-10-11:
+
+| Output | Rows | What it holds |
+|---|---|---|
+| `money.parquet` | 56,431 (one per film) | budget and revenue with `*_src`, currency, nominal USD, `*_usd2025`, `*_disagree`, profit and ROI. Budgets: 17,156 films (numbers 6,034, tmdb 10,094, wikidata 1,028); 9,192 of 13,080 notable. Revenues: 17,639 (numbers 5,780, tmdb 11,179, wikidata 680); 9,753 notable. 468 Numbers and TMDB revenues under $10,000 dropped as unit errors or re-release grosses. ROI for 12,212 films. |
+| `ratings.parquet` | 56,431 | `imdb_100`, `tmdb_100` (null under 50 TMDB votes: 33,043 left), `tomatometer_100` (22,744), `audience_100` (33,615), `gap` (22,347; median −3) |
+| `film_genres.parquet` | 126,307 rows for 56,199 films | one row per film and genre, `family`, `genre_weight = 1/n` without TV Movie |
+| `country_genre_netflix.parquet` | 9,893 rows: 94 countries, 2021–2026 | Netflix chart score per country, year and genre, with `share`, `coverage` (min 0.73, median 0.99) and `fuzzy_share` |

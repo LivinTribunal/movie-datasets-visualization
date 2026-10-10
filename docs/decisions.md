@@ -193,3 +193,51 @@ title comes first, then rapidfuzz `token_sort_ratio` ≥ 90. Each match keeps
 - **Watch**: a spot check still finds a few wrong films among the 49 fuzzy
   Netflix matches. All 49 together carry 0.2 % of the chart score, and the app
   marks them as fuzzy.
+
+### D15. Derive rules for money, ratings and genres (2026-10-11)
+
+`movies derive` writes `money.parquet`, `ratings.parquet`,
+`film_genres.parquet` and `country_genre_netflix.parquet` to `data/interim/`.
+Choices the PLAN left open:
+
+- **Money order**: budget from The Numbers, then TMDB, then Wikidata; revenue
+  from The Numbers worldwide gross, then TMDB, then Wikidata box office. The
+  first source with a value wins, per field, and `budget_src` /
+  `revenue_src` name it. Box Office Mojo is not used (its robots.txt blocks
+  all crawlers) and Wikipedia infoboxes are not parsed yet.
+- **Floors**: a budget under $1,000 or a revenue under $10,000 counts as
+  missing in that source, and the next source is tried. The small revenues
+  were re-release grosses (12 Angry Men at $379) or unit errors (TMDB's 7 for
+  Memoir of a Snail). For Wikidata the floor applies to the nominal amount
+  before a statement is picked, and again after conversion.
+- **Wikidata pick**: only worldwide or place-less box office counts (a US
+  figure is domestic). Among the rest: USD first, then preferred rank, then
+  the latest date, then the largest amount (D12).
+- **Currency**: `data/reference/currencies.csv` maps each Wikidata currency
+  to the country whose World Bank rate it uses, with the years that rate is
+  valid (EUR uses Germany's rate from 1999; DEM, FRF, ITL, ESP, FIM and GRD
+  use their country's rate up to the euro). Amounts are divided by that
+  rate in the release year. No rate (Taiwan is not in the World Bank data,
+  no 2026 rates yet, nothing before 1960) gives a null USD value and the
+  nominal amount stays.
+- **Inflation**: `*_usd2025 = *_usd × CPI(2025) / CPI(year)`. CPI starts in
+  1947, so older films have nominal USD but no 2025 value.
+- **Disagreement**: `*_disagree` is true when at least two sources have a
+  USD value and the largest is more than 1.25 times the smallest.
+- **ROI** = revenue / budget, only when the USD budget is at least $100,000.
+  `profit_usd2025` = revenue minus budget in 2025 USD.
+- **TMDB rating** is null under 50 TMDB votes, where an average is noise.
+  The PLAN's minimum of 20 critic reviews cannot be applied yet: the RT
+  dataset has no review counts. Its audience scores are all from before the
+  Popcornmeter (April 2023 snapshot), so no `rt_audience_era` column is
+  needed for it.
+- **Genres**: "TV Movie" is dropped before `genre_weight = 1/n` is computed.
+  A TMDB genre missing from `genre_families.csv` stops the run.
+- **Netflix genre shares** per country and year: each chart row adds
+  `score × genre_weight` to its film's genres. `coverage` is the share of
+  chart score whose title matched a film with genres, and `fuzzy_share` the
+  part of it matched by title similarity. A country-year with no matched
+  title has no rows (the map draws it hatched).
+- **Watch**: a few TMDB pairs give implausible ROI (Fist of Fury, $100k
+  budget and $100M revenue, ROI 1,000). The floors do not catch them, and
+  the app should show the source of every money point.

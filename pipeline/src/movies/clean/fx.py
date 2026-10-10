@@ -1,8 +1,9 @@
 """Clean World Bank PA.NUS.FCRF into data/interim/fx.parquet.
 
 Values are "official exchange rate, LCU per US$, period average". Euro members are reported
-in euros for all years (the derive stage deals with that). Aggregates (AFE, WLD, ...) and rows
-with no value are dropped.
+in their old currency up to 1998 and in euros from 1999 (data/reference/currencies.csv maps each
+currency to the country and years whose rate it uses). Aggregates (AFE, WLD, ...) and rows with no
+value are dropped.
 """
 
 import json
