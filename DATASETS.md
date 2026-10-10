@@ -22,7 +22,7 @@ using it (keys, units, missing values) are in `AGENTS.md`. Decisions are in
 | `rt_clapper` | [Rotten Tomatoes, Clapper scrape](https://www.kaggle.com/datasets/andrezaza/clapper-massive-rotten-tomatoes-movies-and-reviews), `rotten_tomatoes_movies.csv` only | Kaggle v4 (scraped April 2023) | CC0 | `data/raw/rt_clapper/` | tomatometer + audience score: T2, T3, T5, T6 | ✅ 17.4 MB, 143,258 rows |
 | `numbers_budgets` | [The Numbers budgets](https://www.kaggle.com/datasets/dahvid/movie-budgets-and-revenues) | Kaggle v1 | MIT | `data/raw/numbers_budgets/` | budget, domestic + worldwide gross: T2, T5, X1 | ✅ 0.5 MB, 6,518 rows |
 | `numbers_metrics` | [The Numbers + metrics](https://www.kaggle.com/datasets/michaelmatta0/movies-ultimate-metrics-features-and-metadata) | Kaggle v1 | MIT | `data/raw/numbers_metrics/` | gross split, franchise, source, creative type: T5, T6 | ✅ 10.4 MB, 6,569 rows (cleaned and raw files) |
-| `netflix` | [Netflix Top 10, all weeks by country](https://www.netflix.com/tudum/top10) (`all-weeks-countries.tsv`) | live file; **we use weeks up to 2026-09-27** (later weeks are dropped when cleaning) | Netflix public data | `data/raw/netflix/` | streaming genre taste: T1, T4, X2 | ✅ 32.6 MB, 512,200 rows (films + TV), weeks 2021-07-04 to 2026-10-04, 94 countries |
+| `netflix` | [Netflix Top 10, all weeks by country](https://www.netflix.com/tudum/top10) (`all-weeks-countries.tsv`) | live file; **we use weeks up to 2026-09-27** (later weeks are dropped when cleaning); fetched with a browser User-Agent because Netflix serves an HTML page to the descriptive one | Netflix public data | `data/raw/netflix/` | streaming genre taste: T1, T4, X2 | ✅ 32.6 MB, 512,200 rows (films + TV), weeks 2021-07-04 to 2026-10-04, 94 countries |
 | `cpi` | [FRED CPIAUCSL](https://fred.stlouisfed.org/series/CPIAUCSL) | live (monthly, from 1947) | public domain (BLS) | `data/raw/cpi/` | inflation adjustment to 2025 USD | ✅ 956 monthly rows |
 | `fx` | [World Bank PA.NUS.FCRF](https://data.worldbank.org/indicator/PA.NUS.FCRF) | live (yearly) | CC BY 4.0 | `data/raw/fx/` | converting non-USD money | ✅ 4.6 MB, 17,490 country-years (12,630 with a value) |
 | `world_atlas` | [world-atlas@2](https://github.com/topojson/world-atlas) (Natural Earth), 50m + 110m | npm v2 | ISC / public domain | `data/raw/world_atlas/` | map geometry: T1, X2 | ✅ 0.9 MB |
@@ -32,10 +32,10 @@ using it (keys, units, missing values) are in `AGENTS.md`. Decisions are in
 
 | ID | Dataset | Version | Licence | Path | Used for | Status |
 |---|---|---|---|---|---|---|
-| `wikidata` | [Wikidata SPARQL](https://query.wikidata.org): for each IMDb ID (P345) in the working subset, the RT id (P1258), Metacritic id (P1712), LUMIERE id (P4282), English Wikipedia article, budget (P2130) and box office (P2142) with currency and qualifiers | live, queried 2026-10 | CC0 | `data/scraped/wikidata_ids.parquet`, `data/scraped/wikidata_money.parquet` | the hub that joins every other source; extra money values | ✅ 53,904 films, 12,440 money rows |
+| `wikidata` | [Wikidata SPARQL](https://query.wikidata.org): for each IMDb ID (P345) of a Released film with ≥ 1,000 IMDb votes (any year, so a superset of the working subset), the RT id (P1258), Metacritic id (P1712), LUMIERE id (P4282), English Wikipedia article, budget (P2130) and box office (P2142) with currency and qualifiers | live, queried 2026-10 | CC0 | `data/scraped/wikidata_ids.parquet`, `data/scraped/wikidata_money.parquet` | the hub that joins every other source; extra money values | ✅ 53,904 films, 12,440 money rows |
 
-Crosswalk result (queried 2026-10-09). Of the 56,601 working-subset IMDb IDs
-sent, 53,904 (95.2 %) matched a Wikidata item. Of the matched films:
+Crosswalk result (queried 2026-10-09). Of the 56,601 IMDb IDs sent (Released,
+≥ 1,000 votes, no year filter), 53,904 (95.2 %) matched a Wikidata item. Of the matched films:
 
 | Column | Films with a value | Share |
 |---|---|---|

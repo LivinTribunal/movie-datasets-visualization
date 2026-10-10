@@ -22,6 +22,9 @@ CHUNK = 1024 * 1024
 RETRIES = 3
 BACKOFF = 5.0  # seconds, doubled per attempt
 PART_NAME = ".download.part"
+MIN_INTERVAL = 1.0  # seconds between request starts to one host
+
+_last_request: dict[str, float] = {}
 
 
 def make_client(browser: bool = False, timeout: float = 60.0) -> httpx.Client:
@@ -46,8 +49,13 @@ def request(
     client: httpx.Client, method: str, url: str, *, dest: Path | None = None, **kwargs
 ) -> httpx.Response:
     """Send a request, retrying 429/5xx/connection errors. Streams the body to `dest` if given."""
+    host = httpx.URL(url).host
     for attempt in range(RETRIES + 1):
         delay = BACKOFF * 2**attempt
+        wait = MIN_INTERVAL - (time.monotonic() - _last_request.get(host, float("-inf")))
+        if wait > 0:
+            time.sleep(wait)
+        _last_request[host] = time.monotonic()
         try:
             with client.stream(method, url, **kwargs) as resp:
                 if resp.status_code == 429 or resp.status_code >= 500:
@@ -92,13 +100,15 @@ def load_lock(path: Path) -> dict:
 
 def save_lock(lock: dict, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n")
+    part = path.with_suffix(".json.part")
+    part.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n")
+    part.replace(path)
 
 
-def is_up_to_date(lock: dict, name: str, data_root: Path) -> bool:
-    """True when the lock lists `name` and every listed file exists with the recorded size."""
-    entry = lock.get(name)
-    if not entry or not entry.get("files"):
+def is_up_to_date(lock: dict, src: Source, data_root: Path) -> bool:
+    """True when the lock lists `src` at its registry version and every file exists at its size."""
+    entry = lock.get(src.name)
+    if not entry or not entry.get("files") or entry.get("version") != src.version:
         return False
     for rel, info in entry["files"].items():
         f = data_root / rel
@@ -161,6 +171,7 @@ def fetch_kaggle(client: httpx.Client, src: Source, dest_dir: Path) -> list[Path
         else:
             if not plain:
                 raise RuntimeError(f"{url} did not return a zip")
+            _check_not_html(part, url)
             final = dest_dir / plain
             part.replace(final)
             out.append(final)
@@ -195,7 +206,6 @@ def fetch_fx(client: httpx.Client, src: Source, dest_dir: Path) -> list[Path]:
         if page >= meta["pages"]:
             break
         page += 1
-        time.sleep(1)
     final = dest_dir / filename
     part = dest_dir / PART_NAME
     part.write_text(json.dumps([{**meta, "page": 1, "pages": 1}, rows]))
@@ -205,7 +215,7 @@ def fetch_fx(client: httpx.Client, src: Source, dest_dir: Path) -> list[Path]:
 
 def acquire_source(src: Source, *, force: bool = False) -> None:
     lock = load_lock(paths.LOCK)
-    if not force and is_up_to_date(lock, src.name, paths.DATA):
+    if not force and is_up_to_date(lock, src, paths.DATA):
         print(f"[{src.name}] up to date, skipped", flush=True)
         return
     print(f"[{src.name}] {src.description}", flush=True)

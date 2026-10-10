@@ -8,7 +8,6 @@ makes no request for a batch it has already seen.
 import hashlib
 import json
 import re
-import time
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
@@ -20,7 +19,6 @@ from movies.acquire.download import make_client, request
 
 ENDPOINT = "https://query.wikidata.org/sparql"
 BATCH_SIZE = 200
-MIN_INTERVAL = 1.0  # seconds between requests
 TIMEOUT = 120.0  # WDQS aborts slow queries after 60 s; leave room for its error reply
 MIN_VOTES = 1000
 USD = "Q4917"
@@ -86,15 +84,14 @@ def batch_key(batch: list[str]) -> str:
 
 def load_imdb_ids(csv: Path) -> list[str]:
     """Released films with >= 1000 IMDb votes and a well-formed IMDb id, sorted and unique."""
-    names = pl.scan_csv(csv, infer_schema_length=0).collect_schema().names()
+    lf = pl.scan_csv(csv, infer_schema_length=0)
+    names = lf.collect_schema().names()
     for col in ("status", "imdb_id", "imdb_votes"):
         if col not in names:
             raise RuntimeError(f"{csv.name} has no column {col!r}; columns: {names}")
-    lf = pl.scan_csv(csv, infer_schema_length=0).select(
-        "status", "imdb_id", pl.col("imdb_votes").cast(pl.Float64, strict=False)
-    )
     out = (
-        lf.filter(
+        lf.select("status", "imdb_id", pl.col("imdb_votes").cast(pl.Float64, strict=False))
+        .filter(
             (pl.col("status") == "Released")
             & (pl.col("imdb_votes") >= MIN_VOTES)
             & pl.col("imdb_id").str.contains(r"^tt\d+$")
@@ -153,7 +150,7 @@ def aggregate_ids(rows: list[dict[str, str | None]]) -> pl.DataFrame:
     """One row per imdb_id; several values of a property are kept as a sorted `|`-joined string."""
     acc: dict[str, dict[str, set[str]]] = {}
     for r in rows:
-        cols = acc.setdefault(r["imdb_id"] or "", {c: set() for c in IDS_COLUMNS})
+        cols = acc.setdefault(r["imdb_id"], {c: set() for c in IDS_COLUMNS})
         for c in IDS_COLUMNS:
             if r[c] is not None:
                 cols[c].add(r[c])
@@ -192,7 +189,6 @@ def _sort_key(row: tuple) -> tuple:
 def fetch_batches(ids: list[str], cache_dir: Path) -> None:
     """Query both SPARQL queries for every batch; skip any batch already in the cache."""
     cache_dir.mkdir(parents=True, exist_ok=True)
-    last = 0.0
     all_batches = list(batches(ids))
     with make_client(timeout=TIMEOUT) as client:
         for n, batch in enumerate(all_batches, 1):
@@ -201,9 +197,6 @@ def fetch_batches(ids: list[str], cache_dir: Path) -> None:
                 target = cache_dir / f"{kind}_{key}.json"
                 if target.exists():
                     continue
-                wait = MIN_INTERVAL - (time.monotonic() - last)
-                if wait > 0:
-                    time.sleep(wait)
                 resp = request(
                     client,
                     "POST",
@@ -211,7 +204,6 @@ def fetch_batches(ids: list[str], cache_dir: Path) -> None:
                     data={"query": template.replace("__IDS__", _values(batch))},
                     headers={"Accept": "application/sparql-results+json"},
                 )
-                last = time.monotonic()
                 payload = resp.json()
                 if "results" not in payload:
                     raise RuntimeError(f"unexpected SPARQL reply for batch {n} ({kind})")
