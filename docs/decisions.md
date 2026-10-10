@@ -151,3 +151,32 @@ TMDB lists production countries that no longer exist. They map to their main
 successor: Soviet Union → RU, Yugoslavia and Serbia and Montenegro → RS,
 Czechoslovakia → CZ, East and West Germany → DE. The alias table marks these
 rows, and the app says so where a country's films are listed.
+
+### D14. Title matching for The Numbers and Netflix (2026-10-11)
+
+The Numbers and Netflix Top 10 have no IMDb id, so `movies join` matches them
+to TMDB by title. Titles are normalised first: accents, case, punctuation, a
+trailing `(...)` and a leading "The" are dropped, and the numerals II to X and
+two to ten become digits. An exact match on the normalised title or original
+title comes first, then rapidfuzz `token_sort_ratio` ≥ 90. Each match keeps
+`method` (exact, fuzzy, override) and `score`, so the app can mark fuzzy ones.
+
+- **Year windows**: a Numbers row matches films released within ±1 year of
+  its release date. A Netflix title matches any film released before its first
+  chart week, but a fuzzy match must be at most 2 years older than that week.
+  Without that limit about half of the fuzzy Netflix matches were older films
+  one letter away ("Devara" → "Devar", 1966).
+- **Numbers in titles**: a fuzzy match is rejected when both titles carry
+  numbers and they differ ("The Expendables 4" is not "The Expendables 2").
+  A number on one side only is allowed, because The Numbers writes
+  "Jaws 4: The Revenge" where TMDB writes "Jaws: The Revenge".
+- **Netflix candidates** are TMDB films with status Released, an IMDb id and
+  ≥ 100 IMDb votes. Netflix originals in small markets often have fewer votes
+  than the 1,000 of the working subset.
+- **Overrides**: `data/overrides/numbers.csv` (key `metrics:<id>` or
+  `budgets:<rank>`) and `data/overrides/netflix.csv` (key = Netflix title)
+  hold hand fixes, each checked against TMDB. An empty `imdb_id` removes a
+  wrong match.
+- **Watch**: a spot check still finds a few wrong films among the 49 fuzzy
+  Netflix matches. All 49 together carry 0.2 % of the chart score, and the app
+  marks them as fuzzy.

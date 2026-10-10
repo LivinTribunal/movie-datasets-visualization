@@ -12,16 +12,24 @@ from rapidfuzz import fuzz, process
 
 MATCH_COLUMNS = ["key", "imdb_id", "method", "score"]
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
+_NON_DIGIT = re.compile(r"\D")
+_TRAILING_PAREN = re.compile(r"\s*\([^()]*\)\s*$")  # "RRR (Hindi)", "Death Wish (2018)"
+# "Blade II", "Chapter Two" -> 2; "I" and "one" stay words ("I, Robot", "One Day")
+_ROMAN = "ii iii iv v vi vii viii ix x".split()
+_WORDS = "two three four five six seven eight nine ten".split()
+_NUMERALS = {
+    w: str(n) for n, pair in enumerate(zip(_ROMAN, _WORDS, strict=True), start=2) for w in pair
+}
 
 
 def normalise(title: str | None) -> str | None:
-    """Fold case, accents, punctuation and a leading 'The' so titles compare equal."""
+    """Fold case, accents, punctuation, numerals, a trailing (...) and a leading 'The'."""
     if title is None:
         return None
-    text = unicodedata.normalize("NFKD", title)
+    text = unicodedata.normalize("NFKD", _TRAILING_PAREN.sub("", title) or title)
     text = "".join(c for c in text if not unicodedata.combining(c)).lower()
     text = text.replace("&", " and ").replace("'", "").replace("’", "")
-    text = _NON_ALNUM.sub(" ", text).strip()
+    text = " ".join(_NUMERALS.get(w, w) for w in _NON_ALNUM.sub(" ", text).split())
     text = text.removeprefix("the ")
     return text or None
 
@@ -43,8 +51,19 @@ def _best(df: pl.DataFrame, by: list[str], descending: list[bool]) -> pl.DataFra
     )
 
 
-def match(left: pl.DataFrame, right: pl.DataFrame, *, min_score: float = 90.0) -> pl.DataFrame:
-    """Return one row (key, imdb_id, method, score) per left key that matched a right film."""
+def match(
+    left: pl.DataFrame,
+    right: pl.DataFrame,
+    *,
+    min_score: float = 90.0,
+    fuzzy_years: int | None = None,
+) -> pl.DataFrame:
+    """Return one row (key, imdb_id, method, score) per left key that matched a right film.
+
+    A fuzzy match may not carry different numbers ("Expendables 4" is not "Expendables 2", but
+    "Jaws 4: The Revenge" is "Jaws: The Revenge"). With `fuzzy_years`, fuzzy matching only
+    considers films released at most that many years before `year_max`.
+    """
     lefts = left.select("key", "year_min", "year_max", _norm=normalise_expr("title")).drop_nulls(
         "_norm"
     )
@@ -63,6 +82,10 @@ def match(left: pl.DataFrame, right: pl.DataFrame, *, min_score: float = 90.0) -
     exact = _best(exact, ["imdb_votes", "imdb_id"], [True, False])
 
     todo = lefts.join(exact.select("key"), on="key", how="anti")
+    if fuzzy_years is not None:
+        todo = todo.with_columns(
+            year_min=pl.max_horizontal("year_min", pl.col("year_max") - fuzzy_years)
+        )
     # block by year window so each title is only scored against films it could match
     pairs = []
     for (lo, hi), group in todo.group_by(["year_min", "year_max"]):
@@ -71,7 +94,9 @@ def match(left: pl.DataFrame, right: pl.DataFrame, *, min_score: float = 90.0) -
             for choice, score, _ in process.extract(
                 norm, choices, scorer=fuzz.token_sort_ratio, score_cutoff=min_score, limit=None
             ):
-                pairs.append((norm, choice, float(score)))
+                numbers = {_NON_DIGIT.sub("", norm), _NON_DIGIT.sub("", choice)} - {""}
+                if len(numbers) < 2:
+                    pairs.append((norm, choice, float(score)))
     scored = pl.DataFrame(
         pairs, schema={"_norm": pl.String, "_rnorm": pl.String, "_score": pl.Float64}, orient="row"
     )

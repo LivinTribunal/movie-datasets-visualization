@@ -4,6 +4,7 @@ import argparse
 
 from movies import clean
 from movies.acquire import download
+from movies.join import films
 from movies.reference import countries
 
 
@@ -36,6 +37,10 @@ def main(argv: list[str] | None = None) -> None:
         help="only this source (repeatable)",
     )
 
+    sub.add_parser(
+        "join", help="tmdb + Wikidata + RT + The Numbers -> films.parquet, Netflix title matches"
+    )
+
     args = parser.parse_args(argv)
     if args.stage == "acquire":
         download.run(args.source, force=args.force)
@@ -43,3 +48,5 @@ def main(argv: list[str] | None = None) -> None:
         countries.run()
     elif args.stage == "clean":
         clean.run(args.source)
+    elif args.stage == "join":
+        films.run()
