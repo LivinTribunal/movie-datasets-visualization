@@ -2,7 +2,7 @@
 
 import argparse
 
-from movies import clean, derive
+from movies import clean, derive, export, validate
 from movies.acquire import download
 from movies.join import films
 from movies.reference import countries
@@ -50,6 +50,9 @@ def main(argv: list[str] | None = None) -> None:
         help="only this output (repeatable)",
     )
 
+    sub.add_parser("export", help="interim tables -> app/public/data")
+    sub.add_parser("validate", help="check app/public/data against the schema and invariants")
+
     args = parser.parse_args(argv)
     if args.stage == "acquire":
         download.run(args.source, force=args.force)
@@ -61,3 +64,7 @@ def main(argv: list[str] | None = None) -> None:
         films.run()
     elif args.stage == "derive":
         derive.run(args.source)
+    elif args.stage == "export":
+        export.run()
+    elif args.stage == "validate":
+        validate.run()
