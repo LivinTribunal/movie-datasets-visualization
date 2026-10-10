@@ -85,7 +85,7 @@ Planned. Keep this section in sync with the Makefile.
 ```
 make setup        # uv sync (pipeline) + npm ci (app)
 make data         # full local rebuild: acquire → clean → join → derive → export
-make validate     # uv run movies validate
+make validate     # uv run --project pipeline movies validate
 make test         # pytest + vitest
 make lint         # ruff check/format --check + eslint + tsc --noEmit
 make dev          # vite dev server for the app
