@@ -1,4 +1,15 @@
 {
+  "countries_iso": {
+    "downloaded_at": "2026-10-10T22:14:56Z",
+    "files": {
+      "raw/countries_iso/all.csv": {
+        "bytes": 20730,
+        "sha256": "347bba35029f804f53780062052499781d267b8a5d887bf3b051e80a68390d6d"
+      }
+    },
+    "url": "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/145f1ad3caff212ed25f42b0ee2c8b92a75af895/all/all.csv",
+    "version": "145f1ad"
+  },
   "cpi": {
     "downloaded_at": "2026-10-09T10:55:35Z",
     "files": {

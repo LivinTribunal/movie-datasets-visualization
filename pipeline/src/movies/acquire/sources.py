@@ -107,6 +107,21 @@ REGISTRY: tuple[Source, ...] = (
         version="world-atlas@2",
     ),
     Source(
+        name="countries_iso",
+        description=(
+            "ISO 3166 codes with UN M49 regions "
+            "(lukes/ISO-3166-Countries-with-Regional-Codes, CC BY-SA 4.0)"
+        ),
+        kind="http",
+        urls=(
+            (
+                "all.csv",
+                "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/145f1ad3caff212ed25f42b0ee2c8b92a75af895/all/all.csv",
+            ),
+        ),
+        version="145f1ad",
+    ),
+    Source(
         name="wikidata",
         description="Wikidata crosswalk: IMDb id to RT / Metacritic / LUMIERE / enwiki, money",
         kind="wikidata",
