@@ -1,0 +1,19 @@
+genre,family,family_order,colour
+Action,Action & Adventure,1,#D55E00
+Adventure,Action & Adventure,1,#D55E00
+War,Action & Adventure,1,#D55E00
+Western,Action & Adventure,1,#D55E00
+Science Fiction,Sci-Fi & Fantasy,2,#56B4E9
+Fantasy,Sci-Fi & Fantasy,2,#56B4E9
+Crime,Crime & Thriller,3,#0072B2
+Thriller,Crime & Thriller,3,#0072B2
+Mystery,Crime & Thriller,3,#0072B2
+Horror,Horror,4,#CC79A7
+Comedy,Comedy,5,#F0E442
+Drama,Drama & Romance,6,#E69F00
+Romance,Drama & Romance,6,#E69F00
+History,Drama & Romance,6,#E69F00
+Music,Drama & Romance,6,#E69F00
+Animation,Family & Animation,7,#009E73
+Family,Family & Animation,7,#009E73
+Documentary,Documentary,8,#999999

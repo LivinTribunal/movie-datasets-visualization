@@ -109,3 +109,41 @@ Options and their trade-offs are in `docs/design-sheets/sheet-1-options.md`.
   puts the denser or more precise chart behind an advanced view.
 - **Watch**: a 100 % stacked area shows shares, not size. If users read it as
   "how big each genre is", T4 swaps it for the streamgraph.
+
+### D11. Eight genre families (2026-10-11)
+
+`data/reference/genre_families.csv` groups TMDB's 18 film genres ("TV Movie"
+is excluded) into 8 families, one Okabe–Ito colour each:
+
+| family | genres |
+|---|---|
+| Action & Adventure | Action, Adventure, War, Western |
+| Sci-Fi & Fantasy | Science Fiction, Fantasy |
+| Crime & Thriller | Crime, Thriller, Mystery |
+| Horror | Horror |
+| Comedy | Comedy |
+| Drama & Romance | Drama, Romance, History, Music |
+| Family & Animation | Animation, Family |
+| Documentary | Documentary |
+
+- **Why**: the lecture allows 6–12 colour categories and Okabe–Ito has 8.
+  Horror keeps its own family because T3 expects it to differ. Music joins
+  Drama & Romance because 69 % of Music films in the working subset are also
+  Drama, Romance or Comedy, and only 22 % are documentaries. Documentary is
+  grey, so it reads as "not fiction".
+- **Watch**: the team can regroup on the design sheets; only this file
+  changes.
+
+### D12. Wikidata money keeps rank and date precision (2026-10-11)
+
+The money query also returns the statement rank (`preferred` / `normal`) and
+the precision of the point-in-time qualifier. A film with several budgets
+uses the preferred one. The cache file name now includes a hash of the query,
+so a changed query can never reuse old replies.
+
+### D13. Historical countries map to their main successor (2026-10-11)
+
+TMDB lists production countries that no longer exist. They map to their main
+successor: Soviet Union → RU, Yugoslavia and Serbia and Montenegro → RS,
+Czechoslovakia → CZ, East and West Germany → DE. The alias table marks these
+rows, and the app says so where a country's films are listed.
