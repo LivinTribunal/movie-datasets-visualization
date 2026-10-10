@@ -47,6 +47,7 @@ Details in `docs/PLAN.md` §2.
 
 ```
 AGENTS.md, CLAUDE.md     agent instructions (CLAUDE.md imports this file)
+.claude/                 shared skills (architect, grain, pr-ready, review-proof, unslop) and implementer agents
 docs/                    PLAN.md, decisions.md, data-dictionary.md, design-sheets/
 materials/               course materials (PDFs and IS pages are gitignored)
 pipeline/                Python package `movies` (uv project)
@@ -154,6 +155,12 @@ Pipeline steps one at a time: `uv run movies <stage> [--source NAME]`.
 - Tests: pipeline transformations get pytest cases on small fixtures. App
   helpers (scales, aggregations) get Vitest cases. Do not write tests that
   need the network or the full raw data.
+- Before writing or changing code, find the nearest existing example of the
+  same kind of thing and mirror its shape, location and naming. Reach for the
+  laziest solution that works: reuse an existing helper, extend a sibling,
+  polars, D3 or the stdlib before new code or a new dependency. Keep the diff
+  minimal, no drive-by refactors. Close with one line naming the exemplar you
+  mirrored. Full rules in `.claude/skills/grain/`.
 
 ## CI
 
@@ -175,6 +182,9 @@ change.
 - Branch from `main`, open a PR, CI must pass before merging.
 - Commit messages: start with a verb, lowercase, short
   (`add wikidata crosswalk`).
+- Before pushing, self-review the diff (`.claude/skills/pr-ready/`). Review a
+  teammate's PR by proving each finding with a failing test before fixing it
+  (`.claude/skills/review-proof/`).
 - Never commit `data/raw/`, `data/cache/`, `data/interim/`, course PDFs, the
   IS HTML pages, API keys or `.env`.
 - Keys (`KAGGLE_*`, `TMDB_API_KEY`) go in `.env`, which is gitignored;
