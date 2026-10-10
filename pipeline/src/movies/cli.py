@@ -2,7 +2,7 @@
 
 import argparse
 
-from movies import clean, scrape
+from movies import clean, derive, scrape
 from movies.acquire import download
 from movies.join import films
 from movies.reference import countries
@@ -44,6 +44,15 @@ def main(argv: list[str] | None = None) -> None:
     scrape_parser = sub.add_parser("scrape", help="scrape web and API sources -> data/scraped")
     scrape_parser.add_argument("--source", required=True, choices=scrape.SOURCES, metavar="NAME")
 
+    derive_p = sub.add_parser("derive", help="joined films -> derived tables in data/interim")
+    derive_p.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="only this output (repeatable)",
+    )
+
     args = parser.parse_args(argv)
     if args.stage == "acquire":
         download.run(args.source, force=args.force)
@@ -55,3 +64,5 @@ def main(argv: list[str] | None = None) -> None:
         films.run()
     elif args.stage == "scrape":
         scrape.run(args.source)
+    elif args.stage == "derive":
+        derive.run(args.source)
