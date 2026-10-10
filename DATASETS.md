@@ -123,9 +123,9 @@ rate and commit only derived numbers, never page contents.
 | Output | Rows | How it links |
 |---|---|---|
 | `films.parquet` | 56,431 films in the working subset (Released, 1900–2026, ≥ 1,000 IMDb votes), 13,080 notable (≥ 10,000) | the main table, one row per `imdb_id` |
-| RT (Clapper) columns | 35,283 films linked, 22,756 with a tomatometer | Wikidata RT id; the row with a tomatometer wins |
-| Numbers columns | 5,897 films with a budget, 5,009 of them notable | title within ±1 year: of 12,825 rows from both files, 11,524 exact, 126 fuzzy, 68 override |
-| `netflix_titles.parquet` | 8,716 Netflix film titles: 7,608 exact, 49 fuzzy, 17 override, 1,042 unmatched | title, released before the first chart week; matched titles hold 97.9 % of the chart score |
+| RT (Clapper) columns | 35,263 films linked, 22,744 with a tomatometer | Wikidata RT id; the row with a tomatometer wins; an RT id Wikidata gives to two films goes to the one closest to RT's release year |
+| Numbers columns | 5,897 films with a budget, 5,009 of them notable | title within ±1 year: of 12,825 rows from both files, 11,527 exact, 126 fuzzy, 68 override; each value comes from the best-matched row that has it |
+| `netflix_titles.parquet` | 8,716 Netflix film titles: 7,608 exact, 49 fuzzy, 17 override, 1,042 unmatched | title, released no later than the year of the first chart week; matched titles hold 97.9 % of the chart score |
 
 `numbers_match` / `numbers_match_score` and the Netflix `method` / `score`
 columns say how each value was linked, so the app can mark fuzzy matches.

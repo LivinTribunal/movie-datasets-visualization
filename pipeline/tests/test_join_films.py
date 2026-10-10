@@ -49,7 +49,11 @@ def test_attach_rt_prefers_row_with_tomatometer():
             "box_office_usd": [None, None],
             "release_date_theaters": [None, None],
         },
-        schema_overrides={"tomatometer": pl.Int8, "audience_score": pl.Int8},
+        schema_overrides={
+            "tomatometer": pl.Int8,
+            "audience_score": pl.Int8,
+            "release_date_theaters": pl.Date,
+        },
     )
     out = attach_rt(films, ids, rt)
     assert out["rt_slug"].to_list() == ["m/b"]
@@ -137,3 +141,49 @@ def test_netflix_unmatched_title_is_kept():
     assert out["title"].to_list() == ["Ghost", "Old Film"]
     assert out["imdb_id"].to_list() == [None, "tt1"]
     assert out["method"].to_list() == [None, "exact"]
+
+
+def test_rt_id_shared_by_two_films_goes_to_the_closest_year():
+    films = _tmdb(
+        [
+            ("tt1", "Hit", "Hit", "Released", 2020, 1000),
+            ("tt2", "Hit", "Hit", "Released", 2022, 9000),
+        ]
+    )
+    ids = pl.DataFrame({"imdb_id": ["tt1", "tt2"], "rt_id": ["m/hit", "m/hit"]})
+    rt = pl.DataFrame(
+        {
+            "rt_id": ["m/hit"],
+            "tomatometer": [50],
+            "audience_score": [60],
+            "box_office_usd": [None],
+            "release_date_theaters": [date(2020, 7, 10)],
+        },
+        schema_overrides={"tomatometer": pl.Int8, "audience_score": pl.Int8},
+    )
+    out = attach_rt(films, ids, rt).sort("imdb_id")
+    assert out["rt_slug"].to_list() == ["m/hit", None]
+
+
+def test_numbers_override_beats_fuzzy_metrics_and_values_fill_from_twin():
+    films = _tmdb([("tt1", "Alpha Beta Gamma", "Alpha Beta Gamma", "Released", 2000, 5000)])
+    metrics, budgets = _numbers("Alpha Beta Gamm", "Zzz")
+    ov = pl.DataFrame({"key": ["budgets:7"], "imdb_id": ["tt1"]})
+    row = attach_numbers(films, metrics, budgets, ov)[0].row(0, named=True)
+    assert (row["numbers_key"], row["numbers_match"]) == ("budgets:7", "override")
+
+    metrics, budgets = _numbers("Alpha Beta Gamma", "Alpha Beta Gamma")
+    metrics = metrics.with_columns(worldwide_gross=pl.lit(None, dtype=pl.Float64))
+    row = attach_numbers(films, metrics, budgets, NO_OVERRIDES)[0].row(0, named=True)
+    assert row["numbers_key"] == "metrics:1"
+    assert (row["numbers_budget"], row["numbers_worldwide_gross"]) == (10.0, 50.0)
+
+
+def test_numbers_metrics_year_a_century_late_takes_the_budgets_year():
+    # the metrics file stores 1925 films as 2025; the budgets file has the 4-digit year
+    films = _tmdb([("tt1", "Ben-Hur", "Ben-Hur", "Released", 1925, 5000)])
+    metrics, budgets = _numbers("Ben-Hur", "Ben-Hur")
+    metrics = metrics.with_columns(year=pl.lit(2025, dtype=pl.Int64))
+    budgets = budgets.with_columns(year=pl.lit(1925, dtype=pl.Int64))
+    row = attach_numbers(films, metrics, budgets, NO_OVERRIDES)[0].row(0, named=True)
+    assert row["numbers_key"] == "metrics:1"

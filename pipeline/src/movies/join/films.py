@@ -35,7 +35,11 @@ def working_subset(tmdb: pl.DataFrame) -> pl.DataFrame:
 
 
 def attach_rt(films: pl.DataFrame, ids: pl.DataFrame, rt: pl.DataFrame) -> pl.DataFrame:
-    """Left-join the Wikidata ids, then one RT row per film (scored rows first)."""
+    """Left-join the Wikidata ids, then one RT row per film (scored rows first).
+
+    Wikidata links a few RT ids to two films (a remake, a re-release); the RT row then goes only
+    to the film whose year is closest to RT's theatrical release, then the most voted one.
+    """
     picked = (
         ids.select("imdb_id", rt_id=pl.col("rt_id").str.split("|"))
         .explode("rt_id")
@@ -53,6 +57,14 @@ def attach_rt(films: pl.DataFrame, ids: pl.DataFrame, rt: pl.DataFrame) -> pl.Da
             rt_box_office_usd="box_office_usd",
             rt_release_date_theaters="release_date_theaters",
         )
+        .join(films.select("imdb_id", "year", "imdb_votes"), on="imdb_id")
+        .sort(
+            [(pl.col("year") - pl.col("rt_release_date_theaters").dt.year()).abs(), "imdb_votes"],
+            descending=[False, True],
+            nulls_last=True,
+        )
+        .unique("rt_slug", keep="first", maintain_order=True)
+        .drop("year", "imdb_votes")
     )
     return films.join(ids, on="imdb_id", how="left").join(picked, on="imdb_id", how="left")
 
@@ -62,7 +74,15 @@ def _key(prefix: str, id_col: str) -> pl.Expr:
 
 
 def numbers_rows(metrics: pl.DataFrame, budgets: pl.DataFrame) -> pl.DataFrame:
-    """Both Numbers tables as one frame with a `key`; rows without a year are dropped."""
+    """Both Numbers tables as one frame with a `key`; rows without a year are dropped.
+
+    The metrics file stores films from before 1927 a century late (Ben-Hur 1925 as 2025); a
+    metrics year that is a budgets year of the same title plus 100 takes the budgets year.
+    """
+    late = budgets.select("title", year=pl.col("year") + 100, _late=pl.lit(True)).unique()
+    metrics = metrics.join(late, on=["title", "year"], how="left").with_columns(
+        year=pl.when("_late").then(pl.col("year") - 100).otherwise("year")
+    )
     m = metrics.select(
         key=_key("metrics", "numbers_id"),
         src=pl.lit(0),
@@ -91,14 +111,20 @@ def attach_numbers(
     rows = numbers_rows(metrics, budgets)
     left = rows.select("key", "title", year_min=pl.col("year") - 1, year_max=pl.col("year") + 1)
     matches = apply_overrides(match(left, films.select(_FILM_KEYS)), overrides)
+    # override (score null) before exact before fuzzy, then metrics before budgets; each value
+    # comes from the first of the film's rows that has it
     best = (
         matches.join(rows, on="key")
         .sort(
-            ["imdb_id", "src", pl.col("score").fill_null(101.0), "worldwide_gross"],
-            descending=[False, False, True, True],
+            ["imdb_id", pl.col("score").fill_null(101.0), "src", "worldwide_gross"],
+            descending=[False, True, False, True],
             nulls_last=True,
         )
-        .unique("imdb_id", keep="first", maintain_order=True)
+        .group_by("imdb_id", maintain_order=True)
+        .agg(
+            pl.col("key", "method", "score").first(),
+            *[pl.col(c).drop_nulls().first() for c in _NUMBERS_VALUES],
+        )
         .select(
             "imdb_id",
             numbers_budget="budget",
@@ -118,7 +144,7 @@ def attach_numbers(
 def match_netflix(
     netflix: pl.DataFrame, tmdb: pl.DataFrame, overrides: pl.DataFrame
 ) -> pl.DataFrame:
-    """Netflix title -> imdb_id; a film cannot predate the title's first chart week."""
+    """Netflix title -> imdb_id; the film's year is at most the year of the first chart week."""
     titles = netflix.group_by("title").agg(first_week=pl.col("week").min())
     left = titles.select(
         key="title", title="title", year_min=pl.lit(1900), year_max=pl.col("first_week").dt.year()

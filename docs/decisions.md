@@ -162,14 +162,22 @@ title comes first, then rapidfuzz `token_sort_ratio` ≥ 90. Each match keeps
 `method` (exact, fuzzy, override) and `score`, so the app can mark fuzzy ones.
 
 - **Year windows**: a Numbers row matches films released within ±1 year of
-  its release date. A Netflix title matches any film released before its first
-  chart week, but a fuzzy match must be at most 2 years older than that week.
+  its release date. A Netflix title matches any film released no later than
+  the year of its first chart week, but a fuzzy match must be at most 2 years
+  older than that year.
   Without that limit about half of the fuzzy Netflix matches were older films
   one letter away ("Devara" → "Devar", 1966).
 - **Numbers in titles**: a fuzzy match is rejected when both titles carry
   numbers and they differ ("The Expendables 4" is not "The Expendables 2").
   A number on one side only is allowed, because The Numbers writes
   "Jaws 4: The Revenge" where TMDB writes "Jaws: The Revenge".
+- **Ties**: among exact matches the film with the most votes wins; among
+  fuzzy ones the highest score, then the most votes. A film matched by several
+  Numbers rows ranks them override, exact, fuzzy, then the metrics file
+  before the budgets file, and takes each value from the first row that has it.
+- **Century**: the metrics file stores films from before 1927 a century late
+  (Ben-Hur 1925 as 2025). A metrics year that equals a budgets year of the
+  same title plus 100 takes the budgets year.
 - **Netflix candidates** are TMDB films with status Released, an IMDb id and
   ≥ 100 IMDb votes. Netflix originals in small markets often have fewer votes
   than the 1,000 of the working subset.

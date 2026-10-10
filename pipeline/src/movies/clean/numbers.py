@@ -6,7 +6,8 @@ import polars as pl
 
 from movies import paths
 
-# the metrics file read 2-digit years ('15-Dec-39') as 20xx; nothing is released after the snapshot
+# the metrics "Cleaned Data" file turned the raw 2-digit years ('15-Dec-39') into 20xx; a date
+# after the snapshot cannot be real (1900-1926 films need the budgets file, see join/films.py)
 SNAPSHOT = date(2026, 10, 1)
 
 MONEY = {
