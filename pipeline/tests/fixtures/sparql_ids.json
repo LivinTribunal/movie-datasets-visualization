@@ -1,0 +1,31 @@
+{
+  "head": {"vars": ["imdb", "film", "rt", "mc", "lumiere", "title"]},
+  "results": {
+    "bindings": [
+      {
+        "imdb": {"type": "literal", "value": "tt0000001"},
+        "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"},
+        "rt": {"type": "literal", "value": "m/first_film"},
+        "mc": {"type": "literal", "value": "movie/first-film"},
+        "lumiere": {"type": "literal", "value": "1234"},
+        "title": {"xml:lang": "en", "type": "literal", "value": "First Film"}
+      },
+      {
+        "imdb": {"type": "literal", "value": "tt0000002"},
+        "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"},
+        "rt": {"type": "literal", "value": "m/second_film"},
+        "title": {"xml:lang": "en", "type": "literal", "value": "Second Film"}
+      },
+      {
+        "imdb": {"type": "literal", "value": "tt0000002"},
+        "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"},
+        "rt": {"type": "literal", "value": "m/second_film_alt"},
+        "title": {"xml:lang": "en", "type": "literal", "value": "Second Film"}
+      },
+      {
+        "imdb": {"type": "literal", "value": "tt0000003"},
+        "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q300"}
+      }
+    ]
+  }
+}

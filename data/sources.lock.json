@@ -1,0 +1,113 @@
+{
+  "cpi": {
+    "downloaded_at": "2026-10-09T10:55:35Z",
+    "files": {
+      "raw/cpi/CPIAUCSL.csv": {
+        "bytes": 17744,
+        "sha256": "f8ecddf53a9a9a74dda92c2c4204e6039466fcb744bc74171b73b5f6aac48119"
+      }
+    },
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
+    "version": "live"
+  },
+  "fx": {
+    "downloaded_at": "2026-10-09T10:55:35Z",
+    "files": {
+      "raw/fx/PA.NUS.FCRF.json": {
+        "bytes": 4562826,
+        "sha256": "487bf995893a7df4ebf06f6c852ef2934e6403db33f1e832a7a88328fa7b6ac6"
+      }
+    },
+    "url": "https://api.worldbank.org/v2/country/all/indicator/PA.NUS.FCRF",
+    "version": "live"
+  },
+  "netflix": {
+    "downloaded_at": "2026-10-09T10:55:27Z",
+    "files": {
+      "raw/netflix/all-weeks-countries.tsv": {
+        "bytes": 32567063,
+        "sha256": "d4136576cba69705c1a0b1da7c623402150fe56e4b073dff79f21a9e343b23a6"
+      }
+    },
+    "url": "https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv",
+    "version": "live"
+  },
+  "numbers_budgets": {
+    "downloaded_at": "2026-10-09T10:55:24Z",
+    "files": {
+      "raw/numbers_budgets/movie_budgets_and_revenues.csv": {
+        "bytes": 509376,
+        "sha256": "ddb7c3bf438bf49d86f33db03a96a9dd725b5e0289168f0a59672fd7bfd77573"
+      }
+    },
+    "url": "https://www.kaggle.com/api/v1/datasets/download/dahvid/movie-budgets-and-revenues",
+    "version": "1"
+  },
+  "numbers_metrics": {
+    "downloaded_at": "2026-10-09T10:55:25Z",
+    "files": {
+      "raw/numbers_metrics/Top Movies (Cleaned Data).csv": {
+        "bytes": 4113930,
+        "sha256": "52e9bf5e2f9c032d59b406a35432d497bb76f6cf333f4960a353edc1dc59c877"
+      },
+      "raw/numbers_metrics/Top Movies (Raw Data).csv": {
+        "bytes": 6293528,
+        "sha256": "32c14754a2df01d6d0c1019a83adac0e0b753b813d468eaf4569ec1b3ef079ad"
+      }
+    },
+    "url": "https://www.kaggle.com/api/v1/datasets/download/michaelmatta0/movies-ultimate-metrics-features-and-metadata",
+    "version": "1"
+  },
+  "rt_clapper": {
+    "downloaded_at": "2026-10-09T10:55:22Z",
+    "files": {
+      "raw/rt_clapper/rotten_tomatoes_movies.csv": {
+        "bytes": 17396636,
+        "sha256": "7a2e0e33d77def8b5da502227d9465a07c4131055c5a4c55d0653e2a490512bf"
+      }
+    },
+    "url": "https://www.kaggle.com/api/v1/datasets/download/andrezaza/clapper-massive-rotten-tomatoes-movies-and-reviews",
+    "version": "4"
+  },
+  "tmdb": {
+    "downloaded_at": "2026-10-09T10:54:48Z",
+    "files": {
+      "raw/tmdb/TMDB_all_movies.csv": {
+        "bytes": 791725262,
+        "sha256": "2f1229ede0c59c427c6d705e68c4074628cf32785d8007c8eba17b6325780142"
+      }
+    },
+    "url": "https://www.kaggle.com/api/v1/datasets/download/alanvourch/tmdb-movies-daily-updates",
+    "version": "1018"
+  },
+  "wikidata": {
+    "downloaded_at": "2026-10-09T11:04:42Z",
+    "files": {
+      "scraped/wikidata_ids.parquet": {
+        "bytes": 1698703,
+        "sha256": "4fee3e83a6c0705a3969f66319aeafd2dc728e9c6b56cf6293cb766d9ee49b2c"
+      },
+      "scraped/wikidata_money.parquet": {
+        "bytes": 152331,
+        "sha256": "f0fc7aa8819d8ac90e721242aa335b7f7657aa0af270ba7fadccc77e66167c9c"
+      }
+    },
+    "url": "https://query.wikidata.org/sparql",
+    "version": "live"
+  },
+  "world_atlas": {
+    "downloaded_at": "2026-10-09T10:55:35Z",
+    "files": {
+      "raw/world_atlas/countries-110m.json": {
+        "bytes": 107761,
+        "sha256": "2516c915867c7baf18ddec727aec46c315541a07cfb3d79a6559b05d5e94eee8"
+      },
+      "raw/world_atlas/countries-50m.json": {
+        "bytes": 756420,
+        "sha256": "04342cdc1e3016bcd7db1630de95684d67b79fe3c8c460321e87aef469502394"
+      }
+    },
+    "url": "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json; https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+    "version": "world-atlas@2"
+  }
+}

@@ -6,4 +6,5 @@ popularity over time and by country, in cinemas and on Netflix.
 
 - Plan and timeline: [docs/PLAN.md](docs/PLAN.md)
 - Decisions: [docs/decisions.md](docs/decisions.md)
+- Datasets: [DATASETS.md](DATASETS.md)
 - Contributor and agent guide: [AGENTS.md](AGENTS.md)
