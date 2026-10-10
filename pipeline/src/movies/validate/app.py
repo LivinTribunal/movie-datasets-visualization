@@ -72,6 +72,9 @@ def check(data_dir: Path) -> list[str]:
             errors.append("films.json: duplicate imdb_id")
         if any(not IMDB_ID.match(i or "") for i in ids):
             errors.append("films.json: imdb_id does not match tt<digits>")
+        for col in ("genres", "families", "countries"):
+            if any(v is None for v in films[col]):
+                errors.append(f"films.json: {col} has nulls (use [] for none)")
         if _outside(films["year"], 1900, 2026):
             errors.append("films.json: year outside 1900-2026")
         for col in SCHEMA["films.json"]:

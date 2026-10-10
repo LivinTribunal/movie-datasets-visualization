@@ -99,3 +99,12 @@ def test_to_columns_equal_lengths_and_nulls():
     assert len({len(v) for v in cols.values()}) == 1
     assert cols["budget_usd2025"] == [1000, None]
     assert cols["tmdb_100"] == [None, None]
+
+
+def test_unknown_production_countries_export_as_empty_list():
+    # the app iterates every film's countries; a null list crashed it
+    films = FILMS.with_columns(
+        production_countries=pl.Series([None, None, ["CZ"], ["US"]], dtype=pl.List(pl.String))
+    )
+    out = films_table(films, MONEY, RATINGS, FILM_GENRES)
+    assert out["countries"].to_list() == [[], ["CZ"]]

@@ -107,3 +107,10 @@ def test_wrong_columns(tmp_path):
 def test_fuzzy_share_above_coverage(tmp_path, name):
     cg = COUNTRY_GENRE.with_columns(fuzzy_share=pl.lit(0.9))
     assert any("exceeds coverage" in e for e in _errors_with(tmp_path, **{name: cg}))
+
+
+def test_null_list_column(tmp_path):
+    films = films_table(FILMS, MONEY, RATINGS, FILM_GENRES).with_columns(
+        countries=pl.lit(None, dtype=pl.List(pl.String))
+    )
+    assert any("countries has nulls" in e for e in _errors_with(tmp_path, films=films))

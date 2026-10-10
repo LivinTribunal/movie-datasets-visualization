@@ -32,7 +32,7 @@ export function DetailPanel({ data }: { data: AppData }) {
         {src && <Badge text={src} />}
         {col(`${k}_converted`) && <Badge text="converted" />}
         {col(`${k}_disagree`) && <Badge text="sources disagree" />}
-        {col('money_fuzzy') && <Badge text="fuzzy match" />}
+        {col('money_fuzzy') && src === 'numbers' && <Badge text="fuzzy match" />}
       </>
     )
   }

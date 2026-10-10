@@ -16,6 +16,7 @@ from movies.validate.app import SCHEMA
 
 NOTES = [
     "Money is converted at release-year World Bank rates and inflated with CPI to 2025 USD.",
+    "Films before 1947 have no 2025 USD value: the CPI series starts in 1947.",
     "Budgets under $1,000 and revenues under $10,000 are dropped as unreliable.",
     "Fuzzy title matches to The Numbers are flagged (money_fuzzy).",
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
@@ -54,7 +55,7 @@ def films_table(
                 (pl.col("numbers_match") == "fuzzy")
                 & ((pl.col("budget_src") == "numbers") | (pl.col("revenue_src") == "numbers"))
             ).fill_null(False),
-            countries=pl.col("production_countries"),
+            countries=pl.col("production_countries").fill_null([]),
             budget_usd2025=pl.col("budget_usd2025").round(0).cast(pl.Int64),
             revenue_usd2025=pl.col("revenue_usd2025").round(0).cast(pl.Int64),
             roi=pl.col("roi").round(3),
