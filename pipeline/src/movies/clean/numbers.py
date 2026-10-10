@@ -1,8 +1,13 @@
 """Clean The Numbers: budgets/revenues list and the top-movies metrics table."""
 
+from datetime import date
+
 import polars as pl
 
 from movies import paths
+
+# the metrics file read 2-digit years ('15-Dec-39') as 20xx; nothing is released after the snapshot
+SNAPSHOT = date(2026, 10, 1)
 
 MONEY = {
     "budget",
@@ -24,16 +29,21 @@ def _text(col: str) -> pl.Expr:
     return pl.when(s == "").then(None).otherwise(s)
 
 
-def _dates(col: str, fmt: str | None) -> list[pl.Expr]:
-    """release_date and year; the year falls back to a 4-digit year in the raw string."""
-    date = pl.col(col).str.to_date(fmt, strict=False)
-    year = date.dt.year().fill_null(pl.col(col).str.extract(r"\b(\d{4})\b", 1).cast(pl.Int32))
-    return [date.alias("release_date"), year.cast(pl.Int16).alias("year")]
+def _dates(col: str, fmt: str | None, *, fix_century: bool = False) -> list[pl.Expr]:
+    """release_date and year; the year falls back to a 4-digit year in the raw string.
+
+    With `fix_century`, a date after SNAPSHOT is moved back 100 years.
+    """
+    day = pl.col(col).str.to_date(fmt, strict=False)
+    if fix_century:
+        day = pl.when(day > SNAPSHOT).then(day.dt.offset_by("-100y")).otherwise(day)
+    year = day.dt.year().fill_null(pl.col(col).str.extract(r"\b(\d{4})\b", 1).cast(pl.Int32))
+    return [day.alias("release_date"), year.cast(pl.Int16).alias("year")]
 
 
 def clean_budgets(raw: pl.DataFrame) -> pl.DataFrame:
     return raw.select(
-        pl.col("Number").cast(pl.Int32, strict=False).alias("numbers_rank"),
+        pl.col("Number").str.replace_all(",", "").cast(pl.Int32).alias("numbers_rank"),
         _text("Movie Name").alias("title"),
         *_dates("Release Date", "%b %d, %Y"),
         parse_usd(pl.col("Budget")).alias("budget"),
@@ -44,9 +54,9 @@ def clean_budgets(raw: pl.DataFrame) -> pl.DataFrame:
 
 def clean_metrics(raw: pl.DataFrame) -> pl.DataFrame:
     return raw.select(
-        pl.col("id").cast(pl.Int32, strict=False).alias("numbers_id"),
+        pl.col("id").str.replace_all(",", "").cast(pl.Int32).alias("numbers_id"),
         _text("Movie Name").alias("title"),
-        *_dates("Release Date", "%Y-%m-%d"),
+        *_dates("Release Date", "%Y-%m-%d", fix_century=True),
         parse_usd(pl.col("Production Budget (USD)")).alias("budget"),
         parse_usd(pl.col("Domestic Gross (USD)")).alias("domestic_gross"),
         parse_usd(pl.col("Worldwide Gross (USD)")).alias("worldwide_gross"),
