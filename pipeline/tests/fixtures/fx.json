@@ -1,0 +1,10 @@
+[
+  {"page": 1},
+  [
+    {"country": {"id": "CZ", "value": "Czechia"}, "countryiso3code": "CZE", "date": "2024", "value": 23.3},
+    {"country": {"id": "CZ", "value": "Czechia"}, "countryiso3code": "CZE", "date": "2025", "value": null},
+    {"country": {"id": "SK", "value": "Slovakia"}, "countryiso3code": "SVK", "date": "2023", "value": 0.92},
+    {"country": {"id": "ZH", "value": "Africa Eastern and Southern"}, "countryiso3code": "AFE", "date": "2024", "value": 18.0},
+    {"country": {"id": "XX", "value": "Unknown aggregate"}, "countryiso3code": "", "date": "2024", "value": 1.0}
+  ]
+]

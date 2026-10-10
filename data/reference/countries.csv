@@ -37,8 +37,8 @@ BW,BWA,072,Botswana,Africa,Sub-Saharan Africa,002,202,
 BY,BLR,112,Belarus,Europe,Eastern Europe,150,151,
 BZ,BLZ,084,Belize,Americas,Latin America and the Caribbean,019,419,
 CA,CAN,124,Canada,Americas,Northern America,019,021,
-CC,CCK,166,Cocos (Keeling) Islands,Oceania,Australia and New Zealand,009,053,
-CD,COD,180,"Congo, Democratic Republic of the",Africa,Sub-Saharan Africa,002,202,
+CC,CCK,166,Cocos (Keeling) Islands,Oceania,Australia and New Zealand,009,053,Cocos  Islands
+CD,COD,180,"Congo, Democratic Republic of the",Africa,Sub-Saharan Africa,002,202,Zaire
 CF,CAF,140,Central African Republic,Africa,Sub-Saharan Africa,002,202,
 CG,COG,178,Congo,Africa,Sub-Saharan Africa,002,202,
 CH,CHE,756,Switzerland,Europe,Western Europe,150,155,
@@ -70,8 +70,8 @@ ES,ESP,724,Spain,Europe,Southern Europe,150,039,
 ET,ETH,231,Ethiopia,Africa,Sub-Saharan Africa,002,202,
 FI,FIN,246,Finland,Europe,Northern Europe,150,154,
 FJ,FJI,242,Fiji,Oceania,Melanesia,009,054,
-FK,FLK,238,Falkland Islands (Malvinas),Americas,Latin America and the Caribbean,019,419,
-FM,FSM,583,"Micronesia, Federated States of",Oceania,Micronesia,009,057,
+FK,FLK,238,Falkland Islands (Malvinas),Americas,Latin America and the Caribbean,019,419,Falkland Islands
+FM,FSM,583,"Micronesia, Federated States of",Oceania,Micronesia,009,057,Micronesia
 FO,FRO,234,Faroe Islands,Europe,Northern Europe,150,154,Faeroe Islands
 FR,FRA,250,France,Europe,Western Europe,150,155,
 GA,GAB,266,Gabon,Africa,Sub-Saharan Africa,002,202,
@@ -94,7 +94,7 @@ GU,GUM,316,Guam,Oceania,Micronesia,009,057,
 GW,GNB,624,Guinea-Bissau,Africa,Sub-Saharan Africa,002,202,
 GY,GUY,328,Guyana,Americas,Latin America and the Caribbean,019,419,
 HK,HKG,344,Hong Kong,Asia,Eastern Asia,142,030,
-HM,HMD,334,Heard Island and McDonald Islands,Oceania,Australia and New Zealand,009,053,
+HM,HMD,334,Heard Island and McDonald Islands,Oceania,Australia and New Zealand,009,053,Heard and McDonald Islands
 HN,HND,340,Honduras,Americas,Latin America and the Caribbean,019,419,
 HR,HRV,191,Croatia,Europe,Southern Europe,150,039,
 HT,HTI,332,Haiti,Americas,Latin America and the Caribbean,019,419,
@@ -126,7 +126,7 @@ KY,CYM,136,Cayman Islands,Americas,Latin America and the Caribbean,019,419,
 KZ,KAZ,398,Kazakhstan,Asia,Central Asia,142,143,
 LA,LAO,418,Lao People's Democratic Republic,Asia,South-eastern Asia,142,035,
 LB,LBN,422,Lebanon,Asia,Western Asia,142,145,
-LC,LCA,662,Saint Lucia,Americas,Latin America and the Caribbean,019,419,
+LC,LCA,662,Saint Lucia,Americas,Latin America and the Caribbean,019,419,St. Lucia
 LI,LIE,438,Liechtenstein,Europe,Western Europe,150,155,
 LK,LKA,144,Sri Lanka,Asia,Southern Asia,142,034,
 LR,LBR,430,Liberia,Africa,Sub-Saharan Africa,002,202,
@@ -144,7 +144,7 @@ MG,MDG,450,Madagascar,Africa,Sub-Saharan Africa,002,202,
 MH,MHL,584,Marshall Islands,Oceania,Micronesia,009,057,
 MK,MKD,807,North Macedonia,Europe,Southern Europe,150,039,Macedonia
 ML,MLI,466,Mali,Africa,Sub-Saharan Africa,002,202,
-MM,MMR,104,Myanmar,Asia,South-eastern Asia,142,035,
+MM,MMR,104,Myanmar,Asia,South-eastern Asia,142,035,Burma
 MN,MNG,496,Mongolia,Asia,Eastern Asia,142,030,
 MO,MAC,446,Macao,Asia,Eastern Asia,142,030,
 MP,MNP,580,Northern Mariana Islands,Oceania,Micronesia,009,057,
@@ -178,8 +178,8 @@ PG,PNG,598,Papua New Guinea,Oceania,Melanesia,009,054,
 PH,PHL,608,Philippines,Asia,South-eastern Asia,142,035,
 PK,PAK,586,Pakistan,Asia,Southern Asia,142,034,
 PL,POL,616,Poland,Europe,Eastern Europe,150,151,
-PM,SPM,666,Saint Pierre and Miquelon,Americas,Northern America,019,021,
-PN,PCN,612,Pitcairn,Oceania,Polynesia,009,061,
+PM,SPM,666,Saint Pierre and Miquelon,Americas,Northern America,019,021,St. Pierre and Miquelon
+PN,PCN,612,Pitcairn,Oceania,Polynesia,009,061,Pitcairn Island
 PR,PRI,630,Puerto Rico,Americas,Latin America and the Caribbean,019,419,
 PS,PSE,275,"Palestine, State of",Asia,Western Asia,142,145,Palestinian Territory
 PT,PRT,620,Portugal,Europe,Southern Europe,150,039,
@@ -197,7 +197,7 @@ SC,SYC,690,Seychelles,Africa,Sub-Saharan Africa,002,202,
 SD,SDN,729,Sudan,Africa,Northern Africa,002,015,
 SE,SWE,752,Sweden,Europe,Northern Europe,150,154,
 SG,SGP,702,Singapore,Asia,South-eastern Asia,142,035,
-SH,SHN,654,"Saint Helena, Ascension and Tristan da Cunha",Africa,Sub-Saharan Africa,002,202,
+SH,SHN,654,"Saint Helena, Ascension and Tristan da Cunha",Africa,Sub-Saharan Africa,002,202,St. Helena
 SI,SVN,705,Slovenia,Europe,Southern Europe,150,039,
 SJ,SJM,744,Svalbard and Jan Mayen,Europe,Northern Europe,150,154,Svalbard & Jan Mayen Islands
 SK,SVK,703,Slovakia,Europe,Eastern Europe,150,151,
@@ -219,7 +219,7 @@ TG,TGO,768,Togo,Africa,Sub-Saharan Africa,002,202,
 TH,THA,764,Thailand,Asia,South-eastern Asia,142,035,
 TJ,TJK,762,Tajikistan,Asia,Central Asia,142,143,
 TK,TKL,772,Tokelau,Oceania,Polynesia,009,061,
-TL,TLS,626,Timor-Leste,Asia,South-eastern Asia,142,035,
+TL,TLS,626,Timor-Leste,Asia,South-eastern Asia,142,035,East Timor
 TM,TKM,795,Turkmenistan,Asia,Central Asia,142,143,
 TN,TUN,788,Tunisia,Africa,Northern Africa,002,015,
 TO,TON,776,Tonga,Oceania,Polynesia,009,061,
@@ -235,13 +235,13 @@ US,USA,840,United States of America,Americas,Northern America,019,021,
 UY,URY,858,Uruguay,Americas,Latin America and the Caribbean,019,419,
 UZ,UZB,860,Uzbekistan,Asia,Central Asia,142,143,
 VA,VAT,336,Holy See,Europe,Southern Europe,150,039,
-VC,VCT,670,Saint Vincent and the Grenadines,Americas,Latin America and the Caribbean,019,419,
+VC,VCT,670,Saint Vincent and the Grenadines,Americas,Latin America and the Caribbean,019,419,St. Vincent and the Grenadines
 VE,VEN,862,"Venezuela, Bolivarian Republic of",Americas,Latin America and the Caribbean,019,419,Venezuela
-VG,VGB,092,Virgin Islands (British),Americas,Latin America and the Caribbean,019,419,
-VI,VIR,850,Virgin Islands (U.S.),Americas,Latin America and the Caribbean,019,419,
+VG,VGB,092,Virgin Islands (British),Americas,Latin America and the Caribbean,019,419,British Virgin Islands
+VI,VIR,850,Virgin Islands (U.S.),Americas,Latin America and the Caribbean,019,419,US Virgin Islands
 VN,VNM,704,Viet Nam,Asia,South-eastern Asia,142,035,Vietnam
 VU,VUT,548,Vanuatu,Oceania,Melanesia,009,054,
-WF,WLF,876,Wallis and Futuna,Oceania,Polynesia,009,061,
+WF,WLF,876,Wallis and Futuna,Oceania,Polynesia,009,061,Wallis and Futuna Islands
 WS,WSM,882,Samoa,Oceania,Polynesia,009,061,
 XK,XKX,,Kosovo,Europe,Southern Europe,150,039,
 YE,YEM,887,Yemen,Asia,Western Asia,142,145,
