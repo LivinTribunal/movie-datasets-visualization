@@ -91,3 +91,21 @@ the one it replaces; do not edit the old entry.
   scraping rules.
 - **Why**: Letterboxd users are a different audience (cinephiles) from
   IMDb and RT users, which adds a contrast for T3.
+
+### D10. Chart picks for sheet 1 (2026-10-10)
+
+Options and their trade-offs are in `docs/design-sheets/sheet-1-options.md`.
+
+| task | main view | second view | dropped |
+|---|---|---|---|
+| T1 | choropleth map | 100 % stacked bars (advanced view) | heatmap |
+| T2 | scatter plot | hexbin (zoomed-out mode) | correlogram |
+| T3 | scatter with y = x diagonal | ridgeline of the gap per genre | dumbbell, violin |
+| T4 | 100 % stacked area (holds the time brush) | small-multiple lines (advanced view) | – |
+| T5 | bubble chart | scatter small multiples per genre (advanced view) | heatmap |
+| T6 | highlighted spaghetti lines | connected scatter (one franchise) | heatmap |
+
+- **Why**: the team keeps one familiar chart as the default view per task and
+  puts the denser or more precise chart behind an advanced view.
+- **Watch**: a 100 % stacked area shows shares, not size. If users read it as
+  "how big each genre is", T4 swaps it for the streamgraph.
