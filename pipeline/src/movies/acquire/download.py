@@ -85,7 +85,8 @@ def get_following(client: httpx.Client, url: str, max_hops: int = 5) -> httpx.Re
         try:
             return request(client, "GET", url, follow_redirects=False)
         except httpx.HTTPStatusError as err:
-            if not err.response.is_redirect:
+            # a redirect without a Location cannot be followed; the caller sees the 3xx
+            if not err.response.is_redirect or "Location" not in err.response.headers:
                 raise
             url = str(httpx.URL(url).join(err.response.headers["Location"]))
     raise RuntimeError(f"more than {max_hops} redirects from {url}")
