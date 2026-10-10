@@ -1,0 +1,35 @@
+{
+  "head": {"vars": ["imdb", "film", "prop", "amount", "unit", "time", "place"]},
+  "results": {
+    "bindings": [
+      {
+        "imdb": {"type": "literal", "value": "tt0000001"},
+        "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"},
+        "prop": {"type": "literal", "value": "budget"},
+        "amount": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+          "type": "literal",
+          "value": "15000000"
+        },
+        "unit": {"type": "uri", "value": "http://www.wikidata.org/entity/Q4917"}
+      },
+      {
+        "imdb": {"type": "literal", "value": "tt0000001"},
+        "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"},
+        "prop": {"type": "literal", "value": "box_office"},
+        "amount": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+          "type": "literal",
+          "value": "42500000.5"
+        },
+        "unit": {"type": "uri", "value": "http://www.wikidata.org/entity/Q4917"},
+        "time": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+          "type": "literal",
+          "value": "1999-06-01T00:00:00Z"
+        },
+        "place": {"type": "uri", "value": "http://www.wikidata.org/entity/Q30"}
+      }
+    ]
+  }
+}
