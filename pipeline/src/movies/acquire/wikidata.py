@@ -1,8 +1,9 @@
 """Wikidata crosswalk: IMDb id -> QID, RT / Metacritic / LUMIERE ids, enwiki title, and money.
 
 Batches of IMDb ids go to the SPARQL endpoint (at most 1 request per second). Every raw response
-is cached in data/cache/wikidata/ first and the parsers read only from that cache, so a re-run
-makes no request for a batch it has already seen.
+is cached in data/cache/wikidata/ first (the file name includes a hash of the query, so a changed
+query never reuses an old reply) and the parsers read only from that cache, so a re-run makes no
+request for a batch it has already seen.
 """
 
 import hashlib
@@ -43,7 +44,7 @@ SELECT ?imdb ?film ?rt ?mc ?lumiere ?title WHERE {
 """
 
 MONEY_QUERY = """
-SELECT ?imdb ?film ?prop ?amount ?unit ?time ?place WHERE {
+SELECT ?imdb ?film ?prop ?amount ?unit ?time ?precision ?rank ?place WHERE {
   VALUES ?imdb { __IDS__ }
   ?film wdt:P345 ?imdb .
   VALUES (?prop ?p ?psv) {
@@ -56,10 +57,12 @@ SELECT ?imdb ?film ?prop ?amount ?unit ?time ?place WHERE {
   FILTER(?rank != wikibase:DeprecatedRank)
   ?v wikibase:quantityAmount ?amount ;
      wikibase:quantityUnit ?unit .
-  OPTIONAL { ?st pq:P585 ?time }
+  OPTIONAL { ?st pqv:P585 ?tv . ?tv wikibase:timeValue ?time ; wikibase:timePrecision ?precision }
   OPTIONAL { ?st pq:P3005 ?place }
 }
 """
+
+QUERIES = (("ids", IDS_QUERY), ("money", MONEY_QUERY))
 
 IDS_COLUMNS = ["qid", "rt_id", "mc_id", "lumiere_id", "enwiki_title"]
 MONEY_SCHEMA = {
@@ -70,7 +73,10 @@ MONEY_SCHEMA = {
     "unit_qid": pl.String,
     "point_in_time": pl.Date,
     "place_qid": pl.String,
+    "rank": pl.String,
+    "time_precision": pl.Int8,
 }
+RANKS = {"PreferredRank": "preferred", "NormalRank": "normal"}
 
 
 def batches(ids: list[str], size: int = BATCH_SIZE) -> Iterator[list[str]]:
@@ -80,6 +86,12 @@ def batches(ids: list[str], size: int = BATCH_SIZE) -> Iterator[list[str]]:
 
 def batch_key(batch: list[str]) -> str:
     return hashlib.sha1("\n".join(sorted(batch)).encode()).hexdigest()
+
+
+def cache_path(cache_dir: Path, kind: str, template: str, batch: list[str]) -> Path:
+    """Cache file for one batch; the name holds a hash of the query, so an edit refetches."""
+    query_hash = hashlib.sha1(template.encode()).hexdigest()[:8]
+    return cache_dir / f"{kind}_{query_hash}_{batch_key(batch)}.json"
 
 
 def load_imdb_ids(csv: Path) -> list[str]:
@@ -177,6 +189,8 @@ def parse_money(payload: dict) -> list[tuple]:
                 _qid(_val(b, "unit")),
                 _day(_val(b, "time")),
                 _qid(_val(b, "place")),
+                RANKS.get((_val(b, "rank") or "").rsplit("#", 1)[-1]),
+                int(precision) if (precision := _val(b, "precision")) else None,
             )
         )
     return rows
@@ -192,9 +206,8 @@ def fetch_batches(ids: list[str], cache_dir: Path) -> None:
     all_batches = list(batches(ids))
     with make_client(timeout=TIMEOUT) as client:
         for n, batch in enumerate(all_batches, 1):
-            key = batch_key(batch)
-            for kind, template in (("ids", IDS_QUERY), ("money", MONEY_QUERY)):
-                target = cache_dir / f"{kind}_{key}.json"
+            for kind, template in QUERIES:
+                target = cache_path(cache_dir, kind, template, batch)
                 if target.exists():
                     continue
                 resp = request(
@@ -231,9 +244,9 @@ def build() -> list[Path]:
     id_rows: list[dict[str, str | None]] = []
     money_rows: set[tuple] = set()
     for batch in batches(ids):
-        key = batch_key(batch)
-        id_rows += parse_ids(json.loads((cache_dir / f"ids_{key}.json").read_text()))
-        money_rows |= set(parse_money(json.loads((cache_dir / f"money_{key}.json").read_text())))
+        ids_file, money_file = (cache_path(cache_dir, k, t, batch) for k, t in QUERIES)
+        id_rows += parse_ids(json.loads(ids_file.read_text()))
+        money_rows |= set(parse_money(json.loads(money_file.read_text())))
 
     ids_df = aggregate_ids(id_rows)
     money_df = pl.DataFrame(sorted(money_rows, key=_sort_key), schema=MONEY_SCHEMA, orient="row")

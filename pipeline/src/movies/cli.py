@@ -2,7 +2,9 @@
 
 import argparse
 
+from movies import clean
 from movies.acquire import download
+from movies.reference import countries
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -21,6 +23,23 @@ def main(argv: list[str] | None = None) -> None:
     )
     acquire.add_argument("--force", action="store_true", help="ignore the lock and re-download")
 
+    sub.add_parser("reference", help="build data/reference/countries.csv")
+
+    clean_p = sub.add_parser(
+        "clean", help="raw files -> one tidy Parquet per source in data/interim"
+    )
+    clean_p.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="only this source (repeatable)",
+    )
+
     args = parser.parse_args(argv)
     if args.stage == "acquire":
         download.run(args.source, force=args.force)
+    elif args.stage == "reference":
+        countries.run()
+    elif args.stage == "clean":
+        clean.run(args.source)

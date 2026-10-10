@@ -1,0 +1,6 @@
+name,alpha-2,alpha-3,country-code,iso_3166-2,region,sub-region,intermediate-region,region-code,sub-region-code,intermediate-region-code
+Afghanistan,AF,AFG,004,ISO 3166-2:AF,Asia,Southern Asia,"",142,034,""
+Antarctica,AQ,ATA,010,ISO 3166-2:AQ,"","","","","",""
+Germany,DE,DEU,276,ISO 3166-2:DE,Europe,Western Europe,"",150,155,""
+Russian Federation,RU,RUS,643,ISO 3166-2:RU,Europe,Eastern Europe,"",150,151,""
+Serbia,RS,SRB,688,ISO 3166-2:RS,Europe,Southern Europe,"",150,039,""

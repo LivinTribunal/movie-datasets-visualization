@@ -1,4 +1,15 @@
 {
+  "countries_iso": {
+    "downloaded_at": "2026-10-10T22:14:56Z",
+    "files": {
+      "raw/countries_iso/all.csv": {
+        "bytes": 20730,
+        "sha256": "347bba35029f804f53780062052499781d267b8a5d887bf3b051e80a68390d6d"
+      }
+    },
+    "url": "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/145f1ad3caff212ed25f42b0ee2c8b92a75af895/all/all.csv",
+    "version": "145f1ad"
+  },
   "cpi": {
     "downloaded_at": "2026-10-09T10:55:35Z",
     "files": {
@@ -81,15 +92,15 @@
     "version": "1018"
   },
   "wikidata": {
-    "downloaded_at": "2026-10-09T11:04:42Z",
+    "downloaded_at": "2026-10-10T22:15:07Z",
     "files": {
       "scraped/wikidata_ids.parquet": {
         "bytes": 1698703,
         "sha256": "4fee3e83a6c0705a3969f66319aeafd2dc728e9c6b56cf6293cb766d9ee49b2c"
       },
       "scraped/wikidata_money.parquet": {
-        "bytes": 152331,
-        "sha256": "f0fc7aa8819d8ac90e721242aa335b7f7657aa0af270ba7fadccc77e66167c9c"
+        "bytes": 153971,
+        "sha256": "ac12469835d8c4c82eb1666a2556711196e88e1dd21107e231c0aeb522364036"
       }
     },
     "url": "https://query.wikidata.org/sparql",

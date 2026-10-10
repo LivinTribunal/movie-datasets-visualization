@@ -1,5 +1,5 @@
 {
-  "head": {"vars": ["imdb", "film", "prop", "amount", "unit", "time", "place"]},
+  "head": {"vars": ["imdb", "film", "prop", "amount", "unit", "time", "precision", "rank", "place"]},
   "results": {
     "bindings": [
       {
@@ -11,7 +11,8 @@
           "type": "literal",
           "value": "15000000"
         },
-        "unit": {"type": "uri", "value": "http://www.wikidata.org/entity/Q4917"}
+        "unit": {"type": "uri", "value": "http://www.wikidata.org/entity/Q4917"},
+        "rank": {"type": "uri", "value": "http://wikiba.se/ontology#PreferredRank"}
       },
       {
         "imdb": {"type": "literal", "value": "tt0000001"},
@@ -28,6 +29,12 @@
           "type": "literal",
           "value": "1999-06-01T00:00:00Z"
         },
+        "precision": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "type": "literal",
+          "value": "11"
+        },
+        "rank": {"type": "uri", "value": "http://wikiba.se/ontology#NormalRank"},
         "place": {"type": "uri", "value": "http://www.wikidata.org/entity/Q30"}
       }
     ]

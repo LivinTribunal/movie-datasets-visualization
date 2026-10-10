@@ -1,0 +1,8 @@
+id,title,audienceScore,tomatoMeter,rating,ratingContents,releaseDateTheaters,releaseDateStreaming,runtimeMinutes,genre,originalLanguage,director,writer,boxOffice,distributor,soundMix
+space-zombie-bingo,Space Zombie Bingo!,50,,,,,2018-08-25,75,"Comedy, Horror, Sci-fi",English,George Ormrod,"George Ormrod,John Sabotta",,,
+big_movie,Big Movie,88,92,PG-13,,2018-06-01,2018-09-01,120,Drama,English,Jane Roe,Jane Roe,$31.4M,Studio,
+small_movie,Small Movie,70,,R,,2019-01-01,,95,,French,,,$11.5K,,
+giant_movie,Giant Movie,,,,,,,,,,,,$1.2B,,
+plain_movie,Plain Movie,,,,,,,,,,,,"$500",,
+dup_movie,Dup Movie,,,,,,,,Drama,,,,,,
+dup_movie,Dup Movie,60,75,,,,,,Drama,,,,,,
