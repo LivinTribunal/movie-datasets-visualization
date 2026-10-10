@@ -2,11 +2,10 @@
 
 import argparse
 
-from movies import clean
+from movies import clean, scrape
 from movies.acquire import download
 from movies.join import films
 from movies.reference import countries
-from movies.scrape import tmdb_collections
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -42,8 +41,8 @@ def main(argv: list[str] | None = None) -> None:
         "join", help="tmdb + Wikidata + RT + The Numbers -> films.parquet, Netflix title matches"
     )
 
-    scrape = sub.add_parser("scrape", help="scrape web and API sources -> data/scraped")
-    scrape.add_argument("--source", required=True, choices=["tmdb_collections"], metavar="NAME")
+    scrape_parser = sub.add_parser("scrape", help="scrape web and API sources -> data/scraped")
+    scrape_parser.add_argument("--source", required=True, choices=scrape.SOURCES, metavar="NAME")
 
     args = parser.parse_args(argv)
     if args.stage == "acquire":
@@ -55,4 +54,4 @@ def main(argv: list[str] | None = None) -> None:
     elif args.stage == "join":
         films.run()
     elif args.stage == "scrape":
-        tmdb_collections.build()
+        scrape.run(args.source)
