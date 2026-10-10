@@ -184,7 +184,12 @@ title comes first, then rapidfuzz `token_sort_ratio` ≥ 90. Each match keeps
 - **Overrides**: `data/overrides/numbers.csv` (key `metrics:<id>` or
   `budgets:<rank>`) and `data/overrides/netflix.csv` (key = Netflix title)
   hold hand fixes, each checked against TMDB. An empty `imdb_id` removes a
-  wrong match.
+  wrong match. Rows whose note starts with `agent-checked:` (266 Numbers,
+  83 Netflix, added 2026-10-11) were chosen by language-model agents from the
+  4 closest TMDB titles in the year window, then checked by a script (the id
+  must be one of the candidates, the year rule must hold) and read by hand.
+  Agents skipped titles they were unsure of, and 5 of their 354 picks were
+  dropped on review.
 - **Watch**: a spot check still finds a few wrong films among the 49 fuzzy
   Netflix matches. All 49 together carry 0.2 % of the chart score, and the app
   marks them as fuzzy.
