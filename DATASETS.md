@@ -26,13 +26,14 @@ using it (keys, units, missing values) are in `AGENTS.md`. Decisions are in
 | `cpi` | [FRED CPIAUCSL](https://fred.stlouisfed.org/series/CPIAUCSL) | live (monthly, from 1947) | public domain (BLS) | `data/raw/cpi/` | inflation adjustment to 2025 USD | ✅ 956 monthly rows |
 | `fx` | [World Bank PA.NUS.FCRF](https://data.worldbank.org/indicator/PA.NUS.FCRF) | live (yearly) | CC BY 4.0 | `data/raw/fx/` | converting non-USD money | ✅ 4.6 MB, 17,490 country-years (12,630 with a value) |
 | `world_atlas` | [world-atlas@2](https://github.com/topojson/world-atlas) (Natural Earth), 50m + 110m | npm v2 | ISC / public domain | `data/raw/world_atlas/` | map geometry: T1, X2 | ✅ 0.9 MB |
+| `countries_iso` | [ISO-3166 countries with regional codes](https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes) (`all.csv`): ISO-2, ISO-3, ISO numeric, UN M49 region and subregion | commit 145f1ad | CC BY-SA 4.0 | `data/raw/countries_iso/` | builds `data/reference/countries.csv` | ✅ 249 countries |
 | `rt_legacy` | [Rotten Tomatoes 2020 dataset](https://www.kaggle.com/datasets/stefanoleone992/rotten-tomatoes-movies-and-critic-reviews-dataset) | Kaggle v1 | CC0 | `data/raw/rt_legacy/` | fallback for films missing from Clapper | ➖ |
 
 ## 2. Wikidata ID crosswalk
 
 | ID | Dataset | Version | Licence | Path | Used for | Status |
 |---|---|---|---|---|---|---|
-| `wikidata` | [Wikidata SPARQL](https://query.wikidata.org): for each IMDb ID (P345) of a Released film with ≥ 1,000 IMDb votes (any year, so a superset of the working subset), the RT id (P1258), Metacritic id (P1712), LUMIERE id (P4282), English Wikipedia article, budget (P2130) and box office (P2142) with currency and qualifiers | live, queried 2026-10 | CC0 | `data/scraped/wikidata_ids.parquet`, `data/scraped/wikidata_money.parquet` | the hub that joins every other source; extra money values | ✅ 53,904 films, 12,440 money rows |
+| `wikidata` | [Wikidata SPARQL](https://query.wikidata.org): for each IMDb ID (P345) of a Released film with ≥ 1,000 IMDb votes (any year, so a superset of the working subset), the RT id (P1258), Metacritic id (P1712), LUMIERE id (P4282), English Wikipedia article, budget (P2130) and box office (P2142) with currency and qualifiers | live, queried 2026-10 | CC0 | `data/scraped/wikidata_ids.parquet`, `data/scraped/wikidata_money.parquet` | the hub that joins every other source; extra money values | ✅ 53,904 films, 12,446 money rows (with statement rank and date precision, re-queried 2026-10-11) |
 
 Crosswalk result (queried 2026-10-09). Of the 56,601 IMDb IDs sent (Released,
 ≥ 1,000 votes, no year filter), 53,904 (95.2 %) matched a Wikidata item. Of the matched films:
@@ -72,8 +73,8 @@ rate and commit only derived numbers, never page contents.
 
 | File | Contents | Status |
 |---|---|---|
-| `data/reference/countries.csv` | ISO-2, ISO-3, ISO numeric (to join world-atlas), English name, the name variants used by Netflix / BOM / LUMIERE, UN M49 region and subregion | ⏳ |
-| `data/reference/genre_families.csv` | each of TMDB's 19 genres → one of ~8 colour families (decided in the design sheets) | ⏳ |
+| `data/reference/countries.csv` | ISO-2, ISO-3, ISO numeric (to join world-atlas), English name, UN M49 region and subregion, and the other names sources use (`country_aliases.csv`; historical states map to their main successor, D13). Built by `movies reference`. Every Netflix code and every TMDB production country resolves. | ✅ 250 rows |
+| `data/reference/genre_families.csv` | each of TMDB's 18 film genres → one of 8 colour families with an Okabe–Ito colour (D11) | ✅ proposal, the team may regroup |
 | `data/overrides/*.csv` | hand fixes for title matches, one file per source | ⏳ |
 
 ## 5. How the sources join
@@ -99,3 +100,17 @@ rate and commit only derived numbers, never page contents.
   Tomatoes, Metacritic, Letterboxd, Box Office Mojo, The Numbers, LUMIERE
   (European Audiovisual Observatory): named as sources in the app's "About
   the data" panel.
+
+## Clean stage
+
+`movies clean` writes one typed Parquet per source to `data/interim/`
+(gitignored). Counts from the run on 2026-10-11:
+
+| File | Rows | What cleaning changed |
+|---|---|---|
+| `tmdb.parquet` | 1,252,005 (689,411 with an IMDb id) | 0 budget, revenue and runtime → null; 28,539 budgets under $1,000 → null and flagged in `budget_under_1000`; future dates → null; 2 duplicate IMDb ids dropped; production countries as ISO-2 |
+| `rt_clapper.parquet` | 142,052 | 1,206 duplicate RT ids dropped (the fullest row kept); box office strings like `$31.4M` → USD |
+| `numbers_budgets.parquet`, `numbers_metrics.parquet` | 6,518 and 6,569 | `$0` gross → null; dates parsed |
+| `netflix.parquet` | 255,170 | films only, weeks up to 2026-09-27, `score = 11 − rank` |
+| `cpi.parquet` | 80 years | yearly mean of the monthly index, `months` shows a partial year |
+| `fx.parquet` | 12,537 (213 countries) | World Bank aggregates and empty values dropped, ISO-3 → ISO-2 |

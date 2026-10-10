@@ -140,6 +140,10 @@ The money query also returns the statement rank (`preferred` / `normal`) and
 the precision of the point-in-time qualifier. A film with several budgets
 uses the preferred one. The cache file name now includes a hash of the query,
 so a changed query can never reuse old replies.
+- **Watch**: the rank rarely decides. Of the 1,431 film-and-property pairs
+  with several amounts, only 33 mark one as preferred. The others differ by
+  place (worldwide or one country) or currency, so the money step picks by
+  place and currency first and uses the rank as a tie-break.
 
 ### D13. Historical countries map to their main successor (2026-10-11)
 
