@@ -16,13 +16,12 @@ import httpx
 import polars as pl
 
 from movies import paths
-from movies.acquire.download import make_client, request
+from movies.acquire.download import get_following, make_client
 
 URL = "https://letterboxd.com/imdb/{}/"
 OUT = "letterboxd.parquet"
 CACHE_DIR = paths.CACHE / "letterboxd"
 PROGRESS_EVERY = 500
-REDIRECTS = {301, 302, 303, 307, 308}
 
 SCHEMA = {
     "imdb_id": pl.String,
@@ -37,18 +36,6 @@ CDATA = re.compile(r"/\*\s*<!\[CDATA\[\s*\*/|/\*\s*\]\]>\s*\*/")
 SLUG = re.compile(r"/film/([^/]+)/")
 
 
-def get_film(client: httpx.Client, imdb_id: str) -> str:
-    """The film page's html; the redirect is followed by hand so each hop is rate limited."""
-    url = URL.format(imdb_id)
-    try:
-        return request(client, "GET", url, follow_redirects=False).text
-    except httpx.HTTPStatusError as err:
-        if err.response.status_code not in REDIRECTS:
-            raise
-        location = err.response.headers["Location"]
-    return request(client, "GET", str(httpx.URL(url).join(location))).text
-
-
 def fetch(ids: list[str], cache_dir: Path, client: httpx.Client) -> None:
     """GET every id that is not cached yet; a 404 on either hop is cached as `.missing`."""
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +44,7 @@ def fetch(ids: list[str], cache_dir: Path, client: httpx.Client) -> None:
         missing = cache_dir / f"{imdb_id}.missing"
         if not target.exists() and not missing.exists():
             try:
-                html = get_film(client, imdb_id)
+                html = get_following(client, URL.format(imdb_id)).text
             except httpx.HTTPStatusError as err:
                 if err.response.status_code != 404:
                     raise
@@ -78,6 +65,8 @@ def parse(html: str) -> dict:
     try:
         data = json.loads(CDATA.sub("", match.group(1)))
     except json.JSONDecodeError:
+        return out
+    if not isinstance(data, dict):
         return out
     slug = SLUG.search(str(data.get("url", "")))
     out["lb_slug"] = slug.group(1) if slug else None

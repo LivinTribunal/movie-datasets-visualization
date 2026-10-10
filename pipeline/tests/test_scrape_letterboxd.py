@@ -32,6 +32,11 @@ def test_parse_without_aggregate_rating():
     assert lb.parse(html) == {"lb_slug": "x", "letterboxd_avg": None, "letterboxd_ratings": None}
 
 
+def test_parse_json_ld_list_is_all_null():
+    html = '<script type="application/ld+json">[{"url": "x"}]</script>'
+    assert set(lb.parse(html).values()) == {None}
+
+
 def test_parse_no_json_ld():
     assert set(lb.parse("<html></html>").values()) == {None}
 

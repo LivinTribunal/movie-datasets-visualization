@@ -135,3 +135,32 @@ def test_request_throttles_per_host(monkeypatch: pytest.MonkeyPatch):
     assert sleeps == []
     download.request(client, "GET", "https://a.example/2")
     assert sleeps == [pytest.approx(1.0)]
+
+
+def test_get_following_spaces_each_redirect_hop(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(download, "MIN_INTERVAL", 0)
+    calls = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        calls.append(req.url.path)
+        if req.url.path == "/a":
+            return httpx.Response(301, headers={"Location": "/b"})
+        if req.url.path == "/b":
+            return httpx.Response(302, headers={"Location": "https://example.com/c"})
+        return httpx.Response(200, text="final")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        resp = download.get_following(client, "https://example.com/a")
+    assert calls == ["/a", "/b", "/c"]
+    assert resp.text == "final"
+
+
+def test_get_following_gives_up_after_max_hops(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(download, "MIN_INTERVAL", 0)
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"Location": "/loop"})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(RuntimeError, match="redirect"):
+            download.get_following(client, "https://example.com/loop", max_hops=3)

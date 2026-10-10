@@ -39,6 +39,18 @@ def test_parse_card_without_rating_count_is_ignored():
     assert got["mc_user_score"] is None and got["mc_user_ratings"] is None
 
 
+def test_parse_string_and_non_numeric_metascore():
+    def ld(value: str) -> str:
+        return (
+            '<script type="application/ld+json">{"aggregateRating": '
+            f'{{"ratingValue": {value}, "reviewCount": "22"}}}}</script>'
+        )
+
+    got = mc.parse(ld('"83.0"'))
+    assert got["metascore"] == 83 and got["mc_critic_reviews"] == 22
+    assert mc.parse(ld('"tbd"'))["metascore"] is None
+
+
 def test_parse_tbd_and_singular():
     got = mc.parse('<a title="User score tbd out of 10"></a> Based on 1 User Rating')
     assert got["mc_user_score"] is None

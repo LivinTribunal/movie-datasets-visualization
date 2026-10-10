@@ -79,6 +79,18 @@ def request(
     raise RuntimeError("unreachable")
 
 
+def get_following(client: httpx.Client, url: str, max_hops: int = 5) -> httpx.Response:
+    """GET `url`, following redirects by hand so every hop goes through `request()`'s spacing."""
+    for _ in range(max_hops + 1):
+        try:
+            return request(client, "GET", url, follow_redirects=False)
+        except httpx.HTTPStatusError as err:
+            if not err.response.is_redirect:
+                raise
+            url = str(httpx.URL(url).join(err.response.headers["Location"]))
+    raise RuntimeError(f"more than {max_hops} redirects from {url}")
+
+
 def sha256_of(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as fh:

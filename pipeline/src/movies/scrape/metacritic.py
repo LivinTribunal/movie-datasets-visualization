@@ -15,7 +15,7 @@ import httpx
 import polars as pl
 
 from movies import paths
-from movies.acquire.download import make_client, request
+from movies.acquire.download import get_following, make_client
 
 URL = "https://www.metacritic.com/{}/"
 OUT = "metacritic.parquet"
@@ -45,7 +45,7 @@ def fetch(items: list[tuple[str, str]], cache_dir: Path, client: httpx.Client) -
         missing = cache_dir / f"{imdb_id}.missing"
         if not target.exists() and not missing.exists():
             try:
-                html = request(client, "GET", URL.format(mc_id)).text
+                html = get_following(client, URL.format(mc_id)).text
             except httpx.HTTPStatusError as err:
                 if err.response.status_code != 404:
                     raise
@@ -58,6 +58,16 @@ def fetch(items: list[tuple[str, str]], cache_dir: Path, client: httpx.Client) -
             print(f"  {n}/{len(items)}", flush=True)
 
 
+def to_int(value: str | float | None) -> int | None:
+    """83, "83" and "83.0" give 83; None and anything non-numeric ("tbd") give None."""
+    if value is None:
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def parse(html: str) -> dict:
     out: dict = dict.fromkeys(FIELDS)
     for block in LD_JSON.findall(html):
@@ -66,9 +76,8 @@ def parse(html: str) -> dict:
         except (json.JSONDecodeError, AttributeError):
             continue
         if isinstance(rating, dict) and rating.get("ratingValue") is not None:
-            out["metascore"] = int(rating["ratingValue"])
-            count = rating.get("reviewCount")
-            out["mc_critic_reviews"] = int(count) if count is not None else None
+            out["metascore"] = to_int(rating["ratingValue"])
+            out["mc_critic_reviews"] = to_int(rating.get("reviewCount"))
             break
     # recommendation cards carry "User score" titles too: trust it only beside the rating count
     ratings = USER_RATINGS.search(html)
