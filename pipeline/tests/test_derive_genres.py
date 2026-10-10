@@ -73,3 +73,19 @@ def test_netflix_country_genre_shares_coverage_and_fuzzy():
     assert sk["share"].to_list() == [0.5, 0.5]
     assert sk["coverage"].to_list() == [1.0, 1.0]
     assert sk["fuzzy_share"].to_list() == [0.0, 0.0]
+
+
+def test_fuzzy_share_counts_only_matched_rows():
+    netflix = _chart(
+        [
+            ("CZ", date(2025, 3, 2), "Exact", 5),
+            ("CZ", date(2025, 3, 2), "Fuzzy", 5),
+        ]
+    )
+    titles = pl.DataFrame(
+        {"title": ["Exact", "Fuzzy"], "imdb_id": ["tt1", "tt2"], "method": ["exact", "fuzzy"]}
+    )
+    genres = film_genres(_films([("tt1", ["Drama"]), ("tt2", ["TV Movie"])]), FAMILIES)
+    out = netflix_country_genre(netflix, titles, genres)
+    assert out["coverage"].to_list() == [0.5]
+    assert out["fuzzy_share"].to_list() == [0.0]

@@ -92,41 +92,41 @@ def test_all_null_gives_null_value_currency_and_src() -> None:
 def test_wikidata_pick_usd_beats_eur_and_preferred_beats_normal() -> None:
     wiki = _wiki(
         [
-            ("tt1", "budget", 1.0, "Q4916", None, None, "preferred"),
-            ("tt1", "budget", 2.0, "Q4917", None, None, "normal"),
-            ("tt2", "budget", 3.0, "Q4917", None, None, "normal"),
-            ("tt2", "budget", 4.0, "Q4917", None, None, "preferred"),
+            ("tt1", "budget", 1e6, "Q4916", None, None, "preferred"),
+            ("tt1", "budget", 2e6, "Q4917", None, None, "normal"),
+            ("tt2", "budget", 3e6, "Q4917", None, None, "normal"),
+            ("tt2", "budget", 4e6, "Q4917", None, None, "preferred"),
         ]
     )
     got = {
         r["imdb_id"]: (r["amount"], r["currency"])
         for r in wikidata_pick(wiki, CURRENCIES).to_dicts()
     }
-    assert got == {"tt1": (2.0, "USD"), "tt2": (4.0, "USD")}
+    assert got == {"tt1": (2e6, "USD"), "tt2": (4e6, "USD")}
 
 
 def test_wikidata_pick_latest_then_largest_and_null_dates_last() -> None:
     wiki = _wiki(
         [
-            ("tt1", "budget", 9.0, "Q4917", None, None, "normal"),
-            ("tt1", "budget", 1.0, "Q4917", date(2001, 1, 1), None, "normal"),
-            ("tt1", "budget", 2.0, "Q4917", date(2005, 1, 1), None, "normal"),
+            ("tt1", "budget", 9e6, "Q4917", None, None, "normal"),
+            ("tt1", "budget", 1e6, "Q4917", date(2001, 1, 1), None, "normal"),
+            ("tt1", "budget", 2e6, "Q4917", date(2005, 1, 1), None, "normal"),
         ]
     )
-    assert wikidata_pick(wiki, CURRENCIES)["amount"].to_list() == [2.0]
+    assert wikidata_pick(wiki, CURRENCIES)["amount"].to_list() == [2e6]
 
 
 def test_wikidata_pick_ignores_domestic_box_office_and_non_money_units() -> None:
     wiki = _wiki(
         [
-            ("tt1", "box_office", 5.0, "Q4917", None, "Q30", "normal"),
-            ("tt1", "box_office", 7.0, "Q4917", None, "Q13780930", "normal"),
-            ("tt2", "box_office", 5.0, "Q4917", None, "Q30", "normal"),
-            ("tt3", "budget", 5.0, "Q11190", None, None, "normal"),
+            ("tt1", "box_office", 5e6, "Q4917", None, "Q30", "normal"),
+            ("tt1", "box_office", 7e6, "Q4917", None, "Q13780930", "normal"),
+            ("tt2", "box_office", 5e6, "Q4917", None, "Q30", "normal"),
+            ("tt3", "budget", 5e6, "Q11190", None, None, "normal"),
         ]
     )
     got = wikidata_pick(wiki, CURRENCIES)
-    assert got.rows() == [("tt1", "box_office", 7.0, "USD")]
+    assert got.rows() == [("tt1", "box_office", 7e6, "USD")]
 
 
 def test_eur_converts_with_germany_rate() -> None:
@@ -209,6 +209,21 @@ def test_tiny_converted_wikidata_budget_is_dropped() -> None:
     wiki = [("tt1", "budget", 500.0, "Q4916", None, None, "normal")]
     row = _run([("tt1", 2010, None, None, None, None)], wiki)
     assert row["budget"] is None and row["budget_src"] is None and row["budget_currency"] is None
+
+
+def test_tiny_usd_wikidata_budget_does_not_shadow_a_valid_eur_one() -> None:
+    wiki = [
+        ("tt1", "budget", 500.0, "Q4917", None, None, "normal"),
+        ("tt1", "budget", 8e6, "Q4916", None, None, "normal"),
+    ]
+    row = _run([("tt1", 2010, None, None, None, None)], wiki)
+    assert (row["budget"], row["budget_currency"], row["budget_src"]) == (8e6, "EUR", "wikidata")
+
+
+def test_unconvertible_tiny_wikidata_budget_is_dropped() -> None:
+    wiki = [("tt1", "budget", 500.0, "Q4916", None, None, "normal")]
+    row = _run([("tt1", 1990, None, None, None, None)], wiki)
+    assert row["budget"] is None and row["budget_currency"] is None and row["budget_src"] is None
 
 
 def test_one_row_per_film() -> None:
