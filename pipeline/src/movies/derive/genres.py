@@ -50,7 +50,7 @@ def netflix_country_genre(
     totals = chart.group_by(keys).agg(
         total=pl.col("score").sum(),
         matched=pl.col("score").filter(pl.col("matched")).sum(),
-        fuzzy=pl.col("score").filter(pl.col("method") == "fuzzy").sum(),
+        fuzzy=pl.col("score").filter(pl.col("matched") & (pl.col("method") == "fuzzy")).sum(),
     )
     shares = (
         chart.filter("matched")
