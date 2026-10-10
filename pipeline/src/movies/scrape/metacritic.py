@@ -38,7 +38,7 @@ USER_RATINGS = re.compile(r"Based on ([\d,]+) User Ratings?")
 
 
 def fetch(items: list[tuple[str, str]], cache_dir: Path, client: httpx.Client) -> None:
-    """GET every (imdb_id, mc_id) that is not cached yet; a 404 is cached as `.missing`."""
+    """GET every (imdb_id, mc_id) that is not cached yet; a 404 or bare 3xx is `.missing`."""
     cache_dir.mkdir(parents=True, exist_ok=True)
     for n, (imdb_id, mc_id) in enumerate(items, 1):
         target = cache_dir / f"{imdb_id}.html.gz"
@@ -47,7 +47,8 @@ def fetch(items: list[tuple[str, str]], cache_dir: Path, client: httpx.Client) -
             try:
                 html = get_following(client, URL.format(mc_id)).text
             except httpx.HTTPStatusError as err:
-                if err.response.status_code != 404:
+                # a 404, or a redirect with nowhere to go, is a page that is not there
+                if err.response.status_code != 404 and not err.response.is_redirect:
                     raise
                 missing.write_bytes(b"")
             else:

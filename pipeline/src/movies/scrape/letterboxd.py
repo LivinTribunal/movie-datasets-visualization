@@ -46,7 +46,8 @@ def fetch(ids: list[str], cache_dir: Path, client: httpx.Client) -> None:
             try:
                 html = get_following(client, URL.format(imdb_id)).text
             except httpx.HTTPStatusError as err:
-                if err.response.status_code != 404:
+                # a 404, or a redirect with nowhere to go, is a page that is not there
+                if err.response.status_code != 404 and not err.response.is_redirect:
                     raise
                 missing.write_bytes(b"")
             else:

@@ -77,3 +77,15 @@ def test_fetch_404_cached_as_missing_and_cached_skipped(tmp_path):
     assert requested == ["/movie/gone/", "/movie/b/"]
     assert (tmp_path / "tt2.missing").exists()
     assert gzip.decompress((tmp_path / "tt3.html.gz").read_bytes()) == b"<html>ok</html>"
+
+
+def test_fetch_redirect_without_location_cached_as_missing(tmp_path, monkeypatch):
+    # Metacritic answers some moved pages with a bare 301 and a "Server Error" body
+    monkeypatch.setattr(download, "MIN_INTERVAL", 0)
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(301, json={"error": True, "message": "Server Error"})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        mc.fetch([("tt1", "movie/the-wizard-of-oz-1939")], tmp_path, client)
+    assert (tmp_path / "tt1.missing").exists()
