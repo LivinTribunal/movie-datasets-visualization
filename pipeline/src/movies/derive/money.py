@@ -14,6 +14,10 @@ WORLDWIDE_QID = "Q13780930"
 DISAGREE_RATIO = 1.25
 MIN_ROI_BUDGET = 100_000
 BASE_YEAR = 2025
+# below these a value is a unit error or a re-release gross, not the film's money
+MIN_BUDGET = 1_000
+MIN_REVENUE = 10_000
+_FLOOR = {"budget": MIN_BUDGET, "revenue": MIN_REVENUE}
 # (field, The Numbers column, TMDB column, Wikidata property)
 _FIELDS = (
     ("budget", "numbers_budget", "budget", "budget"),
@@ -69,6 +73,47 @@ def to_usd(df: pl.DataFrame, col: str, currencies: pl.DataFrame, fx: pl.DataFram
     )
 
 
+def source_values(
+    films: pl.DataFrame, wiki: pl.DataFrame, currencies: pl.DataFrame, fx: pl.DataFrame
+) -> pl.DataFrame:
+    """Per film, each source's budget and revenue; values under the floor become null.
+
+    `drop_<source column>` flags the values the floor removed. A Wikidata value that cannot be
+    converted to USD is kept (nominal only).
+    """
+    picked = wikidata_pick(wiki, currencies)
+    df = films.select(
+        "imdb_id",
+        "year",
+        *[pl.col(num) for _, num, _, _ in _FIELDS],
+        *[pl.col(tmdb).alias(f"tmdb_{field}") for field, _, tmdb, _ in _FIELDS],
+    )
+    for field, num, _, prop in _FIELDS:
+        one = picked.filter(pl.col("property") == prop).select(
+            "imdb_id",
+            pl.col("amount").alias(f"wiki_{field}"),
+            pl.col("currency").alias(f"wiki_{field}_currency"),
+        )
+        df = df.join(one, on="imdb_id", how="left")
+        wiki_col, floor = f"wiki_{field}", _FLOOR[field]
+        df = to_usd(df, wiki_col, currencies, fx)
+        small = {
+            num: pl.col(num) < floor,
+            f"tmdb_{field}": pl.col(f"tmdb_{field}") < floor,
+            wiki_col: pl.col(f"{wiki_col}_usd") < floor,
+        }
+        df = df.with_columns(
+            *[expr.fill_null(False).alias(f"drop_{c}") for c, expr in small.items()]
+        ).with_columns(
+            *[pl.when(pl.col(f"drop_{c}")).then(None).otherwise(pl.col(c)).alias(c) for c in small],
+            *[
+                pl.when(pl.col(f"drop_{wiki_col}")).then(None).otherwise(pl.col(c)).alias(c)
+                for c in (f"{wiki_col}_currency", f"{wiki_col}_usd")
+            ],
+        )
+    return df
+
+
 def money(
     films: pl.DataFrame,
     wiki: pl.DataFrame,
@@ -77,21 +122,7 @@ def money(
     cpi: pl.DataFrame,
 ) -> pl.DataFrame:
     """One row per films row: value, currency, src, usd, usd2025 and a disagreement flag."""
-    picked = wikidata_pick(wiki, currencies)
-    df = films.select(
-        "imdb_id",
-        "year",
-        *[pl.col(num) for _, num, _, _ in _FIELDS],
-        *[pl.col(tmdb).alias(f"tmdb_{field}") for field, _, tmdb, _ in _FIELDS],
-    )
-    for field, _, _, prop in _FIELDS:
-        one = picked.filter(pl.col("property") == prop).select(
-            "imdb_id",
-            pl.col("amount").alias(f"wiki_{field}"),
-            pl.col("currency").alias(f"wiki_{field}_currency"),
-        )
-        df = df.join(one, on="imdb_id", how="left")
-
+    df = source_values(films, wiki, currencies, fx)
     cpi_base = cpi.filter(pl.col("year") == BASE_YEAR)["cpi"].item()
     cpi_tbl = cpi.select("year", pl.col("cpi").alias("cpi_year"))
     for field, num, _, _ in _FIELDS:
@@ -111,7 +142,6 @@ def money(
             .alias(f"{field}_src"),
         )
         df = to_usd(df, field, currencies, fx)
-        df = to_usd(df, wiki_col, currencies, fx)
         usd = [pl.col(num), pl.col(tmdb), pl.col(f"{wiki_col}_usd")]
         df = (
             df.join(cpi_tbl, on="year", how="left")
@@ -151,11 +181,13 @@ def run() -> None:
     fx = pl.read_parquet(paths.INTERIM / "fx.parquet")
     cpi = pl.read_parquet(paths.INTERIM / "cpi.parquet")
     out = money(films, wiki, currencies, fx, cpi)
+    src = source_values(films, wiki, currencies, fx)
     out.write_parquet(paths.INTERIM / "money.parquet")
 
     joined = out.join(films.select("imdb_id", "notable"), on="imdb_id")
     print(f"films: {out.height} ({joined['notable'].sum()} notable)")
-    for field in ("budget", "revenue"):
+    for field, num, _, _ in _FIELDS:
+        wiki = f"wiki_{field}"
         for label, sub in (("all", joined), ("notable", joined.filter(pl.col("notable")))):
             counts = sub[f"{field}_src"].value_counts().sort(f"{field}_src")
             print(f"{field} src ({label}): {dict(counts.iter_rows())}")
@@ -164,5 +196,10 @@ def run() -> None:
             f"{field} non-USD: {converted.height}, converted to USD: "
             f"{converted[f'{field}_usd'].is_not_null().sum()}"
         )
+        dropped = {
+            name: int(src[f"drop_{col}"].sum())
+            for name, col in (("numbers", num), ("tmdb", f"tmdb_{field}"), ("wikidata", wiki))
+        }
+        print(f"{field} values dropped by the floor: {dropped}")
         print(f"{field} sources disagree: {out[f'{field}_disagree'].sum()}")
     print(f"films with ROI: {out['roi'].is_not_null().sum()}")

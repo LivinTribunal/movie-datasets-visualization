@@ -166,20 +166,20 @@ def test_year_before_cpi_has_usd_but_no_usd2025() -> None:
 
 
 def test_disagreement_threshold() -> None:
-    assert _run([("tt1", 2010, 100.0, 130.0, None, None)])["budget_disagree"] is True
-    assert _run([("tt1", 2010, 100.0, 120.0, None, None)])["budget_disagree"] is False
-    assert _run([("tt1", 2010, 100.0, None, None, None)])["budget_disagree"] is False
+    assert _run([("tt1", 2010, 100_000.0, 130_000.0, None, None)])["budget_disagree"] is True
+    assert _run([("tt1", 2010, 100_000.0, 120_000.0, None, None)])["budget_disagree"] is False
+    assert _run([("tt1", 2010, 100_000.0, None, None, None)])["budget_disagree"] is False
 
 
 def test_disagreement_compares_converted_wikidata() -> None:
     row = _run(
-        [("tt1", 2010, 100.0, None, None, None)],
-        [("tt1", "budget", 80.0, "Q4916", None, None, "normal")],
+        [("tt1", 2010, 100_000.0, None, None, None)],
+        [("tt1", "budget", 80_000.0, "Q4916", None, None, "normal")],
     )
     assert row["budget_disagree"] is False  # 80 EUR / 0.8 = 100 USD
     row = _run(
-        [("tt1", 2010, 100.0, None, None, None)],
-        [("tt1", "budget", 160.0, "Q4916", None, None, "normal")],
+        [("tt1", 2010, 100_000.0, None, None, None)],
+        [("tt1", "budget", 160_000.0, "Q4916", None, None, "normal")],
     )
     assert row["budget_disagree"] is True  # 200 USD
 
@@ -193,6 +193,22 @@ def test_profit_is_null_when_a_side_is_missing() -> None:
     assert _run([("tt1", 2010, 1e6, None, None, None)])["profit_usd2025"] is None
     row = _run([("tt1", 2010, 1e6, None, 3e6, None)])
     assert row["profit_usd2025"] == 2e6 * 300.0 / 200.0
+
+
+def test_tiny_numbers_value_is_dropped_before_the_pick() -> None:
+    row = _run([("tt1", 2010, None, None, 401.0, 2e6)])
+    assert (row["revenue"], row["revenue_src"]) == (2e6, "tmdb")
+
+
+def test_only_a_tiny_value_gives_null_revenue_and_src() -> None:
+    row = _run([("tt1", 2010, None, None, 401.0, None)])
+    assert row["revenue"] is None and row["revenue_src"] is None
+
+
+def test_tiny_converted_wikidata_budget_is_dropped() -> None:
+    wiki = [("tt1", "budget", 500.0, "Q4916", None, None, "normal")]
+    row = _run([("tt1", 2010, None, None, None, None)], wiki)
+    assert row["budget"] is None and row["budget_src"] is None and row["budget_currency"] is None
 
 
 def test_one_row_per_film() -> None:
