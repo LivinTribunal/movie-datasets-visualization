@@ -60,13 +60,13 @@ rate and commit only derived numbers, never page contents.
 | ID | Source | Key | Scope | Gives | Used for | Needs | Status |
 |---|---|---|---|---|---|---|---|
 | `rt_recent` | Rotten Tomatoes film pages (embedded JSON) | Wikidata P1258 | films from 2023 on in the working subset with an RT id (~2.8k) | critics score, audience score (Popcornmeter), review counts | T3 for recent films | crosswalk | ⏳ |
-| `metacritic` | Metacritic film pages | Wikidata P1712 | notable subset with an id (~10k) | Metascore, user score, review counts | T2, T3 (second critic/audience pair) | crosswalk | ⏳ |
-| `letterboxd` | `letterboxd.com/tmdb/{tmdb_id}` | TMDB id | notable subset (~13k) | average rating, number of ratings | T3 (cinephile audience) | – | ⏳ |
+| `metacritic` | `metacritic.com/{mc_id}/` (JSON-LD metascore, user score text) | Wikidata P1712 | notable subset with an id (9,451) | Metascore, critic review count, user score (0–10), user rating count | T2, T3 (second critic/audience pair) | crosswalk | 🔄 scraper written (D16), run pending |
+| `letterboxd` | `letterboxd.com/imdb/{imdb_id}/` → film page (JSON-LD) | IMDb id | notable subset (13,080) | average rating (0.5–5), number of ratings | T3 (cinephile audience) | – | 🔄 scraper written (D16), run pending |
 | `wikipedia` | English Wikipedia infobox (raw wikitext through the MediaWiki API) | enwiki title from the crosswalk | notable films missing budget or gross (~4k) | `budget`, `gross` text, parsed | money coverage | crosswalk | ⏳ |
-| `bom_title` | `boxofficemojo.com/title/{imdb_id}` | IMDb id | notable films missing revenue (~4k) | domestic, international, worldwide gross | money coverage | – | ⏳ |
-| `bom_country` | `boxofficemojo.com/year/{year}/?area={ISO2}` | title + year (fuzzy) | ~97 markets × years | yearly gross per film per market, theatres, distributor | T1, T4, X2 | – | ⏳ |
+| `bom_title` | `boxofficemojo.com/title/{imdb_id}` | IMDb id | notable films missing revenue (~4k) | domestic, international, worldwide gross | money coverage | – | ❌ robots.txt disallows all crawlers (D16) |
+| `bom_country` | `boxofficemojo.com/year/{year}/?area={ISO2}` | title + year (fuzzy) | ~97 markets × years | yearly gross per film per market, theatres, distributor | T1, T4, X2 | – | ❌ robots.txt disallows all crawlers (D16) |
 | `lumiere` | [LUMIERE](https://lumiere.obs.coe.int) film pages | Wikidata P4282 | notable films released after 1996 (~89 % have an id) | admissions per European market per year | T1, T4, X2 | crosswalk | ⏳ |
-| `tmdb_collections` | TMDB API `/movie/{id}` | TMDB id | notable subset (~13k calls) | `belongs_to_collection` (franchises) | T6 | `TMDB_API_KEY` in `.env` | ⏳ |
+| `tmdb_collections` | TMDB API `/movie/{id}` | TMDB id | notable subset (13,080 calls) | `belongs_to_collection` (franchises) | T6 | `TMDB_API_KEY` in `.env` | 🔄 running since 2026-10-11 |
 | `pageviews` | Wikimedia Pageviews API | Wikipedia titles per language | – | monthly views per language edition | – | – | ➖ |
 
 ## 4. Reference tables (hand-made, committed)

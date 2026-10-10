@@ -241,3 +241,22 @@ Choices the PLAN left open:
 - **Watch**: a few TMDB pairs give implausible ROI (Fist of Fury, $100k
   budget and $100M revenue, ROI 1,000). The floors do not catch them, and
   the app should show the source of every money point.
+
+### D16. Which sites we scrape (2026-10-11)
+
+robots.txt checked on 2026-10-11 with our User-Agent:
+
+- **Box Office Mojo** answers `User-agent: * / Disallow: /`, so `bom_title`
+  and `bom_country` are dropped. Cinema grosses per country now come only
+  from LUMIERE (European admissions, `/movie` allowed), and revenue gaps stay
+  gaps. T1's cinema side is therefore Europe only.
+- **Metacritic** allows `/movie/`. The page has the Metascore and its critic
+  review count in JSON-LD. The user score is read from the "User score X out
+  of 10" text, and only when the page also says "Based on N User Ratings",
+  because recommendation cards further down carry the same text.
+- **Letterboxd** allows `/imdb/` and `/film/`. `/imdb/{imdb_id}/` redirects
+  to the film page; the redirect is followed by hand so both hops keep to one
+  request per second. The rating is Letterboxd's weighted average (0.5–5).
+- Pages are cached gzipped (about 120 KB for Metacritic and 40 KB for
+  Letterboxd), and a 404 leaves an empty `.missing` marker so a re-run skips
+  it. Only the parsed numbers go to `data/scraped/`.
