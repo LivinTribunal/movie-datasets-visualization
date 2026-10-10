@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>T4 genre popularity over time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#005a8c}a:hover{color:#003d5f}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 48px 56px; background: #f4f5f7; color: #1a1d21; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <header style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 16px; align-items: baseline; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #5b6470"><span style="font-size: 18px; font-weight: 600; color: #1a1d21">T4</span><span>Action: discover / compare</span><span>Target: trend</span></div>
+    <h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700">How has the popularity of genres changed over time?</h1>
+    <p style="margin: 0; font-size: 16px; color: #3d444d">Data: year × genre family × (releases, IMDb votes, real box office, Netflix chart weight). data-to-viz path: <a href="https://www.data-to-viz.com/story/TwoNumOrdered.html">time series, several groups</a></p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex: 1">
+    <article style="background: #fff; border: 1px dashed #1a1d21; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">A</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px dashed #1a1d21">FALLBACK FOR B</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Streamgraph</h2>
+      <a href="https://www.data-to-viz.com/graph/streamgraph.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/streamgraph</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <g stroke="#fff" style="stroke-width: 0.8">
+          <polygon points="20,65 100,60 180,54 260,46 340,45 340,67 260,72 180,84 100,84 20,85" fill="#0072B2"></polygon>
+          <polygon points="20,85 100,84 180,84 260,72 340,67 340,107 260,102 180,102 100,104 20,101" fill="#E69F00"></polygon>
+          <polygon points="20,101 100,104 180,102 260,102 340,107 340,127 260,130 180,126 100,118 20,111" fill="#009E73"></polygon>
+          <polygon points="20,111 100,118 180,126 260,130 340,127 340,145 260,144 180,136 100,130 20,125" fill="#CC79A7"></polygon>
+        </g>
+        <line x1="20" y1="166" x2="340" y2="166" stroke="#9aa1ab"></line>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="20" y="180">1980</text><text x="180" y="180">2000</text><text x="340" y="180">2025</text></g>
+        <g style="font-size: 9px; font-family: IBM Plex Sans, sans-serif" fill="#fff"><text x="200" y="74">Action</text><text x="200" y="96">Drama</text><text x="200" y="118">Animation</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · x = year, stream thickness = the genre's value, colour = genre family.</div>
+        <div><b style="color: #00603f">Good at</b> · engaging and memorable; big shifts (the superhero / sci-fi boom) show at a glance.</div>
+        <div><b style="color: #a33f00">Weak at</b> · exact values and non-adjacent streams are hard to compare; the wiggle baseline distorts.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 2px solid #0072B2; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">B</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: #fff; background: #0072B2">MAIN VIEW · TIME BRUSH</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Stacked area (100 %)</h2>
+      <a href="https://www.data-to-viz.com/graph/stackedarea.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/stackedarea</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <g stroke="#fff" style="stroke-width: 0.8">
+          <polygon points="40,20 115,20 190,20 265,20 340,20 340,50.8 265,55 190,59.2 115,64.8 40,69" fill="#0072B2"></polygon>
+          <polygon points="40,69 115,64.8 190,59.2 265,55 340,50.8 340,99.8 265,97 190,94.2 115,104 40,104" fill="#E69F00"></polygon>
+          <polygon points="40,104 115,104 190,94.2 265,97 340,99.8 340,134.8 265,136.2 190,129.2 115,129.2 40,125" fill="#009E73"></polygon>
+          <polygon points="40,125 115,129.2 190,129.2 265,136.2 340,134.8 340,160 265,160 190,160 115,160 40,160" fill="#CC79A7"></polygon>
+        </g>
+        <rect x="190" y="16" width="75" height="148" fill="#1a1d21" stroke="#1a1d21" style="fill-opacity: 0.12; stroke-width: 1.5"></rect>
+        <text x="227" y="12" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle">brush</text>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="34" y="24" style="text-anchor: end">100%</text><text x="34" y="163" style="text-anchor: end">0%</text></g>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="40" y="180">1980</text><text x="190" y="180">2000</text><text x="340" y="180">2025</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · x = year, y = share of the total, layers = genre families.</div>
+        <div><b style="color: #00603f">Good at</b> · shows share (composition) honestly; a brush on x gives the global year filter.</div>
+        <div><b style="color: #a33f00">Weak at</b> · only the bottom layer has a common baseline, so the upper layers are hard to read.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px solid #1a1d21; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">C</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px solid #1a1d21">ADVANCED VIEW</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Line chart, small multiples</h2>
+      <a href="https://www.data-to-viz.com/graph/line.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/line</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <g fill="none" stroke="#c9ced6" style="stroke-width: 1.2">
+          <polyline points="20,24 57,31 95,38 132,41.5 170,45"></polyline><polyline points="20,73 57,69.5 95,59 132,52 170,41.5"></polyline><polyline points="20,59 57,55.5 95,59 132,48.5 170,52"></polyline>
+          <polyline points="190,59 227,52 265,45 302,31 340,24"></polyline><polyline points="190,73 227,69.5 265,59 302,52 340,41.5"></polyline><polyline points="190,59 227,55.5 265,59 302,48.5 340,52"></polyline>
+          <polyline points="20,149 57,142 95,135 132,121 170,114"></polyline><polyline points="20,114 57,121 95,128 132,131.5 170,135"></polyline><polyline points="20,149 57,145.5 95,149 132,138.5 170,142"></polyline>
+          <polyline points="190,149 227,142 265,135 302,121 340,114"></polyline><polyline points="190,114 227,121 265,128 302,131.5 340,135"></polyline><polyline points="190,163 227,159.5 265,149 302,142 340,131.5"></polyline>
+        </g>
+        <g fill="none" style="stroke-width: 2.5">
+          <polyline points="20,59 57,52 95,45 132,31 170,24" stroke="#0072B2"></polyline>
+          <polyline points="190,24 227,31 265,38 302,41.5 340,45" stroke="#E69F00"></polyline>
+          <polyline points="20,163 57,159.5 95,149 132,142 170,131.5" stroke="#009E73"></polyline>
+          <polyline points="190,149 227,145.5 265,149 302,138.5 340,142" stroke="#CC79A7"></polyline>
+        </g>
+        <g style="font-size: 10px; font-weight: 600; font-family: IBM Plex Sans, sans-serif" fill="#1a1d21"><text x="20" y="14">Action</text><text x="190" y="14">Drama</text><text x="20" y="104">Animation</text><text x="190" y="104">Horror</text></g>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="20" y="184">1980</text><text x="170" y="184" style="text-anchor: end">2025</text><text x="190" y="184">1980</text><text x="340" y="184" style="text-anchor: end">2025</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · one small panel per genre family, same x and y; the other genres in grey behind.</div>
+        <div><b style="color: #00603f">Good at</b> · the most precise way to compare trends; avoids the <a href="https://www.data-to-viz.com/caveat/spaghetti.html">spaghetti</a> problem (<a href="https://www.data-to-viz.com/caveat/small_multiple.html">caveat: small multiples</a>).</div>
+        <div><b style="color: #a33f00">Weak at</b> · takes more space; less of an immediate overview.</div>
+      </div>
+    </article>
+  </div>
+
+  <footer style="background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 14px 20px; font-size: 15px; line-height: 1.45"><b>Team decision (10.10.2026):</b> B is the main view and holds the time brush. C is the advanced view. A stays as a fallback: if the 100 % shares confuse users about how big each genre really is, B is swapped for A.</footer>
+</div>
+</body>
+</html>

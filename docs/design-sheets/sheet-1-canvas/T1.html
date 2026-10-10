@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>T1 genre taste per country</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#005a8c}a:hover{color:#003d5f}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 48px 56px; background: #f4f5f7; color: #1a1d21; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <header style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 16px; align-items: baseline; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #5b6470"><span style="font-size: 18px; font-weight: 600; color: #1a1d21">T1</span><span>Action: compare</span><span>Target: distribution / similarity</span></div>
+    <h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700">Which genres dominate cinemas and streaming in different countries?</h1>
+    <p style="margin: 0; font-size: 16px; color: #3d444d">Data: country × genre-family share from Netflix chart weight, box office and admissions. data-to-viz paths: <a href="https://www.data-to-viz.com/story/RegionWithValue.html">map with a value per region</a> · <a href="https://www.data-to-viz.com/story/OneNumSevCatSubgroupOneObsPerGroup.html">one value per category and subgroup</a></p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex: 1">
+    <article style="background: #fff; border: 2px solid #0072B2; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">A</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: #fff; background: #0072B2">MAIN VIEW · ENTRY</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Choropleth map</h2>
+      <a href="https://www.data-to-viz.com/graph/choropleth.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/choropleth</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <defs><pattern id="t1hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fff"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#9aa1ab" style="stroke-width: 2"></line></pattern></defs>
+        <polygon points="30,40 80,30 110,34 122,58 96,86 66,98 40,80" fill="#4292c6" stroke="#fff"></polygon>
+        <polygon points="66,98 96,86 104,104 80,110" fill="#9ecae1" stroke="#fff"></polygon>
+        <polygon points="92,114 124,108 136,138 116,172 100,160" fill="#c6dbef" stroke="#fff"></polygon>
+        <polygon points="160,40 186,34 196,52 178,64 160,60" fill="#08519c" stroke="#fff"></polygon>
+        <polygon points="186,34 210,32 214,56 196,52" fill="#2171b5" stroke="#fff"></polygon>
+        <polygon points="166,78 214,76 230,108 210,160 190,160 174,114" fill="url(#t1hatch)" stroke="#c9ced6"></polygon>
+        <polygon points="214,30 290,28 300,62 258,86 226,64 214,56" fill="#6baed6" stroke="#fff"></polygon>
+        <polygon points="290,28 326,34 334,64 300,62" fill="#08306b" stroke="#fff"></polygon>
+        <polygon points="258,86 300,62 310,90 280,104" fill="#9ecae1" stroke="#fff"></polygon>
+        <polygon points="286,132 330,128 336,156 300,162" fill="#4292c6" stroke="#fff"></polygon>
+        <rect x="20" y="176" width="20" height="8" fill="#c6dbef"></rect><rect x="40" y="176" width="20" height="8" fill="#6baed6"></rect><rect x="60" y="176" width="20" height="8" fill="#2171b5"></rect><rect x="80" y="176" width="20" height="8" fill="#08306b"></rect>
+        <text x="106" y="184" fill="#5b6470" style="font-size: 10px; font-family: IBM Plex Mono, monospace">share of Animation</text>
+        <rect x="250" y="176" width="14" height="8" fill="url(#t1hatch)" stroke="#9aa1ab"></rect>
+        <text x="270" y="184" fill="#5b6470" style="font-size: 10px; font-family: IBM Plex Mono, monospace">no data</text>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · country colour = share of the selected genre (sequential), or the top genre family (categorical). Toggle: Netflix / cinema.</div>
+        <div><b style="color: #00603f">Good at</b> · the geographic overview; regional patterns (anime in East Asia) jump out; natural place to click a country.</div>
+        <div><b style="color: #a33f00">Weak at</b> · one genre at a time; big countries dominate, small ones vanish; no-data countries must be hatched.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px dashed #c9ced6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">B</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #5b6470; border: 1px solid #c9ced6">DROPPED</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Heatmap</h2>
+      <a href="https://www.data-to-viz.com/graph/heatmap.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/heatmap</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <text x="110" y="18" fill="#1a1d21" style="font-size: 11px; font-weight: 600; font-family: IBM Plex Sans, sans-serif; text-anchor: middle">Cinema</text>
+        <text x="270" y="18" fill="#1a1d21" style="font-size: 11px; font-weight: 600; font-family: IBM Plex Sans, sans-serif; text-anchor: middle">Netflix</text>
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="10" y="40">US</text><text x="10" y="64">CA</text><text x="10" y="88">DE</text><text x="10" y="112">FR</text><text x="10" y="136">JP</text><text x="10" y="160">KR</text></g>
+        <g stroke="#fff">
+          <rect x="40" y="28" width="35" height="24" fill="#08519c"></rect><rect x="75" y="28" width="35" height="24" fill="#6baed6"></rect><rect x="110" y="28" width="35" height="24" fill="#c6dbef"></rect><rect x="145" y="28" width="35" height="24" fill="#9ecae1"></rect>
+          <rect x="40" y="52" width="35" height="24" fill="#2171b5"></rect><rect x="75" y="52" width="35" height="24" fill="#6baed6"></rect><rect x="110" y="52" width="35" height="24" fill="#c6dbef"></rect><rect x="145" y="52" width="35" height="24" fill="#9ecae1"></rect>
+          <rect x="40" y="76" width="35" height="24" fill="#6baed6"></rect><rect x="75" y="76" width="35" height="24" fill="#2171b5"></rect><rect x="110" y="76" width="35" height="24" fill="#9ecae1"></rect><rect x="145" y="76" width="35" height="24" fill="#c6dbef"></rect>
+          <rect x="40" y="100" width="35" height="24" fill="#9ecae1"></rect><rect x="75" y="100" width="35" height="24" fill="#08519c"></rect><rect x="110" y="100" width="35" height="24" fill="#6baed6"></rect><rect x="145" y="100" width="35" height="24" fill="#c6dbef"></rect>
+          <rect x="40" y="124" width="35" height="24" fill="#c6dbef"></rect><rect x="75" y="124" width="35" height="24" fill="#9ecae1"></rect><rect x="110" y="124" width="35" height="24" fill="#08306b"></rect><rect x="145" y="124" width="35" height="24" fill="#6baed6"></rect>
+          <rect x="40" y="148" width="35" height="24" fill="#c6dbef"></rect><rect x="75" y="148" width="35" height="24" fill="#6baed6"></rect><rect x="110" y="148" width="35" height="24" fill="#2171b5"></rect><rect x="145" y="148" width="35" height="24" fill="#08519c"></rect>
+          <rect x="200" y="28" width="35" height="24" fill="#2171b5"></rect><rect x="235" y="28" width="35" height="24" fill="#2171b5"></rect><rect x="270" y="28" width="35" height="24" fill="#9ecae1"></rect><rect x="305" y="28" width="35" height="24" fill="#6baed6"></rect>
+          <rect x="200" y="52" width="35" height="24" fill="#2171b5"></rect><rect x="235" y="52" width="35" height="24" fill="#2171b5"></rect><rect x="270" y="52" width="35" height="24" fill="#9ecae1"></rect><rect x="305" y="52" width="35" height="24" fill="#6baed6"></rect>
+          <rect x="200" y="76" width="35" height="24" fill="#6baed6"></rect><rect x="235" y="76" width="35" height="24" fill="#08519c"></rect><rect x="270" y="76" width="35" height="24" fill="#9ecae1"></rect><rect x="305" y="76" width="35" height="24" fill="#9ecae1"></rect>
+          <rect x="200" y="100" width="35" height="24" fill="#6baed6"></rect><rect x="235" y="100" width="35" height="24" fill="#08519c"></rect><rect x="270" y="100" width="35" height="24" fill="#9ecae1"></rect><rect x="305" y="100" width="35" height="24" fill="#c6dbef"></rect>
+          <rect x="200" y="124" width="35" height="24" fill="#9ecae1"></rect><rect x="235" y="124" width="35" height="24" fill="#6baed6"></rect><rect x="270" y="124" width="35" height="24" fill="#08519c"></rect><rect x="305" y="124" width="35" height="24" fill="#2171b5"></rect>
+          <rect x="200" y="148" width="35" height="24" fill="#9ecae1"></rect><rect x="235" y="148" width="35" height="24" fill="#6baed6"></rect><rect x="270" y="148" width="35" height="24" fill="#6baed6"></rect><rect x="305" y="148" width="35" height="24" fill="#08306b"></rect>
+        </g>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="57" y="184">Act</text><text x="92" y="184">Dra</text><text x="127" y="184">Ani</text><text x="162" y="184">Thr</text><text x="217" y="184">Act</text><text x="252" y="184">Dra</text><text x="287" y="184">Ani</text><text x="322" y="184">Thr</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · rows = countries ordered by similarity (clustered), columns = genre families, colour = share. Cinema and streaming panels side by side.</div>
+        <div><b style="color: #00603f">Good at</b> · all genres for all countries at once; similar countries form visible blocks, which answers "how do countries differ" directly.</div>
+        <div><b style="color: #a33f00">Weak at</b> · 94 rows is tall, so it needs sorting or a region filter; colour is less precise than position.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px solid #1a1d21; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">C</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px solid #1a1d21">ADVANCED VIEW</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Stacked barplot (100 %)</h2>
+      <a href="https://www.data-to-viz.com/graph/barplot.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/barplot</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="10" y="30">US cin</text><text x="10" y="48">US nfx</text><text x="10" y="78">JP cin</text><text x="10" y="96">JP nfx</text><text x="10" y="126">DE cin</text><text x="10" y="144">DE nfx</text></g>
+        <g stroke="#fff">
+          <rect x="60" y="20" width="110" height="14" fill="#0072B2"></rect><rect x="170" y="20" width="60" height="14" fill="#E69F00"></rect><rect x="230" y="20" width="40" height="14" fill="#009E73"></rect><rect x="270" y="20" width="70" height="14" fill="#CC79A7"></rect>
+          <rect x="60" y="38" width="80" height="14" fill="#0072B2"></rect><rect x="140" y="38" width="100" height="14" fill="#E69F00"></rect><rect x="240" y="38" width="30" height="14" fill="#009E73"></rect><rect x="270" y="38" width="70" height="14" fill="#CC79A7"></rect>
+          <rect x="60" y="68" width="60" height="14" fill="#0072B2"></rect><rect x="120" y="68" width="40" height="14" fill="#E69F00"></rect><rect x="160" y="68" width="130" height="14" fill="#009E73"></rect><rect x="290" y="68" width="50" height="14" fill="#CC79A7"></rect>
+          <rect x="60" y="86" width="50" height="14" fill="#0072B2"></rect><rect x="110" y="86" width="70" height="14" fill="#E69F00"></rect><rect x="180" y="86" width="110" height="14" fill="#009E73"></rect><rect x="290" y="86" width="50" height="14" fill="#CC79A7"></rect>
+          <rect x="60" y="116" width="90" height="14" fill="#0072B2"></rect><rect x="150" y="116" width="90" height="14" fill="#E69F00"></rect><rect x="240" y="116" width="40" height="14" fill="#009E73"></rect><rect x="280" y="116" width="60" height="14" fill="#CC79A7"></rect>
+          <rect x="60" y="134" width="70" height="14" fill="#0072B2"></rect><rect x="130" y="134" width="110" height="14" fill="#E69F00"></rect><rect x="240" y="134" width="30" height="14" fill="#009E73"></rect><rect x="270" y="134" width="70" height="14" fill="#CC79A7"></rect>
+        </g>
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#3d444d">
+          <rect x="60" y="168" width="10" height="10" fill="#0072B2"></rect><text x="74" y="177">Action</text>
+          <rect x="124" y="168" width="10" height="10" fill="#E69F00"></rect><text x="138" y="177">Drama</text>
+          <rect x="184" y="168" width="10" height="10" fill="#009E73"></rect><text x="198" y="177">Animation</text>
+          <rect x="262" y="168" width="10" height="10" fill="#CC79A7"></rect><text x="276" y="177">other</text>
+        </g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · one bar per country, segments = genre families; a cinema bar and a streaming bar per country.</div>
+        <div><b style="color: #00603f">Good at</b> · the exact genre mix for a few selected countries; a good drill-down after clicking the map.</div>
+        <div><b style="color: #a33f00">Weak at</b> · only the first segment shares a baseline; unreadable past ~15 countries. See <a href="https://www.data-to-viz.com/caveat/order_data.html">caveat: order your data</a>.</div>
+      </div>
+    </article>
+  </div>
+
+  <footer style="background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 14px 20px; font-size: 15px; line-height: 1.45"><b>Team decision (10.10.2026):</b> A is the main view. C is the advanced view for the selected countries. B is dropped.</footer>
+</div>
+</body>
+</html>

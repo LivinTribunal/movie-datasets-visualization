@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sheet 1 overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#005a8c}a:hover{color:#003d5f}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 56px; background: #f4f5f7; color: #1a1d21; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #5b6470">PV251 · Movies: money, ratings and genre taste · seminar group 5</div>
+      <h1 style="margin: 0; font-size: 48px; line-height: 1.1; font-weight: 700">Sheet 1: three data-to-viz options per task</h1>
+      <p style="margin: 0; font-size: 18px; color: #3d444d; max-width: 860px">Brainstorm input for HW2 (Five Design Sheets). The team draws the sheet on paper. Picks decided by the team on 10.10.2026.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470; text-transform: uppercase; letter-spacing: 0.08em">Due</div>
+      <div style="font-size: 26px; font-weight: 600">Mon 19.10.2026</div>
+    </div>
+  </header>
+
+  <div style="display: flex; gap: 10px; flex-wrap: wrap">
+    <span style="font-size: 14px; padding: 6px 12px; border: 1px solid #c9ced6; border-radius: 999px; background: #fff">Position first</span>
+    <span style="font-size: 14px; padding: 6px 12px; border: 1px solid #c9ced6; border-radius: 999px; background: #fff">≤ 8 colour categories (genre families)</span>
+    <span style="font-size: 14px; padding: 6px 12px; border: 1px solid #c9ced6; border-radius: 999px; background: #fff">No rainbow, no red–green · Okabe–Ito / ColorBrewer</span>
+    <span style="font-size: 14px; padding: 6px 12px; border: 1px solid #c9ced6; border-radius: 999px; background: #fff">Money on log axes, USD 2025</span>
+    <span style="font-size: 14px; padding: 6px 12px; border: 1px solid #c9ced6; border-radius: 999px; background: #fff">No-data countries hatched</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+    <a href="T1.html" style="text-decoration: none; color: inherit; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470"><span style="font-weight: 600; color: #1a1d21">T1</span><span>compare → distribution</span></div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3">Which genres dominate cinemas and streaming in different countries?</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #3d444d">A Choropleth map <b style="color: #0072B2">● main</b><br>C Stacked bars 100 % <span style="color: #5b6470">○ advanced view</span><br><s style="color: #5b6470">B Heatmap</s></div>
+    </a>
+    <a href="T2.html" style="text-decoration: none; color: inherit; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470"><span style="font-weight: 600; color: #1a1d21">T2</span><span>discover → correlation</span></div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3">Are commercially successful films also better rated?</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #3d444d">A Scatter plot <b style="color: #0072B2">● main</b><br>B 2D density / hexbin <span style="color: #5b6470">○ zoomed-out mode</span><br><s style="color: #5b6470">C Correlogram</s></div>
+    </a>
+    <a href="T3.html" style="text-decoration: none; color: inherit; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470"><span style="font-weight: 600; color: #1a1d21">T3</span><span>identify → outliers</span></div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3">Where do critics and audiences disagree the most?</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #3d444d">A Scatter with y = x diagonal <b style="color: #0072B2">● main</b><br>B Ridgeline of the gap <span style="color: #5b6470">○ per-genre summary</span><br><s style="color: #5b6470">C Dumbbell top 20</s> · <s style="color: #5b6470">D Violin</s></div>
+    </a>
+    <a href="T4.html" style="text-decoration: none; color: inherit; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470"><span style="font-weight: 600; color: #1a1d21">T4</span><span>discover → trend</span></div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3">How has the popularity of genres changed over time?</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #3d444d">B Stacked area 100 % <b style="color: #0072B2">● main + time brush</b><br>C Lines, small multiples <span style="color: #5b6470">○ advanced view</span><br>A Streamgraph <span style="color: #5b6470">◇ fallback if B misleads on size</span></div>
+    </a>
+    <a href="T5.html" style="text-decoration: none; color: inherit; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470"><span style="font-weight: 600; color: #1a1d21">T5</span><span>discover → correlation</span></div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3">Does a higher budget lead to greater popularity and better ratings?</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #3d444d">A Bubble chart <b style="color: #0072B2">● main</b><br>B Scatter, small multiples per genre <span style="color: #5b6470">○ advanced view</span><br><s style="color: #5b6470">C Heatmap genre × budget decile</s></div>
+    </a>
+    <a href="T6.html" style="text-decoration: none; color: inherit; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5b6470"><span style="font-weight: 600; color: #1a1d21">T6</span><span>browse → trend / outliers</span></div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3">How do ratings and earnings change across film series? Do sequels get worse?</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #3d444d">A Highlighted spaghetti lines <b style="color: #0072B2">● main</b><br>B Connected scatter <span style="color: #5b6470">○ one-franchise detail</span><br><s style="color: #5b6470">C Heatmap franchise × installment</s></div>
+    </a>
+  </div>
+
+  <section style="display: flex; gap: 20px; align-items: stretch">
+    <div style="flex: 2; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">How the picks could link (idea for sheet 5)</h2>
+      <div style="display: grid; grid-template-columns: 1.4fr 0.6fr 2fr; column-gap: 20px; row-gap: 8px; font-size: 14px; line-height: 1.4">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5b6470; text-transform: uppercase; letter-spacing: 0.06em">View</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5b6470; text-transform: uppercase; letter-spacing: 0.06em">Serves</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5b6470; text-transform: uppercase; letter-spacing: 0.06em">Linked by</div>
+        <div style="font-weight: 600">Choropleth + stacked bars</div><div>T1</div><div>click a country → filters the other views to its charts</div>
+        <div style="font-weight: 600">Stacked area + small-multiple lines</div><div>T4</div><div>brush years → global year filter; hover a genre → highlighted everywhere</div>
+        <div style="font-weight: 600">Scatter (axis presets, bubble size = votes, split by genre)</div><div>T2, T3, T5</div><div>brush films → highlighted in the franchise view and the timeline</div>
+        <div style="font-weight: 600">Highlighted line chart</div><div>T6</div><div>pick a franchise → its films are highlighted in the scatter</div>
+      </div>
+    </div>
+    <div style="flex: 1; background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">Badges on the task boards</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+        <div style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: #fff; background: #0072B2">MAIN VIEW</span><span>shown by default</span></div>
+        <div style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px solid #1a1d21">LINKED / ADVANCED</span><span>detail or advanced view</span></div>
+        <div style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px dashed #1a1d21">FALLBACK</span><span>swap in if the main misleads</span></div>
+        <div style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #5b6470; border: 1px solid #c9ced6">DROPPED</span><span>considered, not used</span></div>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #5b6470">Four linked views; the course asks for 3+.</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>
