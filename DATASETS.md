@@ -75,7 +75,7 @@ rate and commit only derived numbers, never page contents.
 |---|---|---|
 | `data/reference/countries.csv` | ISO-2, ISO-3, ISO numeric (to join world-atlas), English name, UN M49 region and subregion, and the other names sources use (`country_aliases.csv`; historical states map to their main successor, D13). Built by `movies reference`. Every Netflix code and every TMDB production country resolves. | ✅ 250 rows |
 | `data/reference/genre_families.csv` | each of TMDB's 18 film genres → one of 8 colour families with an Okabe–Ito colour (D11) | ✅ proposal, the team may regroup |
-| `data/overrides/*.csv` | hand fixes for title matches, one file per source (D14) | ✅ numbers 68, netflix 22 |
+| `data/overrides/*.csv` | hand fixes for title matches, one file per source (D14) | ✅ numbers 334, netflix 105 |
 
 ## 5. How the sources join
 
@@ -124,8 +124,8 @@ rate and commit only derived numbers, never page contents.
 |---|---|---|
 | `films.parquet` | 56,431 films in the working subset (Released, 1900–2026, ≥ 1,000 IMDb votes), 13,080 notable (≥ 10,000) | the main table, one row per `imdb_id` |
 | RT (Clapper) columns | 35,263 films linked, 22,744 with a tomatometer | Wikidata RT id; the row with a tomatometer wins; an RT id Wikidata gives to two films goes to the one closest to RT's release year |
-| Numbers columns | 5,897 films with a budget, 5,009 of them notable | title within ±1 year: of 12,825 rows from both files, 11,527 exact, 126 fuzzy, 68 override; each value comes from the best-matched row that has it |
-| `netflix_titles.parquet` | 8,716 Netflix film titles: 7,608 exact, 49 fuzzy, 17 override, 1,042 unmatched | title, released no later than the year of the first chart week; matched titles hold 97.9 % of the chart score |
+| Numbers columns | 6,034 films with a budget, 5,086 of them notable | title within ±1 year: of 12,825 rows from both files, 11,527 exact, 126 fuzzy, 334 override; each value comes from the best-matched row that has it |
+| `netflix_titles.parquet` | 8,716 Netflix film titles: 7,608 exact, 49 fuzzy, 100 override, 959 unmatched | title, released no later than the year of the first chart week; matched titles hold 98.1 % of the chart score |
 
 `numbers_match` / `numbers_match_score` and the Netflix `method` / `score`
 columns say how each value was linked, so the app can mark fuzzy matches.
