@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>T3 critic and audience gap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#005a8c}a:hover{color:#003d5f}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 1120px; box-sizing: border-box; padding: 48px 56px; background: #f4f5f7; color: #1a1d21; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <header style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 16px; align-items: baseline; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #5b6470"><span style="font-size: 18px; font-weight: 600; color: #1a1d21">T3</span><span>Action: identify / compare</span><span>Target: outliers / distribution</span></div>
+    <h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700">Where do critics and audiences disagree the most?</h1>
+    <p style="margin: 0; font-size: 16px; color: #3d444d">Data: tomatometer, audience score, gap = audience − critics, genre, year. data-to-viz paths: <a href="https://www.data-to-viz.com/story/TwoNum.html">two numeric variables</a> · <a href="https://www.data-to-viz.com/story/OneNumOneCatSeveralObs.html">one numeric value, several categories</a></p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; flex: 1">
+    <article style="background: #fff; border: 2px solid #0072B2; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">A</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: #fff; background: #0072B2">MAIN VIEW</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Scatter plot with a diagonal</h2>
+      <a href="https://www.data-to-viz.com/graph/scatter.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/scatter</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <line x1="60" y1="170" x2="250" y2="170" stroke="#9aa1ab"></line><line x1="60" y1="10" x2="60" y2="170" stroke="#9aa1ab"></line>
+        <line x1="60" y1="170" x2="230" y2="10" stroke="#1a1d21" style="stroke-width: 1.2; stroke-dasharray: 4 3"></line>
+        <text x="232" y="22" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Mono, monospace">y = x</text>
+        <text x="155" y="184" fill="#5b6470" style="font-size: 10px; font-family: IBM Plex Mono, monospace; text-anchor: middle">critics (tomatometer)</text>
+        <text x="46" y="90" fill="#5b6470" transform="rotate(-90 46 90)" style="font-size: 10px; font-family: IBM Plex Mono, monospace; text-anchor: middle">audience score</text>
+        <g style="fill-opacity: 0.75">
+          <circle cx="100" cy="130" r="3" fill="#d8daeb"></circle><circle cx="120" cy="110" r="3" fill="#d8daeb"></circle><circle cx="140" cy="96" r="3" fill="#f7f7f7" stroke="#9aa1ab"></circle><circle cx="150" cy="84" r="3" fill="#fee0b6"></circle><circle cx="170" cy="70" r="3" fill="#d8daeb"></circle><circle cx="180" cy="64" r="3" fill="#fee0b6"></circle><circle cx="196" cy="48" r="3" fill="#f7f7f7" stroke="#9aa1ab"></circle><circle cx="210" cy="40" r="3" fill="#fee0b6"></circle>
+          <circle cx="130" cy="120" r="3" fill="#b2abd2"></circle><circle cx="160" cy="92" r="3" fill="#d8daeb"></circle><circle cx="186" cy="80" r="3" fill="#b2abd2"></circle><circle cx="110" cy="96" r="3" fill="#fdb863"></circle><circle cx="140" cy="70" r="3" fill="#fdb863"></circle><circle cx="200" cy="72" r="3" fill="#b2abd2"></circle>
+          <circle cx="80" cy="50" r="4" fill="#e08214"></circle><circle cx="90" cy="40" r="4" fill="#e08214"></circle><circle cx="226" cy="140" r="4" fill="#542788"></circle><circle cx="216" cy="126" r="4" fill="#8073ac"></circle>
+        </g>
+        <text x="96" y="38" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Sans, sans-serif">crowd pleasers</text>
+        <text x="236" y="146" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Sans, sans-serif">critic</text>
+        <text x="236" y="157" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Sans, sans-serif">darlings</text>
+        <rect x="290" y="40" width="14" height="22" fill="#e08214"></rect><rect x="290" y="62" width="14" height="22" fill="#fee0b6"></rect><rect x="290" y="84" width="14" height="22" fill="#f7f7f7" stroke="#d9dde3"></rect><rect x="290" y="106" width="14" height="22" fill="#d8daeb"></rect><rect x="290" y="128" width="14" height="22" fill="#542788"></rect>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="308" y="50">+gap</text><text x="308" y="98">0</text><text x="308" y="144">−gap</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · x = critics, y = audience, a y = x reference line; colour = gap (diverging purple ↔ orange); the most extreme films labelled.</div>
+        <div><b style="color: #00603f">Good at</b> · outliers are literally far from the line; "critic darlings" and "crowd pleasers" sit in opposite corners.</div>
+        <div><b style="color: #a33f00">Weak at</b> · overplotting in the middle; <a href="https://www.data-to-viz.com/caveat/hard_label.html">labels are hard</a>, so label only the top N.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px solid #1a1d21; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">B</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px solid #1a1d21">LINKED · PER-GENRE SUMMARY</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Ridgeline plot</h2>
+      <a href="https://www.data-to-viz.com/graph/ridgeline.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/ridgeline</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <line x1="210" y1="10" x2="210" y2="166" stroke="#1a1d21" style="stroke-width: 1; stroke-dasharray: 3 3"></line>
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="10" y="42">Horror</text><text x="10" y="68">Comedy</text><text x="10" y="94">Action</text><text x="10" y="120">Drama</text><text x="10" y="146">Documentary</text></g>
+        <g stroke="#1a1d21" style="stroke-width: 1">
+          <path d="M90,42 Q150,-6 250,42 Z" fill="#8073ac" style="fill-opacity: 0.75"></path>
+          <path d="M100,68 Q190,20 290,68 Z" fill="#b2abd2" style="fill-opacity: 0.75"></path>
+          <path d="M110,94 Q215,46 320,94 Z" fill="#fee0b6" style="fill-opacity: 0.85"></path>
+          <path d="M100,120 Q210,72 310,120 Z" fill="#f7f7f7" style="fill-opacity: 0.85"></path>
+          <path d="M110,146 Q240,98 340,146 Z" fill="#fdb863" style="fill-opacity: 0.85"></path>
+        </g>
+        <line x1="90" y1="166" x2="340" y2="166" stroke="#9aa1ab"></line>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="110" y="180">−40</text><text x="210" y="180">0</text><text x="310" y="180">+40</text></g>
+        <text x="340" y="180" fill="#5b6470" style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: end"></text>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · one density curve of the gap per genre, sorted by median gap; a reference line at 0.</div>
+        <div><b style="color: #00603f">Good at</b> · compares the gap distribution across ~19 genres compactly ("Horror: audiences harsher").</div>
+        <div><b style="color: #a33f00">Weak at</b> · no film names; overlaps take care to read. D (violin) was the alternative.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px dashed #c9ced6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">C</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #5b6470; border: 1px solid #c9ced6">DROPPED</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Lollipop / dumbbell</h2>
+      <a href="https://www.data-to-viz.com/graph/lollipop.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/lollipop</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="10" y="30">[film 1]</text><text x="10" y="54">[film 2]</text><text x="10" y="78">[film 3]</text><text x="10" y="102">[film 4]</text><text x="10" y="126">[film 5]</text><text x="10" y="150">[film 6]</text></g>
+        <g stroke="#9aa1ab" style="stroke-width: 2"><line x1="90" y1="26" x2="330" y2="26"></line><line x1="100" y1="50" x2="320" y2="50"></line><line x1="120" y1="74" x2="310" y2="74"></line><line x1="140" y1="98" x2="300" y2="98"></line><line x1="150" y1="122" x2="290" y2="122"></line><line x1="170" y1="146" x2="290" y2="146"></line></g>
+        <g fill="#542788"><circle cx="330" cy="26" r="5"></circle><circle cx="100" cy="50" r="5"></circle><circle cx="310" cy="74" r="5"></circle><circle cx="140" cy="98" r="5"></circle><circle cx="290" cy="122" r="5"></circle><circle cx="170" cy="146" r="5"></circle></g>
+        <g fill="#e08214"><rect x="85" y="21" width="10" height="10"></rect><rect x="315" y="45" width="10" height="10"></rect><rect x="115" y="69" width="10" height="10"></rect><rect x="295" y="93" width="10" height="10"></rect><rect x="145" y="117" width="10" height="10"></rect><rect x="285" y="141" width="10" height="10"></rect></g>
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#3d444d"><circle cx="96" cy="174" r="5" fill="#542788"></circle><text x="106" y="178">critics</text><rect x="166" y="169" width="10" height="10" fill="#e08214"></rect><text x="182" y="178">audience</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · the top 20 films by absolute gap; two marks (critics ● and audience ■) joined by a line, sorted by gap.</div>
+        <div><b style="color: #00603f">Good at</b> · names the outliers, the "identify" part of the task; easy to read.</div>
+        <div><b style="color: #a33f00">Weak at</b> · shows only the extremes; needs a filter (genre, decade) to stay interesting.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px dashed #c9ced6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">D</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #5b6470; border: 1px solid #c9ced6">DROPPED</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Violin plot</h2>
+      <a href="https://www.data-to-viz.com/graph/violin.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/violin</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <line x1="55" y1="14" x2="55" y2="168" stroke="#9aa1ab"></line>
+        <line x1="55" y1="95" x2="352" y2="95" stroke="#1a1d21" style="stroke-dasharray: 3 3"></line>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: end" fill="#5b6470"><text x="50" y="24">+40</text><text x="50" y="98">0</text><text x="50" y="168">−40</text></g>
+        <text x="16" y="92" fill="#5b6470" transform="rotate(-90 16 92)" style="font-size: 10px; font-family: IBM Plex Mono, monospace; text-anchor: middle">gap (aud − crit)</text>
+        <g stroke="#1a1d21" style="stroke-width: 1">
+          <path d="M90,40 C97,50 108,100 108,115 C108,130 95,155 90,165 C85,155 72,130 72,115 C72,100 83,50 90,40 Z" fill="#8073ac" style="fill-opacity: 0.75"></path>
+          <path d="M150,35 C158,45 170,85 170,100 C170,115 156,150 150,160 C144,150 130,115 130,100 C130,85 142,45 150,35 Z" fill="#b2abd2" style="fill-opacity: 0.75"></path>
+          <path d="M210,30 C219,40 232,75 232,90 C232,105 217,140 210,150 C203,140 188,105 188,90 C188,75 201,40 210,30 Z" fill="#fee0b6" style="fill-opacity: 0.85"></path>
+          <path d="M270,35 C278,45 289,80 289,95 C289,110 276,145 270,155 C264,145 251,110 251,95 C251,80 262,45 270,35 Z" fill="#f7f7f7" style="fill-opacity: 0.85"></path>
+          <path d="M330,20 C337,30 347,65 347,80 C347,95 335,130 330,140 C325,130 313,95 313,80 C313,65 323,30 330,20 Z" fill="#fdb863" style="fill-opacity: 0.85"></path>
+        </g>
+        <g fill="#1a1d21"><rect x="88" y="100" width="4" height="30"></rect><rect x="148" y="86" width="4" height="28"></rect><rect x="208" y="76" width="4" height="28"></rect><rect x="268" y="81" width="4" height="28"></rect><rect x="328" y="66" width="4" height="28"></rect></g>
+        <g fill="#fff" stroke="#1a1d21"><circle cx="90" cy="115" r="3"></circle><circle cx="150" cy="100" r="3"></circle><circle cx="210" cy="90" r="3"></circle><circle cx="270" cy="95" r="3"></circle><circle cx="330" cy="80" r="3"></circle></g>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="90" y="182">Horror</text><text x="150" y="182">Comedy</text><text x="210" y="182">Action</text><text x="270" y="182">Drama</text><text x="330" y="182">Docu.</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · one violin of the gap per genre, sorted by median gap; inner box = IQR, dot = median; a reference line at 0.</div>
+        <div><b style="color: #00603f">Good at</b> · same per-genre comparison as B, with no overlaps and a shared baseline; median and spread are read directly.</div>
+        <div><b style="color: #a33f00">Weak at</b> · no film names; small genres give misleadingly smooth shapes, so show n per genre (<a href="https://www.data-to-viz.com/caveat/boxplot.html">caveat: boxplot hides n</a>).</div>
+      </div>
+    </article>
+  </div>
+
+  <footer style="background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 14px 20px; font-size: 15px; line-height: 1.45"><b>Team decision (10.10.2026):</b> A is the main view and B the per-genre summary. C and D are dropped. Either view can add a <a href="https://www.data-to-viz.com/graph/line.html">line chart</a> of the median gap per year, with RT's May 2024 audience-score change marked.</footer>
+</div>
+</body>
+</html>

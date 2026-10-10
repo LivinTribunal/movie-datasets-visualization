@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>T6 do sequels get worse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#005a8c}a:hover{color:#003d5f}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 48px 56px; background: #f4f5f7; color: #1a1d21; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <header style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 16px; align-items: baseline; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #5b6470"><span style="font-size: 18px; font-weight: 600; color: #1a1d21">T6</span><span>Action: browse / compare</span><span>Target: trend / outliers</span></div>
+    <h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700">How do ratings and earnings change across film series? Do sequels get worse?</h1>
+    <p style="margin: 0; font-size: 16px; color: #3d444d">Data: franchise → ordered installments, rating, real revenue, budget. data-to-viz path: <a href="https://www.data-to-viz.com/story/TwoNumOrdered.html">ordered numeric per group</a></p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex: 1">
+    <article style="background: #fff; border: 2px solid #0072B2; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">A</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: #fff; background: #0072B2">MAIN VIEW</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Line chart (highlighted spaghetti)</h2>
+      <a href="https://www.data-to-viz.com/graph/line.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/line</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <line x1="50" y1="160" x2="340" y2="160" stroke="#9aa1ab"></line><line x1="50" y1="12" x2="50" y2="160" stroke="#9aa1ab"></line>
+        <line x1="50" y1="60" x2="340" y2="60" stroke="#1a1d21" style="stroke-dasharray: 3 3"></line>
+        <text x="44" y="63" fill="#5b6470" style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: end">0</text>
+        <g fill="none" stroke="#c9ced6" style="stroke-width: 1.2">
+          <polyline points="60,60 130,72 200,90 270,104"></polyline><polyline points="60,60 130,54 200,70 270,96 340,110"></polyline><polyline points="60,60 130,80 200,96"></polyline><polyline points="60,60 130,66 200,62 270,78"></polyline>
+          <polyline points="60,60 130,90 200,108 270,130 340,142"></polyline><polyline points="60,60 130,48 200,56"></polyline><polyline points="60,60 130,76 200,84 270,88 340,100"></polyline><polyline points="60,60 130,62 200,82 270,118"></polyline>
+        </g>
+        <polyline points="60,60 130,70 200,82 270,98 340,110" fill="none" stroke="#1a1d21" style="stroke-width: 3"></polyline>
+        <polyline points="60,60 130,40 200,34 270,52" fill="none" stroke="#D55E00" style="stroke-width: 2.5"></polyline>
+        <text x="276" y="50" fill="#a33f00" style="font-size: 9px; font-family: IBM Plex Sans, sans-serif">[selected franchise]</text>
+        <text x="300" y="124" fill="#1a1d21" style="font-size: 9px; font-weight: 600; font-family: IBM Plex Sans, sans-serif">median</text>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="60" y="174">1</text><text x="130" y="174">2</text><text x="200" y="174">3</text><text x="270" y="174">4</text><text x="340" y="174">5</text><text x="200" y="186">installment</text></g>
+        <text x="16" y="86" fill="#5b6470" transform="rotate(-90 16 86)" style="font-size: 10px; font-family: IBM Plex Mono, monospace; text-anchor: middle">Δ rating vs film 1</text>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · x = installment number, y = rating (or revenue relative to film 1); all franchises light grey, selected ones highlighted, the median bold.</div>
+        <div><b style="color: #00603f">Good at</b> · shows the general "sequel curve" and lets you pick out single franchises (<a href="https://www.data-to-viz.com/caveat/spaghetti.html">spaghetti</a>, solved by highlighting).</div>
+        <div><b style="color: #a33f00">Weak at</b> · busy without good highlighting; y must be relative (Δ vs film 1) to compare franchises fairly.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px solid #1a1d21; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">B</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #1a1d21; border: 1px solid #1a1d21">LINKED · ONE-FRANCHISE DETAIL</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Connected scatter plot</h2>
+      <a href="https://www.data-to-viz.com/graph/connectedscatter.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/connectedscatter</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <defs><marker id="t6arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#0072B2"></path></marker><marker id="t6arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#E69F00"></path></marker></defs>
+        <line x1="40" y1="160" x2="345" y2="160" stroke="#9aa1ab"></line><line x1="40" y1="12" x2="40" y2="160" stroke="#9aa1ab"></line>
+        <text x="345" y="178" fill="#5b6470" style="font-size: 10px; font-family: IBM Plex Mono, monospace; text-anchor: end">revenue, USD 2025 (log)</text>
+        <text x="14" y="86" fill="#5b6470" transform="rotate(-90 14 86)" style="font-size: 10px; font-family: IBM Plex Mono, monospace; text-anchor: middle">rating</text>
+        <g fill="none" stroke="#0072B2" style="stroke-width: 2"><line x1="120" y1="36" x2="196" y2="54" marker-end="url(#t6arrow)"></line><line x1="200" y1="56" x2="266" y2="90" marker-end="url(#t6arrow)"></line><line x1="270" y1="92" x2="308" y2="126" marker-end="url(#t6arrow)"></line></g>
+        <g fill="#0072B2"><circle cx="120" cy="36" r="5"></circle><circle cx="200" cy="56" r="5"></circle><circle cx="270" cy="92" r="5"></circle><circle cx="310" cy="128" r="5"></circle></g>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace" fill="#1a1d21"><text x="110" y="28">1</text><text x="204" y="48">2</text><text x="276" y="86">3</text><text x="318" y="132">4</text></g>
+        <g fill="none" stroke="#E69F00" style="stroke-width: 2"><line x1="90" y1="110" x2="146" y2="84" marker-end="url(#t6arrow2)"></line><line x1="150" y1="82" x2="174" y2="52" marker-end="url(#t6arrow2)"></line></g>
+        <g fill="#E69F00"><rect x="85" y="105" width="10" height="10"></rect><rect x="145" y="77" width="10" height="10"></rect><rect x="171" y="45" width="10" height="10"></rect></g>
+        <g style="font-size: 9px; font-family: IBM Plex Sans, sans-serif" fill="#3d444d"><text x="230" y="30">[franchise X] ●</text><text x="72" y="134">[franchise Y] ■</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · x = real revenue (log), y = rating; points of one franchise connected in installment order with arrows.</div>
+        <div><b style="color: #00603f">Good at</b> · money and quality together: does a franchise lose both, or keep earning while ratings drop?</div>
+        <div><b style="color: #a33f00">Weak at</b> · readable for only 1–3 franchises at once; <a href="https://www.data-to-viz.com/caveat/counter_intuitive.html">counter-intuitive</a> for new users.</div>
+      </div>
+    </article>
+
+    <article style="background: #fff; border: 1px dashed #c9ced6; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">C</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #5b6470; border: 1px solid #c9ced6">DROPPED</span></div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Heatmap</h2>
+      <a href="https://www.data-to-viz.com/graph/heatmap.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">data-to-viz.com/graph/heatmap</a>
+      <svg viewBox="0 0 360 190" style="width: 100%; height: auto; background: #fafbfc; border-radius: 8px">
+        <g style="font-size: 10px; font-family: IBM Plex Mono, monospace" fill="#5b6470"><text x="10" y="32">[series 1]</text><text x="10" y="56">[series 2]</text><text x="10" y="80">[series 3]</text><text x="10" y="104">[series 4]</text><text x="10" y="128">[series 5]</text><text x="10" y="152">[series 6]</text></g>
+        <g stroke="#fff">
+          <rect x="90" y="18" width="40" height="24" fill="#f7f7f7"></rect><rect x="130" y="18" width="40" height="24" fill="#fdb863"></rect><rect x="170" y="18" width="40" height="24" fill="#e08214"></rect><rect x="210" y="18" width="40" height="24" fill="#b35806"></rect><rect x="250" y="18" width="40" height="24" fill="#b35806"></rect>
+          <rect x="90" y="42" width="40" height="24" fill="#f7f7f7"></rect><rect x="130" y="42" width="40" height="24" fill="#fee0b6"></rect><rect x="170" y="42" width="40" height="24" fill="#fdb863"></rect><rect x="210" y="42" width="40" height="24" fill="#e08214"></rect>
+          <rect x="90" y="66" width="40" height="24" fill="#f7f7f7"></rect><rect x="130" y="66" width="40" height="24" fill="#fdb863"></rect><rect x="170" y="66" width="40" height="24" fill="#fdb863"></rect><rect x="210" y="66" width="40" height="24" fill="#e08214"></rect><rect x="250" y="66" width="40" height="24" fill="#b35806"></rect><rect x="290" y="66" width="40" height="24" fill="#e08214"></rect>
+          <rect x="90" y="90" width="40" height="24" fill="#f7f7f7"></rect><rect x="130" y="90" width="40" height="24" fill="#fee0b6"></rect><rect x="170" y="90" width="40" height="24" fill="#f7f7f7"></rect>
+          <rect x="90" y="114" width="40" height="24" fill="#f7f7f7"></rect><rect x="130" y="114" width="40" height="24" fill="#d8daeb"></rect><rect x="170" y="114" width="40" height="24" fill="#b2abd2"></rect><rect x="210" y="114" width="40" height="24" fill="#d8daeb"></rect>
+          <rect x="90" y="138" width="40" height="24" fill="#f7f7f7"></rect><rect x="130" y="138" width="40" height="24" fill="#b2abd2"></rect><rect x="170" y="138" width="40" height="24" fill="#8073ac"></rect>
+        </g>
+        <rect x="88" y="112" width="164" height="52" fill="none" stroke="#1a1d21" style="stroke-width: 1.5; stroke-dasharray: 4 3"></rect>
+        <text x="258" y="140" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Sans, sans-serif">sequels</text>
+        <text x="258" y="151" fill="#1a1d21" style="font-size: 9px; font-family: IBM Plex Sans, sans-serif">got better</text>
+        <g style="font-size: 9px; font-family: IBM Plex Mono, monospace; text-anchor: middle" fill="#5b6470"><text x="110" y="176">1</text><text x="150" y="176">2</text><text x="190" y="176">3</text><text x="230" y="176">4</text><text x="270" y="176">5</text><text x="310" y="176">6</text><text x="210" y="188">installment · colour = Δ vs film 1</text></g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45">
+        <div><b>Encoding</b> · rows = franchises (≥ 3 films), columns = installment 1…n, colour = change vs film 1 (diverging purple–orange).</div>
+        <div><b style="color: #00603f">Good at</b> · browses hundreds of franchises at once; after sorting, the exceptions (series that improve) are easy to spot.</div>
+        <div><b style="color: #a33f00">Weak at</b> · no absolute values; long franchises make the grid sparse.</div>
+      </div>
+    </article>
+  </div>
+
+  <footer style="background: #fff; border: 1px solid #d9dde3; border-radius: 12px; padding: 14px 20px; font-size: 15px; line-height: 1.45"><b>Team decision (10.10.2026):</b> A is the main view, with B as the detail when one franchise is selected. C is dropped.</footer>
+</div>
+</body>
+</html>

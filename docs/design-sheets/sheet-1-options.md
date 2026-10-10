@@ -6,6 +6,7 @@ Input for HW2 (Five Design Sheets, sheet 1). For each task from
 data-to-viz path that leads to it, how our data maps onto it, and what it is
 good and bad at. The pick at the end of each task was decided by the team on
 2026-10-10 (D10 in `docs/decisions.md`).
+The same options drawn as boards: [`sheet-1-canvas/`](sheet-1-canvas/README.md).
 
 Encoding rules that apply everywhere (`AGENTS.md`): position first, at most
 ~8 colour categories (genre *families*), no rainbow or red–green palettes,
