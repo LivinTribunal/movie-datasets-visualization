@@ -25,6 +25,7 @@ def test_budgets_dates_and_money() -> None:
     assert first["year"] == 2015
     assert first["worldwide_gross"] == 1_395_316_979.0
     assert first["numbers_rank"] == 6
+    assert out["numbers_rank"].to_list()[-1] == 1000  # "1,000" in the raw file
     year_only = out.filter(pl.col("title") == "Year Only").row(0, named=True)
     assert year_only["release_date"] is None
     assert year_only["year"] == 2010
@@ -46,5 +47,9 @@ def test_metrics_zero_is_null() -> None:
     assert first["opening_weekend"] == 247_966_675.0
     assert first["runtime"] == 136
     assert first["release_date"] == dt.date(2015, 12, 16)
+    gwtw = out.filter(pl.col("title") == "Gone with the Wind").row(0, named=True)
+    assert gwtw["numbers_id"] == 5201
+    assert gwtw["release_date"] == dt.date(1939, 12, 15)  # raw 2039: a 2-digit year read as 20xx
+    assert gwtw["year"] == 1939
     undated = out.filter(pl.col("title") == "Undated Film").row(0, named=True)
     assert undated["year"] is None

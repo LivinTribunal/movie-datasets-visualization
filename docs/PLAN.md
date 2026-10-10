@@ -152,7 +152,8 @@ These are proposals until they are in `docs/decisions.md`.
   title (case, accents, punctuation, leading "The"), match exactly on
   title + year (±1 year), then use `rapidfuzz` with a score of at least 90,
   and when several films match take the one with the most votes. Hand fixes
-  go to `data/overrides/*.csv`. The match rate per source is reported.
+  go to `data/overrides/*.csv`. The match rate per source is reported. The
+  rules as built, including the Netflix year window, are in D14.
 
 **Missing values and cleaning** (lecture 3)
 - TMDB stores unknown budget, revenue and runtime as `0`. We recode them to

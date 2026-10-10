@@ -75,7 +75,7 @@ rate and commit only derived numbers, never page contents.
 |---|---|---|
 | `data/reference/countries.csv` | ISO-2, ISO-3, ISO numeric (to join world-atlas), English name, UN M49 region and subregion, and the other names sources use (`country_aliases.csv`; historical states map to their main successor, D13). Built by `movies reference`. Every Netflix code and every TMDB production country resolves. | ✅ 250 rows |
 | `data/reference/genre_families.csv` | each of TMDB's 18 film genres → one of 8 colour families with an Okabe–Ito colour (D11) | ✅ proposal, the team may regroup |
-| `data/overrides/*.csv` | hand fixes for title matches, one file per source | ⏳ |
+| `data/overrides/*.csv` | hand fixes for title matches, one file per source (D14) | ✅ numbers 68, netflix 22 |
 
 ## 5. How the sources join
 
@@ -110,7 +110,22 @@ rate and commit only derived numbers, never page contents.
 |---|---|---|
 | `tmdb.parquet` | 1,252,005 (689,411 with an IMDb id) | 0 budget, revenue and runtime → null; 28,539 budgets under $1,000 → null and flagged in `budget_under_1000`; future dates → null; 2 duplicate IMDb ids dropped; production countries as ISO-2 |
 | `rt_clapper.parquet` | 142,052 | 1,206 duplicate RT ids dropped (the fullest row kept); box office strings like `$31.4M` → USD |
-| `numbers_budgets.parquet`, `numbers_metrics.parquet` | 6,518 and 6,569 | `$0` gross → null; dates parsed |
+| `numbers_budgets.parquet`, `numbers_metrics.parquet` | 6,518 and 6,569 | `$0` gross → null; dates parsed; ids like `1,000` parsed (they were null before); in the metrics file two-digit years after 2026-10-01 moved back a century (`15-Dec-39` is 1939, not 2039) |
 | `netflix.parquet` | 255,170 | films only, weeks up to 2026-09-27, `score = 11 − rank` |
 | `cpi.parquet` | 80 years | yearly mean of the monthly index, `months` shows a partial year |
 | `fx.parquet` | 12,537 (213 countries) | World Bank aggregates and empty values dropped, ISO-3 → ISO-2 |
+
+## Join stage
+
+`movies join` links the cleaned sources to TMDB films and writes two files to
+`data/interim/` (D14). Counts from the run on 2026-10-11:
+
+| Output | Rows | How it links |
+|---|---|---|
+| `films.parquet` | 56,431 films in the working subset (Released, 1900–2026, ≥ 1,000 IMDb votes), 13,080 notable (≥ 10,000) | the main table, one row per `imdb_id` |
+| RT (Clapper) columns | 35,263 films linked, 22,744 with a tomatometer | Wikidata RT id; the row with a tomatometer wins; an RT id Wikidata gives to two films goes to the one closest to RT's release year |
+| Numbers columns | 5,897 films with a budget, 5,009 of them notable | title within ±1 year: of 12,825 rows from both files, 11,527 exact, 126 fuzzy, 68 override; each value comes from the best-matched row that has it |
+| `netflix_titles.parquet` | 8,716 Netflix film titles: 7,608 exact, 49 fuzzy, 17 override, 1,042 unmatched | title, released no later than the year of the first chart week; matched titles hold 97.9 % of the chart score |
+
+`numbers_match` / `numbers_match_score` and the Netflix `method` / `score`
+columns say how each value was linked, so the app can mark fuzzy matches.
