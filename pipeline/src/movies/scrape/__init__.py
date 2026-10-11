@@ -2,7 +2,7 @@
 
 from importlib import import_module
 
-SOURCES = ("tmdb_collections", "metacritic", "letterboxd")
+SOURCES = ("tmdb_collections", "metacritic", "letterboxd", "lumiere")
 
 
 def run(name: str) -> None:
