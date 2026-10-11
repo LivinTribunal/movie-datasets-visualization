@@ -6,7 +6,7 @@ data/interim/ and data/scraped/ and writes data/interim/<name>.parquet.
 
 from importlib import import_module
 
-SOURCES = ("money", "ratings", "genres")
+SOURCES = ("money", "ratings", "genres", "franchises")
 
 
 def run(names: list[str]) -> None:

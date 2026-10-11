@@ -26,7 +26,7 @@ export default function App() {
         <WorldMap data={data} />
         <GenreTimeline data={data} />
         <FilmScatter data={data} />
-        <Franchise />
+        <Franchise data={data} />
       </main>
       <DetailPanel data={data} />
     </div>

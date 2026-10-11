@@ -4,9 +4,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from movies.export.app import films_table, genre_year, to_columns
+from movies.export.app import films_table, franchises_table, genre_year, to_columns
 from movies.validate.app import check
-from test_export_app import FILM_GENRES, FILMS, MONEY, RATINGS
+from test_export_app import FILM_GENRES, FILMS, FRANCHISES, MONEY, RATINGS
 
 COUNTRY_GENRE = pl.DataFrame(
     {
@@ -47,6 +47,7 @@ def _write(path: Path, **overrides: pl.DataFrame) -> None:
         "country_genre.json": COUNTRY_GENRE,
         "countries.json": COUNTRIES,
         "genre_families.json": FAMILIES,
+        "franchises.json": franchises_table(FRANCHISES),
     }
     for name, df in tables.items():
         df = overrides.get(name.removesuffix(".json"), df)
@@ -114,3 +115,18 @@ def test_null_list_column(tmp_path):
         countries=pl.lit(None, dtype=pl.List(pl.String))
     )
     assert any("countries has nulls" in e for e in _errors_with(tmp_path, films=films))
+
+
+def test_franchise_installment_beyond_n_released(tmp_path):
+    bad = FRANCHISES.with_columns(installment=pl.Series([2, 4, 1]))
+    errors = _errors_with(tmp_path, franchises=franchises_table(bad))
+    assert any("installment" in e for e in errors)
+
+
+def test_franchise_small_collection_and_bad_rating(tmp_path):
+    bad = FRANCHISES.with_columns(
+        n_released=pl.Series([2, 2, 2]), imdb_100=pl.Series([70.0, 101.0, None])
+    )
+    errors = _errors_with(tmp_path, franchises=franchises_table(bad))
+    assert any("n_released" in e for e in errors)
+    assert any("imdb_100 outside" in e for e in errors)

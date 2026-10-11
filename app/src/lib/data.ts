@@ -1,5 +1,6 @@
 import type {
-  AppData, Columnar, CountryGenreRow, CountryRow, FilmRow, GenreFamilyRow, GenreYearRow, Meta,
+  AppData, Columnar, CountryGenreRow, CountryRow, FilmRow, FranchiseRow, GenreFamilyRow,
+  GenreYearRow, Meta,
 } from './types'
 
 async function fetchJson<T>(file: string): Promise<T> {
@@ -9,14 +10,15 @@ async function fetchJson<T>(file: string): Promise<T> {
 }
 
 export async function loadData(): Promise<AppData> {
-  const [films, genreYear, countryGenre, countries, genreFamilies, topo, meta] = await Promise.all([
+  const [films, genreYear, countryGenre, countries, genreFamilies, franchises, topo, meta] = await Promise.all([
     fetchJson<Columnar<FilmRow>>('films.json'),
     fetchJson<Columnar<GenreYearRow>>('genre_year.json'),
     fetchJson<Columnar<CountryGenreRow>>('country_genre.json'),
     fetchJson<Columnar<CountryRow>>('countries.json'),
     fetchJson<Columnar<GenreFamilyRow>>('genre_families.json'),
+    fetchJson<Columnar<FranchiseRow>>('franchises.json'),
     fetchJson<unknown>('countries.topo.json'),
     fetchJson<Meta>('meta.json'),
   ])
-  return { films, genreYear, countryGenre, countries, genreFamilies, topo, meta }
+  return { films, genreYear, countryGenre, countries, genreFamilies, franchises, topo, meta }
 }
