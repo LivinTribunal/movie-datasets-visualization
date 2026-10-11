@@ -278,6 +278,11 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   it. Letterboxd shows an average only once a film has enough ratings, so
   it gets no threshold of ours. `gap` stays audience score minus
   Tomatometer.
+- **Critic review minimum**: the PLAN's 20 critic reviews is not applied in
+  derive. It would drop 39 % of the Metascores (5,628 of 9,154 left), and
+  RT gives no review counts to apply it to. `films.json` carries
+  `mc_critic_reviews` next to each Metascore, so a view can apply the
+  minimum and the detail panel shows the count.
 - **Cinema genre shares** come from LUMIERE admissions per market and year
   (the year of the admissions, not of the release). Each film adds
   `admissions × genre_weight` to its genres. The combined `GB_IE` market

@@ -40,7 +40,7 @@ export function Franchise({ data }: { data: AppData }) {
         {top.map(([id, r]) => (
           <li key={id}>
             {r.name}: {r.n} films, IMDb change from film 1 to film 2:{' '}
-            {r.change === null ? 'n/a' : `${r.change > 0 ? '+' : ''}${r.change.toFixed(1)}`}
+            {r.change === null ? 'n/a' : `${r.change > 0 ? '+' : ''}${r.change.toFixed(1)} points`}
           </li>
         ))}
       </ul>

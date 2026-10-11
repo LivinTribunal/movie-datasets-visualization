@@ -89,7 +89,7 @@ work runs in parallel because the scrapes take days of wall-clock time.
 | Rotten Tomatoes, Clapper (Kaggle) | tomatometer and audience score up to April 2023 | Kaggle CLI | 143k titles |
 | Rotten Tomatoes pages | scores for films from 2023 on | scrape (embedded JSON) | ~2.8k films |
 | Metacritic pages | Metascore and user score | scrape | ~10k films |
-| Letterboxd | average rating, a third audience score | scrape `letterboxd.com/tmdb/{tmdb_id}` | ~13k films (notable subset) |
+| Letterboxd | average rating, a third audience score | scrape `letterboxd.com/imdb/{imdb_id}` | ~13k films (notable subset) |
 | The Numbers (2 Kaggle scrapes) | budget, domestic and worldwide gross, franchise, source | Kaggle CLI | 6.5k films |
 | English Wikipedia infobox | budget and gross for notable films that miss them | MediaWiki API (raw wikitext) | ~4k films |
 | Box Office Mojo title pages | worldwide gross for films without revenue | scrape | ~4k films |
@@ -116,7 +116,7 @@ Links:
 Scrape URL patterns: RT and Metacritic pages through the Wikidata IDs
 (P1258, P1712); `boxofficemojo.com/title/{imdb_id}`;
 `boxofficemojo.com/year/{year}/?area={ISO2}`; LUMIERE through P4282;
-`letterboxd.com/tmdb/{tmdb_id}`.
+`letterboxd.com/imdb/{imdb_id}`.
 
 ### 4.2 Pipeline stages
 
@@ -232,7 +232,7 @@ Rough targets: under ~15 MB in total, under 5 MB gzipped for the first load.
 | `films.json` (columnar) | notable films + films with both RT scores (~25k) | scatter, details, franchise |
 | `genre_year.json` | year × genre × metric (fractional) | genre timeline |
 | `country_genre.json` | source × country × year × genre share | map, country panel |
-| `franchises.json` | collection → ordered film IDs | franchise view |
+| `franchises.json` | one row per released part of a collection, with its installment number | franchise view |
 | `countries.topo.json` | world geometry | map |
 | `meta.json` | snapshot dates, coverage stats, match rates, notes on transformations | "About the data" panel |
 
