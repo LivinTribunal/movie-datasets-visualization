@@ -30,7 +30,7 @@ SCHEMA: dict[str, list[str]] = {
     ],
 }  # fmt: skip
 OTHER_FILES = ("countries.topo.json", "meta.json")
-SRC_VALUES = {"numbers", "tmdb", "wikidata", None}
+SRC_VALUES = {"numbers", "tmdb", "wikidata", "wikipedia", None}
 IMDB_ID = re.compile(r"^tt\d+$")
 
 

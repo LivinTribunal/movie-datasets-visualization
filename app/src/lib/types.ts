@@ -2,7 +2,7 @@
 
 export type Columnar<T> = { columns: { [K in keyof T]: T[K][] } }
 
-export type MoneySrc = 'numbers' | 'tmdb' | 'wikidata'
+export type MoneySrc = 'numbers' | 'tmdb' | 'wikidata' | 'wikipedia'
 
 export interface FilmRow {
   imdb_id: string

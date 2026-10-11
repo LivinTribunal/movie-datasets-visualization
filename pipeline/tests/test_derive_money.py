@@ -60,8 +60,29 @@ def _films(rows: list[tuple]) -> pl.DataFrame:
     )
 
 
-def _run(films: list[tuple], wiki: list[tuple] | None = None) -> dict:
-    out = money(_films(films), _wiki(wiki or []), CURRENCIES, FX, CPI)
+def _wp(rows: list[tuple]) -> pl.DataFrame:
+    """(imdb_id, wp_budget, wp_budget_currency, wp_gross, wp_gross_currency)"""
+    return pl.DataFrame(
+        rows,
+        schema={
+            "imdb_id": pl.String,
+            "enwiki_title": pl.String,
+            "wp_budget": pl.Float64,
+            "wp_budget_currency": pl.String,
+            "wp_budget_text": pl.String,
+            "wp_gross": pl.Float64,
+            "wp_gross_currency": pl.String,
+            "wp_gross_text": pl.String,
+        },
+        orient="row",
+    )
+
+
+def _run(
+    films: list[tuple], wiki: list[tuple] | None = None, wp: list[tuple] | None = None
+) -> dict:
+    wikipedia = None if wp is None else _wp(wp)
+    out = money(_films(films), _wiki(wiki or []), CURRENCIES, FX, CPI, wikipedia)
     return out.row(0, named=True)
 
 
@@ -230,3 +251,40 @@ def test_one_row_per_film() -> None:
     films = _films([("tt1", 2010, 1e6, None, None, None), ("tt2", 2010, None, None, None, None)])
     out = money(films, _wiki([]), CURRENCIES, FX, CPI)
     assert out["imdb_id"].to_list() == ["tt1", "tt2"]
+
+
+def _wp_row(budget=None, cur="USD", gross=None) -> tuple:
+    return ("tt1", "T", budget, cur, "", gross, cur, "")
+
+
+def test_wikipedia_is_the_last_budget_source() -> None:
+    films = [("tt1", 2010, None, None, None, None)]
+    row = _run(films, wp=[_wp_row(budget=3e6)])
+    assert (row["budget"], row["budget_src"], row["budget_currency"]) == (3e6, "wikipedia", "USD")
+    wiki = [("tt1", "budget", 8e6, "Q4917", None, None, "normal")]
+    assert _run(films, wiki, [_wp_row(budget=3e6)])["budget_src"] == "wikidata"
+    tmdb = [("tt1", 2010, None, 6e6, None, None)]
+    row = _run(tmdb, wp=[_wp_row(budget=6.1e6)])
+    assert (row["budget"], row["budget_src"]) == (6e6, "tmdb")
+
+
+def test_wikipedia_eur_budget_converts_and_keeps_currency() -> None:
+    row = _run([("tt1", 2010, None, None, None, None)], wp=[_wp_row(budget=8e6, cur="EUR")])
+    assert row["budget_currency"] == "EUR" and row["budget_usd"] == 8e6 / 0.8
+
+
+def test_wikipedia_unknown_currency_keeps_nominal_without_usd() -> None:
+    row = _run([("tt1", 2010, None, None, None, None)], wp=[_wp_row(budget=8e6, cur="BEF")])
+    assert (row["budget"], row["budget_currency"], row["budget_src"]) == (8e6, "BEF", "wikipedia")
+    assert row["budget_usd"] is None
+
+
+def test_tiny_wikipedia_revenue_is_dropped() -> None:
+    row = _run([("tt1", 2010, None, None, None, None)], wp=[_wp_row(gross=9_000.0)])
+    assert row["revenue"] is None and row["revenue_src"] is None
+
+
+def test_wikipedia_counts_in_disagreement() -> None:
+    films = [("tt1", 2010, None, 1e6, None, None)]
+    assert _run(films, wp=[_wp_row(budget=5e6)])["budget_disagree"] is True
+    assert _run(films, wp=[_wp_row(budget=1.1e6)])["budget_disagree"] is False
