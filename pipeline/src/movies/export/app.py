@@ -22,6 +22,8 @@ NOTES = [
     "Fuzzy title matches to The Numbers are flagged (money_fuzzy).",
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
     "The TMDB average is null under 50 votes.",
+    "Rotten Tomatoes scores of films from 2023 on come from the RT pages (October 2026), older"
+    " ones from the April 2023 Clapper dump; newer audience scores are often RT's verified score.",
     "Netflix shares cover only matched titles; see the coverage column.",
     "Scores are on 0–100: IMDb, TMDB and Metacritic users ×10, Letterboxd ×20. "
     "The Metacritic user score is null under 10 user ratings.",
