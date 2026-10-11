@@ -35,12 +35,15 @@ def ratings(
     )
     if metacritic is None:
         out = out.with_columns(
-            metascore_100=pl.lit(None, pl.Float64), mc_user_100=pl.lit(None, pl.Float64)
+            metascore_100=pl.lit(None, pl.Float64),
+            mc_critic_reviews=pl.lit(None, pl.Int32),
+            mc_user_100=pl.lit(None, pl.Float64),
         )
     else:
         mc = metacritic.select(
             "imdb_id",
             metascore_100=pl.col("metascore").cast(pl.Float64),
+            mc_critic_reviews=pl.col("mc_critic_reviews").cast(pl.Int32),
             mc_user_100=pl.when(pl.col("mc_user_ratings") >= MC_MIN_USER_RATINGS).then(
                 pl.col("mc_user_score").cast(pl.Float64) * 10
             ),
@@ -59,6 +62,7 @@ def ratings(
         "tmdb_100",
         "tomatometer_100",
         "metascore_100",
+        "mc_critic_reviews",
         "audience_100",
         "mc_user_100",
         "letterboxd_100",

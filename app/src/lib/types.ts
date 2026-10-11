@@ -29,6 +29,7 @@ export interface FilmRow {
   tomatometer_100: number | null
   audience_100: number | null
   metascore_100: number | null
+  mc_critic_reviews: number | null
   mc_user_100: number | null
   letterboxd_100: number | null
   gap: number | null

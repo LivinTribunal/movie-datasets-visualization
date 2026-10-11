@@ -12,7 +12,7 @@ SCHEMA: dict[str, list[str]] = {
         "imdb_votes", "budget_usd2025", "revenue_usd2025", "budget_src", "revenue_src",
         "budget_converted", "revenue_converted", "budget_disagree", "revenue_disagree",
         "money_fuzzy", "roi", "imdb_100", "tmdb_100", "tomatometer_100", "audience_100",
-        "metascore_100", "mc_user_100", "letterboxd_100", "gap",
+        "metascore_100", "mc_critic_reviews", "mc_user_100", "letterboxd_100", "gap",
     ],
     "genre_year.json": [
         "subset", "year", "genre", "family", "films", "votes", "revenue_usd2025", "revenue_films",
@@ -107,6 +107,23 @@ def check(data_dir: Path) -> list[str]:
         for col in ("imdb_100", "tomatometer_100", "audience_100"):
             if _outside(fr[col], 0, 100):
                 errors.append(f"franchises.json: {col} outside 0-100")
+        by_collection: dict[int, list[int]] = {}
+        for c, i in zip(fr["collection_id"], fr["installment"], strict=True):
+            by_collection.setdefault(c, []).append(i)
+        ns = dict(zip(fr["collection_id"], fr["n_released"], strict=True))
+        if any(sorted(i) != list(range(1, ns[c] + 1)) for c, i in by_collection.items()):
+            errors.append("franchises.json: installments are not exactly 1..n_released")
+        first = [i == 1 for i in fr["installment"]]
+        if any(
+            f and v is not None and v != 0
+            for f, v in zip(first, fr["imdb_100_vs_first"], strict=True)
+        ):
+            errors.append("franchises.json: imdb_100_vs_first not 0 at installment 1")
+        if any(f and v is not None for f, v in zip(first, fr["imdb_100_vs_prev"], strict=True)):
+            errors.append("franchises.json: imdb_100_vs_prev set at installment 1")
+        for col in ("revenue_vs_prev", "revenue_vs_first"):
+            if any(v is not None and v < 0 for v in fr[col]):
+                errors.append(f"franchises.json: negative {col}")
         if any(i is not None and not IMDB_ID.match(i) for i in fr["imdb_id"]):
             errors.append("franchises.json: imdb_id does not match tt<digits>")
     check_refs("films.json", "families", families, "family", nested=True)

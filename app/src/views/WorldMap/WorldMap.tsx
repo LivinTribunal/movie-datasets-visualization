@@ -30,7 +30,7 @@ export function WorldMap({ data }: { data: AppData }) {
     <section className="panel">
       <h2>World map</h2>
       <p>
-        Netflix genre shares: {sourceCounts.netflix} countries · Cinema (LUMIERE):{' '}
+        Netflix genre shares: {sourceCounts.netflix} countries · Cinema (LUMIERE, notable films only):{' '}
         {sourceCounts.lumiere} markets
       </p>
       <p>

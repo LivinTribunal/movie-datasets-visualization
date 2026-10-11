@@ -136,3 +136,28 @@ def test_franchise_small_collection_and_bad_rating(tmp_path):
     errors = _errors_with(tmp_path, franchises=franchises_table(bad))
     assert any("n_released" in e for e in errors)
     assert any("imdb_100 outside" in e for e in errors)
+
+
+def test_franchise_installments_must_be_exactly_1_to_n(tmp_path):
+    bad = FRANCHISES.with_columns(installment=pl.Series([2, 2, 1]), n_released=pl.Series([2, 2, 3]))
+    errors = _errors_with(tmp_path, franchises=franchises_table(bad))
+    assert any("not exactly 1..n_released" in e for e in errors)
+
+
+def test_franchise_first_installment_imdb_vs_first_must_be_zero(tmp_path):
+    bad = FRANCHISES.with_columns(imdb_100_vs_first=pl.Series([-9.96, 2.0, None]))
+    errors = _errors_with(tmp_path, franchises=franchises_table(bad))
+    assert any("imdb_100_vs_first not 0" in e for e in errors)
+
+
+def test_franchise_first_installment_has_no_vs_prev(tmp_path):
+    bad = FRANCHISES.with_columns(imdb_100_vs_prev=pl.Series([-9.96, 1.0, None]))
+    errors = _errors_with(tmp_path, franchises=franchises_table(bad))
+    assert any("imdb_100_vs_prev set" in e for e in errors)
+
+
+@pytest.mark.parametrize("col", ["revenue_vs_prev", "revenue_vs_first"])
+def test_franchise_revenue_ratios_not_negative(tmp_path, col):
+    bad = FRANCHISES.with_columns(pl.Series(col, [-0.5, None, None]))
+    errors = _errors_with(tmp_path, franchises=franchises_table(bad))
+    assert any(f"negative {col}" in e for e in errors)

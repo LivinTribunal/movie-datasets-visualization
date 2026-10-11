@@ -22,6 +22,10 @@ NOTES = [
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
     "The TMDB average is null under 50 votes.",
     "Netflix shares cover only matched titles; see the coverage column.",
+    "Scores are on 0–100: IMDb, TMDB and Metacritic users ×10, Letterboxd ×20. "
+    "The Metacritic user score is null under 10 user ratings.",
+]
+CINEMA_NOTES = [
     "Cinema genre shares come from LUMIERE admissions of notable films only; UK and Ireland "
     "admissions are LUMIERE estimates, and the combined UK+Ireland market counts as the UK.",
 ]
@@ -106,6 +110,25 @@ def genre_year(films: pl.DataFrame, money: pl.DataFrame, film_genres: pl.DataFra
     )
 
 
+def country_genre_table(netflix: pl.DataFrame, lumiere: pl.DataFrame | None) -> pl.DataFrame:
+    """Netflix and (when present) LUMIERE genre shares as one frame in schema order."""
+    sources = [("netflix", netflix)] + ([("lumiere", lumiere)] if lumiere is not None else [])
+    return pl.concat(
+        [
+            df.with_columns(
+                source=pl.lit(name),
+                year=pl.col("year").cast(pl.Int16),
+                score=pl.col("score").cast(pl.Float64),
+                share=pl.col("share").round(4),
+                coverage=pl.col("coverage").round(4),
+                fuzzy_share=pl.col("fuzzy_share").round(4),
+                estimated_share=pl.col("estimated_share").round(4),
+            ).select(SCHEMA["country_genre.json"])
+            for name, df in sources
+        ]
+    )
+
+
 def franchises_table(df: pl.DataFrame) -> pl.DataFrame:
     return (
         df.with_columns(
@@ -150,23 +173,10 @@ def run() -> None:
     _write_table("films.json", films_out)
     _write_table("genre_year.json", genre_year(films, money, fg))
     lumiere_path = interim / "country_genre_lumiere.parquet"
-    sources = [("netflix", netflix)]
-    if lumiere_path.exists():
-        sources.append(("lumiere", pl.read_parquet(lumiere_path)))
-    else:
+    lumiere = pl.read_parquet(lumiere_path) if lumiere_path.exists() else None
+    if lumiere is None:
         print("lumiere cinema shares skipped: run `movies scrape --source lumiere` and derive")
-    country_genre = pl.concat(
-        [
-            df.with_columns(
-                source=pl.lit(name),
-                share=pl.col("share").round(4),
-                coverage=pl.col("coverage").round(4),
-                fuzzy_share=pl.col("fuzzy_share").round(4),
-                estimated_share=pl.col("estimated_share").round(4),
-            ).select(SCHEMA["country_genre.json"])
-            for name, df in sources
-        ]
-    )
+    country_genre = country_genre_table(netflix, lumiere)
     _write_table("country_genre.json", country_genre)
     countries = pl.read_csv(
         paths.REFERENCE / "countries.csv", schema_overrides={"iso_numeric": pl.String}
@@ -174,13 +184,8 @@ def run() -> None:
     _write_table("countries.json", countries.select(SCHEMA["countries.json"]))
     families = pl.read_csv(paths.REFERENCE / "genre_families.csv")
     _write_table("genre_families.json", families.select(SCHEMA["genre_families.json"]))
-    franchises_path = interim / "franchises.parquet"
-    franchises_out = None
-    if franchises_path.exists():
-        franchises_out = franchises_table(pl.read_parquet(franchises_path))
-        _write_table("franchises.json", franchises_out)
-    else:
-        print("franchises.json skipped: run `movies scrape --source tmdb_collections` and derive")
+    franchises_out = franchises_table(pl.read_parquet(interim / "franchises.parquet"))
+    _write_table("franchises.json", franchises_out)
     shutil.copyfile(
         paths.RAW / "world_atlas" / "countries-110m.json", paths.APP_DATA / "countries.topo.json"
     )
@@ -202,15 +207,11 @@ def run() -> None:
                             "country_iso2"
                         ].n_unique()
                     }
-                    if len(sources) > 1
+                    if lumiere is not None
                     else {}
                 ),
-                **(
-                    {"franchises": franchises_out["collection_id"].n_unique()}
-                    if franchises_out is not None
-                    else {}
-                ),
+                "franchises": franchises_out["collection_id"].n_unique(),
             },
-            "notes": NOTES,
+            "notes": NOTES + (CINEMA_NOTES if lumiere is not None else []),
         },
     )
