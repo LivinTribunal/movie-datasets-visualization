@@ -312,7 +312,8 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 
 - **Rotten Tomatoes** allows `/m/` (only `/m/*/pictures` is disallowed).
   The film page embeds its scores in a `media-scorecard-json` script tag.
-  We fetch films from 2023 on that have an RT id (3,067), because the
+  We fetch films from 2023 on that have a film RT id (3,056; 11 more
+  point at a TV episode and are skipped), because the
   Clapper dump stops in April 2023 and has a score for only 161 of them.
   Where a page has a score, it replaces Clapper's, value by value: a page
   with a Tomatometer but no audience score keeps Clapper's audience score.

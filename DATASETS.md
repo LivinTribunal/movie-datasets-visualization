@@ -59,7 +59,7 @@ rate and commit only derived numbers, never page contents.
 
 | ID | Source | Key | Scope | Gives | Used for | Needs | Status |
 |---|---|---|---|---|---|---|---|
-| `rt_recent` | Rotten Tomatoes film pages (embedded JSON) | Wikidata P1258 | films from 2023 on in the working subset with an RT id (3,067) | critics score, audience score (Popcornmeter), review counts | T3 for recent films | crosswalk | 🔄 scraping since 2026-10-11 |
+| `rt_recent` | Rotten Tomatoes film pages (embedded JSON) | Wikidata P1258 | films from 2023 on in the working subset with a film (`m/`) RT id (3,056) | critics score, audience score (Popcornmeter), review counts | T3 for recent films | crosswalk | 🔄 scraping since 2026-10-11 |
 | `metacritic` | `metacritic.com/{mc_id}/` (JSON-LD metascore, user score text) | Wikidata P1712 | notable subset with an id (9,451) | Metascore, critic review count, user score (0–10), user rating count | T2, T3 (second critic/audience pair) | crosswalk | ✅ scraped 2026-10-11: 9,451 films, 27 missing (404 or bare redirect), 9,154 Metascores, 9,301 user scores (8,790 with ≥ 10 user ratings) |
 | `letterboxd` | `letterboxd.com/imdb/{imdb_id}/` → film page (JSON-LD) | IMDb id | notable subset (13,080) | average rating (0.5–5), number of ratings | T3 (cinephile audience) | – | ✅ scraped 2026-10-11: 13,080 films, 13,027 averages; 11 not on Letterboxd ("IMDb ID Not found"), 42 with too few ratings for an average |
 | `wikipedia` | English Wikipedia Infobox film (raw wikitext from `/wiki/{title}?action=raw`) | enwiki title from the crosswalk | notable films with an enwiki article (12,923), also those that have money, as a cross-check | `budget`, `gross` text, parsed | money coverage | crosswalk | 🔄 scraping since 2026-10-11 |

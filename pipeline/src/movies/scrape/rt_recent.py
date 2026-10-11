@@ -101,6 +101,8 @@ def build() -> Path:
         pl.read_parquet(films, columns=["imdb_id", "year", "rt_id"])
         .filter((pl.col("year") >= RT_FROM_YEAR) & pl.col("rt_id").is_not_null())
         .with_columns(pl.col("rt_id").str.split("|").list.first())
+        # a few Wikidata RT ids point at a TV episode (tv/...), whose scores are not the film's
+        .filter(pl.col("rt_id").str.starts_with("m/"))
         .select("imdb_id", "rt_id")
         .unique("imdb_id")
         .sort("imdb_id")
