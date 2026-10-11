@@ -305,3 +305,29 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   `budget_usd2025` drop from 557 to 54, and revenues from 373 to 15. The
   rest are non-USD amounts from years with no World Bank rate (before
   1960, or Taiwan), and those stay null.
+
+### D19. Rotten Tomatoes pages and Wikipedia infoboxes (2026-10-11)
+
+robots.txt checked on 2026-10-11 with our User-Agent:
+
+- **Rotten Tomatoes** allows `/m/` (only `/m/*/pictures` is disallowed).
+  The film page embeds its scores in a `media-scorecard-json` script tag.
+  We fetch films from 2023 on that have a film RT id (3,056; 11 more
+  point at a TV episode and are skipped), because the
+  Clapper dump stops in April 2023 and has a score for only 161 of them.
+  Where a page has a score, it replaces Clapper's, value by value: a page
+  with a Tomatometer but no audience score keeps Clapper's audience score.
+  The audience score is the Popcornmeter RT shows first, which is the
+  verified-ticket score when the film has one (`audience_score_type`
+  says which). Clapper's older films mostly have the all-audience score,
+  so the two are not exactly the same measure.
+- **Wikipedia** disallows `/w/` for crawlers, which covers `api.php`, but
+  allows article URLs, so we read `/wiki/{title}?action=raw` (raw
+  wikitext). We fetch every notable film with an English article
+  (12,923), including the ones that already have money. The infobox
+  value then serves both as the last fallback and as a second opinion for
+  the `*_disagree` flags, which catch wrong TMDB amounts. The parser
+  takes the first item of the `budget` and `gross` fields. A range gives
+  its upper bound, like the Wikidata pick that keeps the largest amount.
+  A currency it cannot name gives null, and `wp_*_text` keeps the cleaned
+  field so every value can be checked against its source text.

@@ -18,11 +18,14 @@ def ratings(
     films: pl.DataFrame,
     metacritic: pl.DataFrame | None = None,
     letterboxd: pl.DataFrame | None = None,
+    rt_recent: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """One row per film: every score on 0-100 and `gap = audience - critics`.
 
     The scraped Metacritic and Letterboxd frames are optional; without them their columns are null.
     Letterboxd shows an average only once a film has enough ratings, so it gets no extra threshold.
+    The Rotten Tomatoes page scrape (2026-10) wins over the Clapper dump (April 2023), per value:
+    a page without a score keeps Clapper's.
     """
     out = films.select(
         "imdb_id",
@@ -33,6 +36,20 @@ def ratings(
         tomatometer_100=pl.col("tomatometer").cast(pl.Float64),
         audience_100=pl.col("audience_score").cast(pl.Float64),
     )
+    if rt_recent is not None:
+        rt = rt_recent.select(
+            "imdb_id",
+            rt_tomatometer=pl.col("tomatometer").cast(pl.Float64),
+            rt_audience=pl.col("audience_score").cast(pl.Float64),
+        )
+        out = (
+            out.join(rt, on="imdb_id", how="left")
+            .with_columns(
+                tomatometer_100=pl.coalesce("rt_tomatometer", "tomatometer_100"),
+                audience_100=pl.coalesce("rt_audience", "audience_100"),
+            )
+            .drop("rt_tomatometer", "rt_audience")
+        )
     if metacritic is None:
         out = out.with_columns(
             metascore_100=pl.lit(None, pl.Float64),
@@ -70,11 +87,11 @@ def ratings(
     )
 
 
-def _read_scraped(name: str, nulls: str) -> pl.DataFrame | None:
+def _read_scraped(name: str, outcome: str) -> pl.DataFrame | None:
     path = paths.SCRAPED / name
     if path.exists():
         return pl.read_parquet(path)
-    print(f"{name} not found; {nulls} stay null")
+    print(f"{name} not found; {outcome}")
     return None
 
 
@@ -82,8 +99,9 @@ def run() -> None:
     films = pl.read_parquet(paths.INTERIM / "films.parquet")
     out = ratings(
         films,
-        _read_scraped("metacritic.parquet", "metascore_100 and mc_user_100"),
-        _read_scraped("letterboxd.parquet", "letterboxd_100"),
+        _read_scraped("metacritic.parquet", "metascore_100 and mc_user_100 stay null"),
+        _read_scraped("letterboxd.parquet", "letterboxd_100 stays null"),
+        _read_scraped("rt_recent.parquet", "the Clapper RT scores are kept"),
     )
     out.write_parquet(paths.INTERIM / "ratings.parquet")
 
