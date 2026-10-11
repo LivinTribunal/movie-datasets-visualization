@@ -1,6 +1,8 @@
+import datetime as dt
+
 import polars as pl
 
-from movies.export.app import films_table, genre_year, to_columns
+from movies.export.app import films_table, franchises_table, genre_year, to_columns
 
 FILMS = pl.DataFrame(
     {
@@ -108,3 +110,35 @@ def test_unknown_production_countries_export_as_empty_list():
     )
     out = films_table(films, MONEY, RATINGS, FILM_GENRES)
     assert out["countries"].to_list() == [[], ["CZ"]]
+
+
+FRANCHISES = pl.DataFrame(
+    {
+        "collection_id": [7, 7, 3],
+        "collection_name": ["S", "S", "T"],
+        "installment": [2, 1, 1],
+        "n_released": [3, 3, 3],
+        "tmdb_id": [2, 1, 9],
+        "imdb_id": ["tt2", "tt1", None],
+        "title": ["Two", "One", "Nine"],
+        "release_date": [dt.date(2003, 1, 1), dt.date(2001, 5, 1), dt.date(1999, 1, 1)],
+        "imdb_100": [70.04, 80.0, None],
+        "imdb_100_vs_prev": [-9.96, None, None],
+        "imdb_100_vs_first": [-9.96, 0.0, None],
+        "tomatometer_100": [None, 90.0, None],
+        "audience_100": pl.Series([None, None, None], dtype=pl.Float64),
+        "revenue_usd2025": [50.4, 100.0, None],
+        "revenue_vs_prev": [0.50049, None, None],
+        "revenue_vs_first": [0.50049, 1.0, None],
+    }
+)
+
+
+def test_franchises_table_year_rounding_and_order():
+    out = franchises_table(FRANCHISES)
+    assert out["collection_id"].to_list() == [3, 7, 7]
+    assert out["installment"].to_list() == [1, 1, 2]
+    assert out["year"].to_list() == [1999, 2001, 2003]
+    assert out["imdb_100"].to_list() == [None, 80.0, 70.0]
+    assert out["revenue_usd2025"].to_list() == [None, 100, 50]
+    assert out["revenue_vs_prev"].to_list() == [None, None, 0.5]

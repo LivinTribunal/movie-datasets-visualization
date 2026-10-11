@@ -101,6 +101,24 @@ def genre_year(films: pl.DataFrame, money: pl.DataFrame, film_genres: pl.DataFra
     )
 
 
+def franchises_table(df: pl.DataFrame) -> pl.DataFrame:
+    return (
+        df.with_columns(
+            year=pl.col("release_date").dt.year().cast(pl.Int64),
+            imdb_100=pl.col("imdb_100").round(1),
+            imdb_100_vs_prev=pl.col("imdb_100_vs_prev").round(1),
+            imdb_100_vs_first=pl.col("imdb_100_vs_first").round(1),
+            tomatometer_100=pl.col("tomatometer_100").round(1),
+            audience_100=pl.col("audience_100").round(1),
+            revenue_usd2025=pl.col("revenue_usd2025").round(0).cast(pl.Int64),
+            revenue_vs_prev=pl.col("revenue_vs_prev").round(3),
+            revenue_vs_first=pl.col("revenue_vs_first").round(3),
+        )
+        .select(SCHEMA["franchises.json"])
+        .sort("collection_id", "installment")
+    )
+
+
 def to_columns(df: pl.DataFrame) -> dict[str, list]:
     return {c: df[c].to_list() for c in df.columns}
 
@@ -139,6 +157,13 @@ def run() -> None:
     _write_table("countries.json", countries.select(SCHEMA["countries.json"]))
     families = pl.read_csv(paths.REFERENCE / "genre_families.csv")
     _write_table("genre_families.json", families.select(SCHEMA["genre_families.json"]))
+    franchises_path = interim / "franchises.parquet"
+    franchises_out = None
+    if franchises_path.exists():
+        franchises_out = franchises_table(pl.read_parquet(franchises_path))
+        _write_table("franchises.json", franchises_out)
+    else:
+        print("franchises.json skipped: run `movies scrape --source tmdb_collections` and derive")
     shutil.copyfile(
         paths.RAW / "world_atlas" / "countries-110m.json", paths.APP_DATA / "countries.topo.json"
     )
@@ -154,6 +179,11 @@ def run() -> None:
                 "with_revenue": films_out["revenue_usd2025"].count(),
                 "with_gap": films_out["gap"].count(),
                 "netflix_countries": country_genre["country_iso2"].n_unique(),
+                **(
+                    {"franchises": franchises_out["collection_id"].n_unique()}
+                    if franchises_out is not None
+                    else {}
+                ),
             },
             "notes": NOTES,
         },

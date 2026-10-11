@@ -22,6 +22,11 @@ SCHEMA: dict[str, list[str]] = {
     ],
     "countries.json": ["iso2", "iso_numeric", "name", "region", "subregion"],
     "genre_families.json": ["genre", "family", "family_order", "colour"],
+    "franchises.json": [
+        "collection_id", "collection_name", "installment", "n_released", "tmdb_id", "imdb_id",
+        "title", "year", "imdb_100", "imdb_100_vs_prev", "imdb_100_vs_first", "tomatometer_100",
+        "audience_100", "revenue_usd2025", "revenue_vs_prev", "revenue_vs_first",
+    ],
 }  # fmt: skip
 OTHER_FILES = ("countries.topo.json", "meta.json")
 SRC_VALUES = {"numbers", "tmdb", "wikidata", None}
@@ -89,6 +94,20 @@ def check(data_dir: Path) -> list[str]:
             bad = set(films[col]) - SRC_VALUES
             if bad:
                 errors.append(f"films.json: bad {col} {sorted(bad, key=str)}")
+    fr = t["franchises.json"]
+    if fr:
+        if any(
+            i is None or i < 1 or i > n
+            for i, n in zip(fr["installment"], fr["n_released"], strict=True)
+        ):
+            errors.append("franchises.json: installment outside 1..n_released")
+        if any(n is None or n < 3 for n in fr["n_released"]):
+            errors.append("franchises.json: n_released under 3")
+        for col in ("imdb_100", "tomatometer_100", "audience_100"):
+            if _outside(fr[col], 0, 100):
+                errors.append(f"franchises.json: {col} outside 0-100")
+        if any(i is not None and not IMDB_ID.match(i) for i in fr["imdb_id"]):
+            errors.append("franchises.json: imdb_id does not match tt<digits>")
     check_refs("films.json", "families", families, "family", nested=True)
     check_refs("films.json", "countries", countries, "country", nested=True)
     check_refs("genre_year.json", "family", families, "family")

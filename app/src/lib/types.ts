@@ -69,6 +69,25 @@ export interface GenreFamilyRow {
   colour: string
 }
 
+export interface FranchiseRow {
+  collection_id: number
+  collection_name: string
+  installment: number
+  n_released: number
+  tmdb_id: number
+  imdb_id: string | null
+  title: string
+  year: number
+  imdb_100: number | null
+  imdb_100_vs_prev: number | null
+  imdb_100_vs_first: number | null
+  tomatometer_100: number | null
+  audience_100: number | null
+  revenue_usd2025: number | null
+  revenue_vs_prev: number | null
+  revenue_vs_first: number | null
+}
+
 export interface Meta {
   snapshots: Record<string, string>
   base_year: number
@@ -82,6 +101,7 @@ export interface AppData {
   countryGenre: Columnar<CountryGenreRow>
   countries: Columnar<CountryRow>
   genreFamilies: Columnar<GenreFamilyRow>
+  franchises: Columnar<FranchiseRow>
   topo: unknown
   meta: Meta
 }

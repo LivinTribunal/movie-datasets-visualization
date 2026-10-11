@@ -73,3 +73,30 @@ def test_api_key_missing(monkeypatch):
     monkeypatch.delenv("TMDB_API_KEY", raising=False)
     with pytest.raises(RuntimeError, match="TMDB_API_KEY"):
         tc.api_key()
+
+
+def test_parse_parts_null_date_for_empty_string():
+    payload = {
+        "id": 10,
+        "name": "Star Wars Collection",
+        "parts": [
+            {"id": 11, "title": "A", "release_date": "1977-05-25"},
+            {"id": 12, "title": "B", "release_date": ""},
+        ],
+    }
+    got = tc.parse_parts(payload)
+    assert [(p["tmdb_id"], p["release_date"]) for p in got] == [(11, "1977-05-25"), (12, None)]
+    assert got[0]["collection_id"] == 10 and got[0]["collection_name"] == "Star Wars Collection"
+    assert tc.parse_parts({"id": 9, "not_found": True}) == []
+
+
+def test_collection_fetch_uses_its_endpoint_and_hides_the_key(tmp_path):
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/3/collection/10"
+        return httpx.Response(500)
+
+    with pytest.raises(RuntimeError) as err:
+        with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+            tc.fetch([10], tmp_path, "SECRETKEY", client, tc.COLLECTION_ENDPOINT, "collection")
+    assert "500" in str(err.value) and "collection 10" in str(err.value)
+    assert "SECRETKEY" not in str(err.value)
