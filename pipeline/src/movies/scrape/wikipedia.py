@@ -47,6 +47,13 @@ COMMENT = re.compile(r"<!--.*?-->", re.S)
 REF_SELF = re.compile(r"<ref\b[^>]*?/>", re.I)
 REF = re.compile(r"<ref\b[^>]*>.*?</ref>", re.I | re.S)
 NOTE_TEMPLATE = re.compile(r"\{\{\s*(?:efn|refn|sfn|sfnp)\b", re.I)
+# annotations that are not part of the value
+NOISE_TEMPLATE = re.compile(
+    r"\{\{\s*(?:estimation|circa|increase|decrease|steady|usdcy|inflation(?:-year)?"
+    r"|citation needed|cn)\s*(?=[|}])",
+    re.I,
+)
+SMALL_TAG = re.compile(r"</?small\b[^>]*>", re.I)
 WRAPPER_TEMPLATE = re.compile(
     r"\{\{\s*(?:nowrap|small|plainlist|ubl|unbulleted list|flatlist|hlist)\s*\|", re.I
 )
@@ -54,47 +61,68 @@ LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")
 
 # a list item is split off on these; template pipes are removed first
 ITEM_SPLIT = re.compile(r"<br\s*/?>|\n|\|", re.I)
+GROSS_SPLIT = re.compile(ITEM_SPLIT.pattern + r"|\s+or\s+", re.I)
 CODE_TEMPLATE = re.compile(
-    r"\{\{\s*(US\$|USD|GBP|EUR|INR|CN¥|CNY|JPY|KRW)\s*\|\s*([^{}|]*?)\s*(?:\|[^{}]*)?\}\}", re.I
+    r"\{\{\s*(US\$|USD|GBP|EUR|INR|CN¥|¥|CNY|JPY|KRW)\s*\|\s*([^{}|]*?)\s*(?:\|[^{}]*)?\}\}", re.I
 )
 CURRENCY_TEMPLATE = re.compile(
     r"\{\{\s*currency\s*\|\s*([^{}|]*?)\s*\|\s*([A-Za-z]{3})\s*[^{}]*\}\}", re.I
 )
-TEMPLATE_CODES = {"US$": "USD", "CN¥": "CNY"}
+TEMPLATE_CODES = {"US$": "USD", "CN¥": "CNY", "¥": "JPY"}
+DASH = re.compile(r"&[nm]dash;|\{\{\s*[nm]dash\s*\}\}", re.I)
+SPACE = re.compile(r"&nbsp;|&#160;|&thinsp;|\{\{\s*nbsp\s*\}\}", re.I)
 
+# a bare ¥ is left out: Chinese articles use it for yuan, so it is ambiguous
 SYMBOLS = {
     "US$": "USD", "USD": "USD", "$": "USD",
     "£": "GBP", "GBP": "GBP",
     "€": "EUR", "EUR": "EUR",
     "₹": "INR", "Rs.": "INR", "Rs": "INR", "INR": "INR",
     "CN¥": "CNY", "RMB": "CNY", "CNY": "CNY",
-    "JP¥": "JPY", "¥": "JPY", "JPY": "JPY",
+    "JP¥": "JPY", "JPY": "JPY",
     "₩": "KRW", "KRW": "KRW",
     "A$": "AUD", "AU$": "AUD", "AUD": "AUD",
     "C$": "CAD", "CA$": "CAD", "CAD": "CAD",
     "HK$": "HKD", "HKD": "HKD",
     "R$": "BRL", "BRL": "BRL",
+    "MX$": "MXN", "NZ$": "NZD", "S$": "SGD", "NT$": "TWD",
+    "₣": "FRF", "FF": "FRF", "DM": "DEM",
 }  # fmt: skip
 CURRENCY = re.compile(
     "("
     + "|".join(re.escape(s) for s in sorted(SYMBOLS, key=len, reverse=True))
     + r")(?![A-Za-z])\s*"
 )
+ISO_CODE = re.compile(r"([A-Z]{3})(?=[\s\d])\s*")
+NOT_CODES = {"TBA", "TBD", "USA", "EST", "APX", "UNK"}
+UK = re.compile(r"UK\s+")
+# a bound is not a value
+BOUND = re.compile(r"(?:(?:over|under|less than|at least|more than)\b|[<>≥≤])", re.I)
 HEDGE = re.compile(
-    r"(?:~|≈|approx(?:imately)?\.?|about|around|circa|c\.|est(?:imated)?\.?|over|under"
-    r"|at least|less than)\s*",
-    re.I,
+    r"(?:~|≈|approx(?:imately)?\.?|about\b|around\b|circa\b|c\.|est(?:imated)?\.?)\s*", re.I
 )
 SCALES = {
-    "thousand": 1e3, "million": 1e6, "mil": 1e6, "m": 1e6, "billion": 1e9, "bn": 1e9,
-    "lakh crore": 1e12, "lakh": 1e5, "crore": 1e7,
+    "k": 1e3, "thousand": 1e3,
+    "m": 1e6, "mn": 1e6, "mln": 1e6, "mil": 1e6, "million": 1e6, "millions": 1e6,
+    "b": 1e9, "bn": 1e9, "billion": 1e9, "billions": 1e9,
+    "lakh": 1e5, "lakhs": 1e5, "crore": 1e7, "crores": 1e7,
 }  # fmt: skip
-NUMBER = re.compile(
-    r"(\d+(?:,\d{3})*(?:\.\d+)?)\s*"
-    r"(lakh crore|thousand|million|mil\.?|billion|bn|lakh|crore|m(?![A-Za-z]))?(?![A-Za-z])",
-    re.I,
-)
+UNITS = {
+    "swiss franc": "CHF", "belgian franc": "BEF", "franc": "FRF", "lira": "ITL", "lire": "ITL",
+    "peseta": "ESP", "deutsche mark": "DEM", "mark": "DEM", "rupee": "INR", "rouble": "RUB",
+    "ruble": "RUB", "kronor": "SEK", "yen": "JPY", "yuan": "CNY", "dm": "DEM",
+}  # fmt: skip
+UNIT = re.compile(r"\s*(" + "|".join(sorted(UNITS, key=len, reverse=True)) + r")s?\b", re.I)
+# Indian grouping (1,50,00,000) has groups of two
+NUMBER = re.compile(r"\d+(?:,\d{2,3})*(?:\.\d+)?")
+WORD = re.compile(r"\s*([A-Za-z]+)")
+LAKH_CRORE = re.compile(r"\s*crores?\b", re.I)
 RANGE_SEP = re.compile(r"\s*(?:[–—-]|to)\s*", re.I)
+# what may follow a gross amount without making it partial (a territory, rentals, a re-release)
+GROSS_NOTES = re.compile(
+    r"\b(?:original release|box office|worldwide|world|global|total|gross|lifetime|theatrical"
+    r"|estimated|approx|est)\b"
+)
 
 
 def _match_end(text: str, start: int) -> int:
@@ -124,19 +152,24 @@ def _unwrap_templates(text: str, opener: re.Pattern[str]) -> str:
     return text
 
 
+def _strip_noise(text: str) -> str:
+    return SMALL_TAG.sub("", _remove_templates(text, NOISE_TEMPLATE))
+
+
 def _clean(text: str) -> str:
     text = COMMENT.sub("", text)
     text = REF_SELF.sub("", REF.sub("", text))
-    text = _remove_templates(text, NOTE_TEMPLATE)
+    text = _strip_noise(_remove_templates(text, NOTE_TEMPLATE))
     text = _unwrap_templates(text, WRAPPER_TEMPLATE)
     text = LINK.sub(r"\1", text)
-    text = text.replace("&nbsp;", " ").replace("&#160;", " ")
+    text = SPACE.sub(" ", DASH.sub("–", text))
     lines = (re.sub(r"[ \t ]+", " ", line).strip() for line in text.split("\n"))
     return "\n".join(line for line in lines if line)
 
 
 def field_text(wikitext: str, name: str) -> str | None:
     """Cleaned value of the Infobox film parameter `name`, or None if absent or empty."""
+    wikitext = COMMENT.sub("", wikitext)
     start = INFOBOX.search(wikitext)
     if not start:
         return None
@@ -160,41 +193,111 @@ def field_text(wikitext: str, name: str) -> str | None:
     return None
 
 
-def _scaled(number: str, scale: str | None, default: float) -> float:
-    factor = SCALES[scale.lower().rstrip(".")] if scale else default
-    return float(number.replace(",", "")) * factor
+def _amount_at(piece: str, pos: int) -> tuple[str, float | None, str | None, int] | None:
+    """(digits, scale factor, currency from a unit word, end) at `pos`; None if unclear."""
+    num = NUMBER.match(piece, pos)
+    # "500 000": a space as thousands separator is not read
+    if not num or re.match(r"\s+\d", piece[num.end() :]):
+        return None
+    end, factor = num.end(), None
+    word = WORD.match(piece, end)
+    if word and word[1].lower() in SCALES:
+        factor, end = SCALES[word[1].lower()], word.end()
+        if word[1].lower() in ("lakh", "lakhs") and (crore := LAKH_CRORE.match(piece, end)):
+            factor, end = 1e12, crore.end()
+        if word[1].lower() == "mil" and piece[end : end + 1] == ".":
+            end += 1
+    elif word and word[1].lower() != "to" and not UNIT.match(piece, end):
+        # "250K", "5x": letters on the number must be a scale; "5 milion" is a typo, but
+        # "$700,000 or $765,000" is an amount followed by a word
+        if word.start(1) == end or float(num[0].replace(",", "")) < 1000:
+            return None
+    unit = UNIT.match(piece, end)
+    if not unit:
+        return num[0], factor, None, end
+    key = " ".join(unit[1].lower().split())
+    return num[0], factor, UNITS[key], unit.end()
+
+
+def _inherits(digits: str) -> bool:
+    return "," not in digits and float(digits) < 1000
+
+
+def _range_values(
+    n1: str, f1: float | None, n2: str, f2: float | None
+) -> tuple[float, float] | None:
+    """Both ends of a range, a bare end taking the other's scale; None if it is no range."""
+    if f1 is not None and f2 is None and not _inherits(n2):
+        return None  # "$5 million – 2009"
+    low = f1 if f1 is not None else (f2 if f2 is not None and _inherits(n1) else 1.0)
+    high = f2 if f2 is not None else (f1 if f1 is not None else 1.0)
+    return float(n1.replace(",", "")) * low, float(n2.replace(",", "")) * high
+
+
+def _parse_item(piece: str) -> tuple[float | None, str | None, str]:
+    """(amount, ISO currency, text after the amount) of one list item."""
+    none = (None, None, "")
+    if BOUND.match(piece):
+        return none
+    while hedge := HEDGE.match(piece):
+        piece = piece[hedge.end() :]
+    piece = piece[len("UK") :].lstrip() if UK.match(piece) else piece
+    prefix = CURRENCY.match(piece)
+    code = None
+    if prefix:
+        code = SYMBOLS[prefix[1]]
+    elif (iso := ISO_CODE.match(piece)) and iso[1] not in NOT_CODES:
+        code, prefix = iso[1], iso
+    first = _amount_at(piece, prefix.end() if prefix else 0)
+    if not first:
+        return none
+    n1, f1, unit, end = first
+    amount = float(n1.replace(",", "")) * (f1 or 1.0)
+    sep = RANGE_SEP.match(piece, end)
+    if sep:
+        again = CURRENCY.match(piece, sep.end())
+        second = _amount_at(piece, again.end() if again else sep.end())
+        values = _range_values(n1, f1, second[0], second[1]) if second else None
+        if second and values:
+            # a range gives the upper bound, with one scale word covering both ends;
+            # consistent with derive/money.py's Wikidata pick, which keeps the largest amount
+            amount, unit, end = max(values), unit or second[2], second[3]
+    if code and unit:
+        return none  # a prefix and a unit word together: not sure which is meant
+    currency = code or unit
+    if currency is None:
+        return none
+    return amount, currency, piece[end:].strip()
+
+
+def _normalise(text: str) -> str:
+    text = _strip_noise(text)
+    text = CODE_TEMPLATE.sub(lambda m: f"{TEMPLATE_CODES.get(m[1], m[1]).upper()} {m[2]}", text)
+    return CURRENCY_TEMPLATE.sub(lambda m: f"{m[2].upper()} {m[1]}", text)
+
+
+def _items(text: str, split: re.Pattern[str]) -> list[str]:
+    pieces = (p.strip(" *\t") for p in split.split(_normalise(text)))
+    return [p for p in pieces if p]
 
 
 def parse_money(text: str) -> tuple[float | None, str | None]:
     """First item of an infobox money value as (amount, ISO currency); (None, None) if unclear."""
-    text = CODE_TEMPLATE.sub(lambda m: f"{TEMPLATE_CODES.get(m[1], m[1]).upper()} {m[2]}", text)
-    text = CURRENCY_TEMPLATE.sub(lambda m: f"{m[2].upper()} {m[1]}", text)
-    piece = next((p.strip(" *\t") for p in ITEM_SPLIT.split(text) if p.strip(" *\t")), "")
-    while hedge := HEDGE.match(piece):
-        piece = piece[hedge.end() :]
-    currency = CURRENCY.match(piece)
-    if not currency:
-        return None, None
-    piece = piece[currency.end() :]
-    first = NUMBER.match(piece)
-    if not first:
-        return None, None
-    low_scale, high_scale = first[2], first[2]
-    amount = _scaled(first[1], first[2], 1.0)
-    sep = RANGE_SEP.match(piece, first.end())
-    if sep:
-        rest = piece[sep.end() :]
-        again = CURRENCY.match(rest)
-        rest_start = again.end() if again else 0
-        second = NUMBER.match(rest, rest_start)
-        if second:
-            high_scale = second[2]
-            # a range gives the upper bound, with one scale word covering both ends;
-            # consistent with derive/money.py's Wikidata pick, which keeps the largest amount
-            low = _scaled(first[1], low_scale or high_scale, 1.0)
-            high = _scaled(second[1], high_scale or low_scale, 1.0)
-            amount = max(low, high)
-    return amount, SYMBOLS[currency[1]]
+    items = _items(text, ITEM_SPLIT)
+    amount, currency, _ = _parse_item(items[0]) if items else (None, None, "")
+    return amount, currency
+
+
+def parse_gross(text: str) -> tuple[float | None, str | None]:
+    """First item that is the whole gross: no territory, rentals or re-release qualifier."""
+    for item in _items(text, GROSS_SPLIT):
+        amount, currency, rest = _parse_item(item)
+        words = re.sub(r"[^a-z]+", " ", rest.lower()).strip()
+        if amount is not None and (
+            words.startswith("equivalent to") or not GROSS_NOTES.sub("", words).strip()
+        ):
+            return amount, currency
+    return None, None
 
 
 def _get(client: httpx.Client, title: str) -> str:
@@ -228,12 +331,12 @@ def fetch(items: list[tuple[str, str]], cache_dir: Path, client: httpx.Client) -
 
 def parse(text: str) -> dict:
     out: dict = dict.fromkeys(FIELDS)
-    for key in ("budget", "gross"):
+    for key, parser in (("budget", parse_money), ("gross", parse_gross)):
         value = field_text(text, key)
         if value is None:
             continue
         out[f"wp_{key}_text"] = value[:TEXT_MAX]
-        out[f"wp_{key}"], out[f"wp_{key}_currency"] = parse_money(value)
+        out[f"wp_{key}"], out[f"wp_{key}_currency"] = parser(value)
     return out
 
 

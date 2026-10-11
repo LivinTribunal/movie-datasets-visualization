@@ -37,22 +37,141 @@ def no_sleep(monkeypatch):
         ("₹150 crore", 1.5e9, "INR"),
         ("₹50 lakh", 5e6, "INR"),
         ("{{INR|150 crore}}", 1.5e9, "INR"),
-        ("¥2.4 billion", 2.4e9, "JPY"),
         ("CN¥100 million", 100e6, "CNY"),
         ("{{Currency|5 million|AUD}}", 5e6, "AUD"),
         ("~$5 million", 5e6, "USD"),
         ("est. $5 million", 5e6, "USD"),
-        ("at least $5 million", 5e6, "USD"),
         ("$40–50 million (gross)<br />$30 million (net)", 50e6, "USD"),
         ("* $5 million\n* $6 million", 5e6, "USD"),
         ("Unknown", None, None),
         ("kr 20 million", None, None),
+        # A: trailing letters after the number must be a known scale
+        ("$250K", 250e3, "USD"),
+        ("$1.2B", 1.2e9, "USD"),
+        ("₹100 crores", 1e9, "INR"),
+        ("$5 millions", 5e6, "USD"),
+        ("$14.4 mn", 14.4e6, "USD"),
+        ("$2.5 mln", 2.5e6, "USD"),
+        ("$5 millionaire", None, None),
+        ("$5 foo", None, None),
+        ("₹1 lakh crore", 1e12, "INR"),
+        # C: range scale inheritance
+        ("$800,000 – 1 million", 1e6, "USD"),
+        ("$750,000-1.2 million", 1.2e6, "USD"),
+        ("$5 million – 2009", 5e6, "USD"),
+        ("$5 million to 2009", 5e6, "USD"),
+        # D: Indian grouping
+        ("₹1,50,00,000", 1.5e7, "INR"),
+        ("Rs. 10,00,000", 1e6, "INR"),
+        # E: space as thousands separator
+        ("$500 000", None, None),
+        ("$ 1 000 000", None, None),
+        # G: bare yen sign is ambiguous
+        ("¥2.4 billion", None, None),
+        ("JP¥2.4 billion", 2.4e9, "JPY"),
+        ("{{JPY|2.4 billion}}", 2.4e9, "JPY"),
+        ("RMB 100 million", 100e6, "CNY"),
+        ("{{CN¥|100 million}}", 100e6, "CNY"),
+        ("300 million yen", 3e8, "JPY"),
+        ("50 million yuan", 5e7, "CNY"),
+        # H: bounds are not values
+        ("over $5 million", None, None),
+        ("Under $5 million", None, None),
+        ("less than $5 million", None, None),
+        ("at least $5 million", None, None),
+        ("more than $5 million", None, None),
+        ("> $5 million", None, None),
+        ("≤$5 million", None, None),
+        ("circa $5 million", 5e6, "USD"),
+        ("approx. $5 million", 5e6, "USD"),
+        # I: ISO prefix, suffix words
+        ("SEK 2 million", 2e6, "SEK"),
+        ("FRF 10 million", 10e6, "FRF"),
+        ("UK £12,000", 12000, "GBP"),
+        ("₣5 million", 5e6, "FRF"),
+        ("FF 5 million", 5e6, "FRF"),
+        ("DM 5 million", 5e6, "DEM"),
+        ("1 million francs", 1e6, "FRF"),
+        ("56 million Lire", 5.6e7, "ITL"),
+        ("5,500,500 francs", 5500500, "FRF"),
+        ("3 million Swiss francs", 3e6, "CHF"),
+        ("3 million Belgian francs", 3e6, "BEF"),
+        ("2 million pesetas", 2e6, "ESP"),
+        ("4 million Deutsche Marks", 4e6, "DEM"),
+        ("4 million marks", 4e6, "DEM"),
+        ("10 million rupees", 1e7, "INR"),
+        ("10 million roubles", 1e7, "RUB"),
+        ("10 million rubles", 1e7, "RUB"),
+        ("10 million kronor", 1e7, "SEK"),
+        ("10 million kroner", None, None),
+        ("TBA 5 million", None, None),
+        # round 2: words after whitespace are not scales
+        ("$700,000 or $765,000", 7e5, "USD"),
+        ("$1,242,000 or $995,000", 1.242e6, "USD"),
+        ("$5 milion", None, None),
+        ("$5 millions", 5e6, "USD"),
+        ("$5x", None, None),
+        ("{{¥|62.9 million}}", 6.29e7, "JPY"),
+        ("¥62.9 million", None, None),
+        ("MX$5 million", 5e6, "MXN"),
+        ("NZ$5 million", 5e6, "NZD"),
+        ("S$5 million", 5e6, "SGD"),
+        ("NT$5 million", 5e6, "TWD"),
+        ("5.4 million DM", 5.4e6, "DEM"),
+        ("{{Estimation}} {{INR|6 million}}", 6e6, "INR"),
     ],
 )
 def test_parse_money(text, amount, currency):
     got_amount, got_currency = wp.parse_money(text)
     assert got_currency == currency
     assert got_amount == (pytest.approx(amount) if amount is not None else None)
+
+
+@pytest.mark.parametrize(
+    ("text", "amount", "currency"),
+    [
+        ("$3.8 million (US and Canada rentals)", None, None),
+        ("$77,982 (2001 re-release)", None, None),
+        ("$2.15 million (U.S. and Canada rentals)|$4 million (worldwide)", 4e6, "USD"),
+        ("$600,000 (U.S.) or $1.25 million", 1.25e6, "USD"),
+        ("$839 million", 8.39e8, "USD"),
+        ("$3.2 million (worldwide est.)", 3.2e6, "USD"),
+        ("4,768,505 admissions (France)", None, None),
+        ("$29 million ({{estimation}})", 2.9e7, "USD"),
+        (
+            "$30.6 million<small>(equivalent to ${{Inflation|US|30.6|1957|2024}} million in 2024)"
+            "</small>",
+            3.06e7,
+            "USD",
+        ),
+        ("$5.6 million {{USDCY|5638000|1945}}", 5.6e6, "USD"),
+    ],
+)
+def test_parse_gross(text, amount, currency):
+    got_amount, got_currency = wp.parse_gross(text)
+    assert got_currency == currency
+    assert got_amount == (pytest.approx(amount) if amount is not None else None)
+
+
+@pytest.mark.parametrize(
+    ("raw", "amount"),
+    [
+        ("$30&ndash;35 million", 3.5e7),
+        ("$30{{ndash}}35 million", 3.5e7),
+        ("$30&mdash;35 million", 3.5e7),
+        ("$5{{nbsp}}million", 5e6),
+        ("$5&thinsp;million", 5e6),
+    ],
+)
+def test_clean_entities_then_parse(raw, amount):
+    assert wp.parse_money(wp._clean(raw))[0] == pytest.approx(amount)
+
+
+def test_field_text_ignores_commented_out_param():
+    text = "{{Infobox film\n<!--\n| budget = $5 million\n-->\n| gross = $7 million\n}}"
+    assert wp.field_text(text, "budget") is None
+    text = "{{Infobox film\n<!--\n| budget = $5 million\n-->\n| budget = $9 million\n}}"
+    assert wp.field_text(text, "budget") == "$9 million"
 
 
 def test_field_text_inception():
