@@ -11,17 +11,23 @@ SCHEMA: dict[str, list[str]] = {
         "imdb_id", "tmdb_id", "title", "year", "notable", "genres", "families", "countries",
         "imdb_votes", "budget_usd2025", "revenue_usd2025", "budget_src", "revenue_src",
         "budget_converted", "revenue_converted", "budget_disagree", "revenue_disagree",
-        "money_fuzzy", "roi", "imdb_100", "tmdb_100", "tomatometer_100", "audience_100", "gap",
+        "money_fuzzy", "roi", "imdb_100", "tmdb_100", "tomatometer_100", "audience_100",
+        "metascore_100", "mc_critic_reviews", "mc_user_100", "letterboxd_100", "gap",
     ],
     "genre_year.json": [
         "subset", "year", "genre", "family", "films", "votes", "revenue_usd2025", "revenue_films",
     ],
     "country_genre.json": [
         "source", "country_iso2", "year", "genre", "family", "share", "score", "coverage",
-        "fuzzy_share",
+        "fuzzy_share", "estimated_share",
     ],
     "countries.json": ["iso2", "iso_numeric", "name", "region", "subregion"],
     "genre_families.json": ["genre", "family", "family_order", "colour"],
+    "franchises.json": [
+        "collection_id", "collection_name", "installment", "n_released", "tmdb_id", "imdb_id",
+        "title", "year", "imdb_100", "imdb_100_vs_prev", "imdb_100_vs_first", "tomatometer_100",
+        "audience_100", "revenue_usd2025", "revenue_vs_prev", "revenue_vs_first",
+    ],
 }  # fmt: skip
 OTHER_FILES = ("countries.topo.json", "meta.json")
 SRC_VALUES = {"numbers", "tmdb", "wikidata", None}
@@ -89,6 +95,37 @@ def check(data_dir: Path) -> list[str]:
             bad = set(films[col]) - SRC_VALUES
             if bad:
                 errors.append(f"films.json: bad {col} {sorted(bad, key=str)}")
+    fr = t["franchises.json"]
+    if fr:
+        if any(
+            i is None or i < 1 or i > n
+            for i, n in zip(fr["installment"], fr["n_released"], strict=True)
+        ):
+            errors.append("franchises.json: installment outside 1..n_released")
+        if any(n is None or n < 3 for n in fr["n_released"]):
+            errors.append("franchises.json: n_released under 3")
+        for col in ("imdb_100", "tomatometer_100", "audience_100"):
+            if _outside(fr[col], 0, 100):
+                errors.append(f"franchises.json: {col} outside 0-100")
+        by_collection: dict[int, list[int]] = {}
+        for c, i in zip(fr["collection_id"], fr["installment"], strict=True):
+            by_collection.setdefault(c, []).append(i)
+        ns = dict(zip(fr["collection_id"], fr["n_released"], strict=True))
+        if any(sorted(i) != list(range(1, ns[c] + 1)) for c, i in by_collection.items()):
+            errors.append("franchises.json: installments are not exactly 1..n_released")
+        first = [i == 1 for i in fr["installment"]]
+        if any(
+            f and v is not None and v != 0
+            for f, v in zip(first, fr["imdb_100_vs_first"], strict=True)
+        ):
+            errors.append("franchises.json: imdb_100_vs_first not 0 at installment 1")
+        if any(f and v is not None for f, v in zip(first, fr["imdb_100_vs_prev"], strict=True)):
+            errors.append("franchises.json: imdb_100_vs_prev set at installment 1")
+        for col in ("revenue_vs_prev", "revenue_vs_first"):
+            if any(v is not None and v < 0 for v in fr[col]):
+                errors.append(f"franchises.json: negative {col}")
+        if any(i is not None and not IMDB_ID.match(i) for i in fr["imdb_id"]):
+            errors.append("franchises.json: imdb_id does not match tt<digits>")
     check_refs("films.json", "families", families, "family", nested=True)
     check_refs("films.json", "countries", countries, "country", nested=True)
     check_refs("genre_year.json", "family", families, "family")
@@ -104,7 +141,7 @@ def check(data_dir: Path) -> list[str]:
         bad_sums = [k for k, s in sums.items() if abs(s - 1) > 1e-3]
         if bad_sums:
             errors.append(f"country_genre.json: shares do not sum to 1 for {bad_sums[:5]}")
-        for col in ("coverage", "fuzzy_share"):
+        for col in ("coverage", "fuzzy_share", "estimated_share"):
             if _outside(cg[col], 0, 1):
                 errors.append(f"country_genre.json: {col} outside 0-1")
         if any(f > c + 1e-9 for f, c in zip(cg["fuzzy_share"], cg["coverage"], strict=True)):

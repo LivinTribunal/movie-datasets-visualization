@@ -7,10 +7,13 @@ export function WorldMap({ data }: { data: AppData }) {
   const { yearRange, subset, selectedCountry, setSelectedCountry } = useStore()
   const { films, countries, countryGenre } = data
 
-  const netflixCountries = useMemo(
-    () => new Set(countryGenre.columns.country_iso2).size,
-    [countryGenre],
-  )
+  const sourceCounts = useMemo(() => {
+    const seen = { netflix: new Set<string>(), lumiere: new Set<string>() }
+    countryGenre.columns.source.forEach((s, i) => {
+      if (s === 'netflix' || s === 'lumiere') seen[s].add(countryGenre.columns.country_iso2[i])
+    })
+    return { netflix: seen.netflix.size, lumiere: seen.lumiere.size }
+  }, [countryGenre])
   const names = useMemo(
     () => new Map(countries.columns.iso2.map((c, i) => [c, countries.columns.name[i]])),
     [countries],
@@ -26,7 +29,10 @@ export function WorldMap({ data }: { data: AppData }) {
   return (
     <section className="panel">
       <h2>World map</h2>
-      <p>Netflix genre shares: {netflixCountries} countries</p>
+      <p>
+        Netflix genre shares: {sourceCounts.netflix} countries · Cinema (LUMIERE, notable films only):{' '}
+        {sourceCounts.lumiere} markets
+      </p>
       <p>
         Selected: {selectedCountry ? (names.get(selectedCountry) ?? selectedCountry) : 'none'}{' '}
         {selectedCountry && <button type="button" onClick={() => setSelectedCountry(null)}>clear</button>}

@@ -89,3 +89,13 @@ def test_fetch_redirect_without_location_cached_as_missing(tmp_path, monkeypatch
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         mc.fetch([("tt1", "movie/the-wizard-of-oz-1939")], tmp_path, client)
     assert (tmp_path / "tt1.missing").exists()
+
+
+def test_parse_user_score_block_is_not_a_metascore():
+    # TV episode pages carry only the user score in JSON-LD, on a 0-10 scale
+    block = (
+        '<script type="application/ld+json">{"aggregateRating": {"name": "Metacritic User '
+        'Score", "bestRating": 10, "ratingValue": 0, "ratingCount": 1}}</script>'
+    )
+    got = mc.parse(f"<html>{block}</html>")
+    assert got["metascore"] is None and got["mc_critic_reviews"] is None

@@ -260,3 +260,34 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - Pages are cached gzipped (about 120 KB for Metacritic and 40 KB for
   Letterboxd), and a 404 leaves an empty `.missing` marker so a re-run skips
   it. Only the parsed numbers go to `data/scraped/`.
+
+### D17. Franchises, the extra scores and cinema genre shares (2026-10-11)
+
+- **Franchises** are TMDB collections. `/3/collection/{id}` lists every
+  part, including parts outside our film table. A part counts once it was
+  released by the TMDB snapshot (2026-10-01), and a collection needs at
+  least three released parts to be a franchise. Installments are numbered
+  by release date, then TMDB id. `imdb_100_vs_prev` and `_vs_first` are
+  differences in points; `revenue_vs_prev` and `_vs_first` are ratios of
+  2025 USD revenue. A part we have no ratings or money for keeps its
+  installment number with null values, so the numbering has no gaps.
+- **Metacritic and Letterboxd scores** join on `imdb_id`. `metascore_100`
+  is the Metascore as is, `mc_user_100` the user score × 10 and
+  `letterboxd_100` the average × 20. The Metacritic user score is null
+  under 10 user ratings, where a few votes (often review-bombing) decide
+  it. Letterboxd shows an average only once a film has enough ratings, so
+  it gets no threshold of ours. `gap` stays audience score minus
+  Tomatometer.
+- **Critic review minimum**: the PLAN's 20 critic reviews is not applied in
+  derive. It would drop 39 % of the Metascores (5,628 of 9,154 left), and
+  RT gives no review counts to apply it to. `films.json` carries
+  `mc_critic_reviews` next to each Metascore, so a view can apply the
+  minimum and the detail panel shows the count.
+- **Cinema genre shares** come from LUMIERE admissions per market and year
+  (the year of the admissions, not of the release). Each film adds
+  `admissions × genre_weight` to its genres. The combined `GB_IE` market
+  counts as GB, and only for film-years that have no GB row of their own.
+  LUMIERE marks UK and Irish admissions as estimates, so each row carries
+  `estimated_share`. A market-year with fewer than 20 films is dropped as
+  too noisy. The shares cover notable films with a LUMIERE id only, never
+  a market's whole box office, and the app has to say so.

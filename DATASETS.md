@@ -60,13 +60,13 @@ rate and commit only derived numbers, never page contents.
 | ID | Source | Key | Scope | Gives | Used for | Needs | Status |
 |---|---|---|---|---|---|---|---|
 | `rt_recent` | Rotten Tomatoes film pages (embedded JSON) | Wikidata P1258 | films from 2023 on in the working subset with an RT id (~2.8k) | critics score, audience score (Popcornmeter), review counts | T3 for recent films | crosswalk | ⏳ |
-| `metacritic` | `metacritic.com/{mc_id}/` (JSON-LD metascore, user score text) | Wikidata P1712 | notable subset with an id (9,451) | Metascore, critic review count, user score (0–10), user rating count | T2, T3 (second critic/audience pair) | crosswalk | 🔄 scraper written (D16), run pending |
-| `letterboxd` | `letterboxd.com/imdb/{imdb_id}/` → film page (JSON-LD) | IMDb id | notable subset (13,080) | average rating (0.5–5), number of ratings | T3 (cinephile audience) | – | 🔄 scraper written (D16), run pending |
+| `metacritic` | `metacritic.com/{mc_id}/` (JSON-LD metascore, user score text) | Wikidata P1712 | notable subset with an id (9,451) | Metascore, critic review count, user score (0–10), user rating count | T2, T3 (second critic/audience pair) | crosswalk | ✅ scraped 2026-10-11: 9,451 films, 27 missing (404 or bare redirect), 9,154 Metascores, 9,301 user scores (8,790 with ≥ 10 user ratings) |
+| `letterboxd` | `letterboxd.com/imdb/{imdb_id}/` → film page (JSON-LD) | IMDb id | notable subset (13,080) | average rating (0.5–5), number of ratings | T3 (cinephile audience) | – | 🔄 scraping since 2026-10-11 |
 | `wikipedia` | English Wikipedia infobox (raw wikitext through the MediaWiki API) | enwiki title from the crosswalk | notable films missing budget or gross (~4k) | `budget`, `gross` text, parsed | money coverage | crosswalk | ⏳ |
 | `bom_title` | `boxofficemojo.com/title/{imdb_id}` | IMDb id | notable films missing revenue (~4k) | domestic, international, worldwide gross | money coverage | – | ❌ robots.txt disallows all crawlers (D16) |
 | `bom_country` | `boxofficemojo.com/year/{year}/?area={ISO2}` | title + year (fuzzy) | ~97 markets × years | yearly gross per film per market, theatres, distributor | T1, T4, X2 | – | ❌ robots.txt disallows all crawlers (D16) |
-| `lumiere` | [LUMIERE](https://lumiere.obs.coe.int) `/movie/{id}` (admissions table) | Wikidata P4282 | notable films with an id (11,920) | admissions per European market per year, with LUMIERE's `estimated` flag; `GB_IE` is a combined market | T1, T4, X2 | crosswalk | 🔄 scraper written, run pending |
-| `tmdb_collections` | TMDB API `/movie/{id}` | TMDB id | notable subset (13,080 calls) | `belongs_to_collection` (franchises) | T6 | `TMDB_API_KEY` in `.env` | 🔄 running since 2026-10-11 |
+| `lumiere` | [LUMIERE](https://lumiere.obs.coe.int) `/movie/{id}` (admissions table) | Wikidata P4282 | notable films with an id (11,920) | admissions per European market per year, with LUMIERE's `estimated` flag; `GB_IE` is a combined market | T1, T4, X2 | crosswalk | 🔄 scraping since 2026-10-11 |
+| `tmdb_collections` | TMDB API `/movie/{id}` | TMDB id | notable subset (13,080 calls) | `belongs_to_collection` (franchises), then `/collection/{id}` for every part | T6 | `TMDB_API_KEY` in `.env` | ✅ scraped 2026-10-11: 2,846 notable films in 1,486 collections; `tmdb_collection_parts.parquet` lists their 4,498 parts |
 | `pageviews` | Wikimedia Pageviews API | Wikipedia titles per language | – | monthly views per language edition | – | – | ➖ |
 
 ## 4. Reference tables (hand-made, committed)
@@ -138,6 +138,7 @@ them to `data/interim/` (D15). Counts from the run on 2026-10-11:
 | Output | Rows | What it holds |
 |---|---|---|
 | `money.parquet` | 56,431 (one per film) | budget and revenue with `*_src`, currency, nominal USD, `*_usd2025`, `*_disagree`, profit and ROI. Budgets: 17,156 films (numbers 6,034, tmdb 10,094, wikidata 1,028); 9,192 of 13,080 notable. Revenues: 17,639 (numbers 5,780, tmdb 11,179, wikidata 680); 9,753 notable. 468 Numbers and TMDB revenues under $10,000 dropped as unit errors or re-release grosses. ROI for 12,212 films. |
-| `ratings.parquet` | 56,431 | `imdb_100`, `tmdb_100` (null under 50 TMDB votes: 33,043 left), `tomatometer_100` (22,744), `audience_100` (33,615), `gap` (22,347; median −3) |
+| `ratings.parquet` | 56,431 | `imdb_100`, `tmdb_100` (null under 50 TMDB votes: 33,043 left), `tomatometer_100` (22,744), `metascore_100` (9,154), `audience_100` (33,615), `mc_user_100` (8,790, null under 10 user ratings), `letterboxd_100` (pending the scrape), `gap` (22,347; median −3) |
 | `film_genres.parquet` | 126,307 rows for 56,199 films | one row per film and genre, `family`, `genre_weight = 1/n` without TV Movie |
 | `country_genre_netflix.parquet` | 9,893 rows: 94 countries, 2021–2026 | Netflix chart score per country, year and genre, with `share`, `coverage` (min 0.73, median 0.99) and `fuzzy_share` |
+| `franchises.parquet` | 2,584 parts of 605 collections | TMDB collections with ≥ 3 released parts, `installment` by release date, IMDb change vs the previous and first part (median at installment 2: −6), revenue ratios (D17) |

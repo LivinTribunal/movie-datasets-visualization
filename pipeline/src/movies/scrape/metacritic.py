@@ -76,7 +76,12 @@ def parse(html: str) -> dict:
             rating = json.loads(block).get("aggregateRating")
         except (json.JSONDecodeError, AttributeError):
             continue
-        if isinstance(rating, dict) and rating.get("ratingValue") is not None:
+        # TV episode pages put the 0-10 user score in this block instead of a Metascore
+        if (
+            isinstance(rating, dict)
+            and rating.get("ratingValue") is not None
+            and "User" not in str(rating.get("name", ""))
+        ):
             out["metascore"] = to_int(rating["ratingValue"])
             out["mc_critic_reviews"] = to_int(rating.get("reviewCount"))
             break

@@ -1,6 +1,15 @@
+import datetime as dt
+
 import polars as pl
 
-from movies.export.app import films_table, genre_year, to_columns
+from movies.export.app import (
+    country_genre_table,
+    films_table,
+    franchises_table,
+    genre_year,
+    to_columns,
+)
+from movies.validate.app import SCHEMA
 
 FILMS = pl.DataFrame(
     {
@@ -36,9 +45,17 @@ RATINGS = pl.DataFrame(
         "tmdb_100": [None, None, None, None],
         "tomatometer_100": [80.0, 50.0, 90.0, None],
         "audience_100": [75.0, 55.0, None, None],
+        "metascore_100": [82.04, None, None, None],
+        "mc_critic_reviews": [38, None, None, None],
+        "mc_user_100": [None, None, None, None],
+        "letterboxd_100": [92.0, None, None, None],
         "gap": [-5.0, 5.0, None, None],
     },
-    schema_overrides={"tmdb_100": pl.Float64},
+    schema_overrides={
+        "tmdb_100": pl.Float64,
+        "mc_user_100": pl.Float64,
+        "mc_critic_reviews": pl.Int32,
+    },
 )
 FILM_GENRES = pl.DataFrame(
     {
@@ -108,3 +125,67 @@ def test_unknown_production_countries_export_as_empty_list():
     )
     out = films_table(films, MONEY, RATINGS, FILM_GENRES)
     assert out["countries"].to_list() == [[], ["CZ"]]
+
+
+FRANCHISES = pl.DataFrame(
+    {
+        "collection_id": [7, 7, 7],
+        "collection_name": ["S", "S", "S"],
+        "installment": [2, 1, 3],
+        "n_released": [3, 3, 3],
+        "tmdb_id": [2, 1, 9],
+        "imdb_id": ["tt2", "tt1", None],
+        "title": ["Two", "One", "Nine"],
+        "release_date": [dt.date(2003, 1, 1), dt.date(2001, 5, 1), dt.date(1999, 1, 1)],
+        "imdb_100": [70.04, 80.0, None],
+        "imdb_100_vs_prev": [-9.96, None, None],
+        "imdb_100_vs_first": [-9.96, 0.0, None],
+        "tomatometer_100": [None, 90.0, None],
+        "audience_100": pl.Series([None, None, None], dtype=pl.Float64),
+        "revenue_usd2025": [50.4, 100.0, None],
+        "revenue_vs_prev": [0.50049, None, None],
+        "revenue_vs_first": [0.50049, 1.0, None],
+    }
+)
+
+
+def test_films_table_includes_scraped_scores_in_schema_order():
+    out = films_table(FILMS, MONEY, RATINGS, FILM_GENRES)
+    assert out.columns == SCHEMA["films.json"]
+    assert out["metascore_100"].to_list()[0] == 82.0
+    assert out["mc_critic_reviews"].to_list() == [38, None]
+    assert out["letterboxd_100"].to_list()[0] == 92.0
+
+
+def test_franchises_table_year_rounding_and_order():
+    out = franchises_table(FRANCHISES)
+    assert out["collection_id"].to_list() == [7, 7, 7]
+    assert out["installment"].to_list() == [1, 2, 3]
+    assert out["year"].to_list() == [2001, 2003, 1999]
+    assert out["imdb_100"].to_list() == [80.0, 70.0, None]
+    assert out["revenue_usd2025"].to_list() == [100, 50, None]
+    assert out["revenue_vs_prev"].to_list() == [None, 0.5, None]
+
+
+def _shares(year_dtype, year):
+    return pl.DataFrame(
+        {
+            "country_iso2": ["CZ"],
+            "year": pl.Series([year], dtype=year_dtype),
+            "genre": ["Drama"],
+            "family": ["Drama"],
+            "score": pl.Series([1], dtype=pl.Int64),
+            "share": [1.0],
+            "coverage": [0.5],
+            "fuzzy_share": [0.0],
+            "estimated_share": [0.0],
+        }
+    )
+
+
+def test_country_genre_table_concats_netflix_int32_and_lumiere_int16_years():
+    out = country_genre_table(_shares(pl.Int32, 2025), _shares(pl.Int16, 2024))
+    assert out.columns == SCHEMA["country_genre.json"]
+    assert out["source"].to_list() == ["netflix", "lumiere"]
+    assert out["year"].to_list() == [2025, 2024]
+    assert country_genre_table(_shares(pl.Int32, 2025), None).height == 1

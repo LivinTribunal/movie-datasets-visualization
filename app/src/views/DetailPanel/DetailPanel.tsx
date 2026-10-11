@@ -9,6 +9,9 @@ const SCORES = [
   ['tmdb_100', 'TMDB'],
   ['tomatometer_100', 'Tomatometer'],
   ['audience_100', 'Audience score'],
+  ['metascore_100', 'Metascore'],
+  ['mc_user_100', 'Metacritic users'],
+  ['letterboxd_100', 'Letterboxd'],
   ['gap', 'Gap (audience − critics)'],
 ] as const
 
@@ -47,7 +50,12 @@ export function DetailPanel({ data }: { data: AppData }) {
           <p>Genres: {col('genres').join(', ') || 'n/a'}</p>
           <ul>
             {SCORES.map(([k, label]) => (
-              <li key={k}>{label}: {col(k) === null ? 'n/a' : col(k)?.toFixed(1)}</li>
+              <li key={k}>
+                {label}: {col(k) === null ? 'n/a' : col(k)?.toFixed(1)}
+                {k === 'metascore_100' &&
+                  col('mc_critic_reviews') !== null &&
+                  ` (${col('mc_critic_reviews')} reviews)`}
+              </li>
             ))}
             <li>Budget (2025 USD): {money('budget')}</li>
             <li>Revenue (2025 USD): {money('revenue')}</li>

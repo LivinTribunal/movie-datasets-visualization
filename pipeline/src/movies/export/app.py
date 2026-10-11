@@ -22,6 +22,12 @@ NOTES = [
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
     "The TMDB average is null under 50 votes.",
     "Netflix shares cover only matched titles; see the coverage column.",
+    "Scores are on 0–100: IMDb, TMDB and Metacritic users ×10, Letterboxd ×20. "
+    "The Metacritic user score is null under 10 user ratings.",
+]
+CINEMA_NOTES = [
+    "Cinema genre shares come from LUMIERE admissions of notable films only; UK and Ireland "
+    "admissions are LUMIERE estimates, and the combined UK+Ireland market counts as the UK.",
 ]
 
 
@@ -63,6 +69,9 @@ def films_table(
             tmdb_100=pl.col("tmdb_100").round(1),
             tomatometer_100=pl.col("tomatometer_100").round(1),
             audience_100=pl.col("audience_100").round(1),
+            metascore_100=pl.col("metascore_100").round(1),
+            mc_user_100=pl.col("mc_user_100").round(1),
+            letterboxd_100=pl.col("letterboxd_100").round(1),
             gap=pl.col("gap").round(1),
         )
     )
@@ -101,6 +110,43 @@ def genre_year(films: pl.DataFrame, money: pl.DataFrame, film_genres: pl.DataFra
     )
 
 
+def country_genre_table(netflix: pl.DataFrame, lumiere: pl.DataFrame | None) -> pl.DataFrame:
+    """Netflix and (when present) LUMIERE genre shares as one frame in schema order."""
+    sources = [("netflix", netflix)] + ([("lumiere", lumiere)] if lumiere is not None else [])
+    return pl.concat(
+        [
+            df.with_columns(
+                source=pl.lit(name),
+                year=pl.col("year").cast(pl.Int16),
+                score=pl.col("score").cast(pl.Float64),
+                share=pl.col("share").round(4),
+                coverage=pl.col("coverage").round(4),
+                fuzzy_share=pl.col("fuzzy_share").round(4),
+                estimated_share=pl.col("estimated_share").round(4),
+            ).select(SCHEMA["country_genre.json"])
+            for name, df in sources
+        ]
+    )
+
+
+def franchises_table(df: pl.DataFrame) -> pl.DataFrame:
+    return (
+        df.with_columns(
+            year=pl.col("release_date").dt.year().cast(pl.Int64),
+            imdb_100=pl.col("imdb_100").round(1),
+            imdb_100_vs_prev=pl.col("imdb_100_vs_prev").round(1),
+            imdb_100_vs_first=pl.col("imdb_100_vs_first").round(1),
+            tomatometer_100=pl.col("tomatometer_100").round(1),
+            audience_100=pl.col("audience_100").round(1),
+            revenue_usd2025=pl.col("revenue_usd2025").round(0).cast(pl.Int64),
+            revenue_vs_prev=pl.col("revenue_vs_prev").round(3),
+            revenue_vs_first=pl.col("revenue_vs_first").round(3),
+        )
+        .select(SCHEMA["franchises.json"])
+        .sort("collection_id", "installment")
+    )
+
+
 def to_columns(df: pl.DataFrame) -> dict[str, list]:
     return {c: df[c].to_list() for c in df.columns}
 
@@ -126,12 +172,11 @@ def run() -> None:
     films_out = films_table(films, money, ratings, fg)
     _write_table("films.json", films_out)
     _write_table("genre_year.json", genre_year(films, money, fg))
-    country_genre = netflix.with_columns(
-        source=pl.lit("netflix"),
-        share=pl.col("share").round(4),
-        coverage=pl.col("coverage").round(4),
-        fuzzy_share=pl.col("fuzzy_share").round(4),
-    ).select(SCHEMA["country_genre.json"])
+    lumiere_path = interim / "country_genre_lumiere.parquet"
+    lumiere = pl.read_parquet(lumiere_path) if lumiere_path.exists() else None
+    if lumiere is None:
+        print("lumiere cinema shares skipped: run `movies scrape --source lumiere` and derive")
+    country_genre = country_genre_table(netflix, lumiere)
     _write_table("country_genre.json", country_genre)
     countries = pl.read_csv(
         paths.REFERENCE / "countries.csv", schema_overrides={"iso_numeric": pl.String}
@@ -139,6 +184,8 @@ def run() -> None:
     _write_table("countries.json", countries.select(SCHEMA["countries.json"]))
     families = pl.read_csv(paths.REFERENCE / "genre_families.csv")
     _write_table("genre_families.json", families.select(SCHEMA["genre_families.json"]))
+    franchises_out = franchises_table(pl.read_parquet(interim / "franchises.parquet"))
+    _write_table("franchises.json", franchises_out)
     shutil.copyfile(
         paths.RAW / "world_atlas" / "countries-110m.json", paths.APP_DATA / "countries.topo.json"
     )
@@ -153,8 +200,18 @@ def run() -> None:
                 "with_budget": films_out["budget_usd2025"].count(),
                 "with_revenue": films_out["revenue_usd2025"].count(),
                 "with_gap": films_out["gap"].count(),
-                "netflix_countries": country_genre["country_iso2"].n_unique(),
+                "netflix_countries": netflix["country_iso2"].n_unique(),
+                **(
+                    {
+                        "lumiere_markets": country_genre.filter(pl.col("source") == "lumiere")[
+                            "country_iso2"
+                        ].n_unique()
+                    }
+                    if lumiere is not None
+                    else {}
+                ),
+                "franchises": franchises_out["collection_id"].n_unique(),
             },
-            "notes": NOTES,
+            "notes": NOTES + (CINEMA_NOTES if lumiere is not None else []),
         },
     )
