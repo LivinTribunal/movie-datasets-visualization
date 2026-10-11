@@ -19,6 +19,7 @@ COUNTRY_GENRE = pl.DataFrame(
         "score": [6.0, 4.0],
         "coverage": [0.8, 0.8],
         "fuzzy_share": [0.1, 0.1],
+        "estimated_share": [0.0, 0.0],
     }
 )
 COUNTRIES = pl.DataFrame(
@@ -108,6 +109,11 @@ def test_wrong_columns(tmp_path):
 def test_fuzzy_share_above_coverage(tmp_path, name):
     cg = COUNTRY_GENRE.with_columns(fuzzy_share=pl.lit(0.9))
     assert any("exceeds coverage" in e for e in _errors_with(tmp_path, **{name: cg}))
+
+
+def test_estimated_share_outside_range(tmp_path):
+    cg = COUNTRY_GENRE.with_columns(estimated_share=pl.lit(1.5))
+    assert any("estimated_share outside 0-1" in e for e in _errors_with(tmp_path, country_genre=cg))
 
 
 def test_null_list_column(tmp_path):

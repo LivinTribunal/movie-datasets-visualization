@@ -22,6 +22,8 @@ NOTES = [
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
     "The TMDB average is null under 50 votes.",
     "Netflix shares cover only matched titles; see the coverage column.",
+    "Cinema genre shares come from LUMIERE admissions of notable films only; UK and Ireland "
+    "admissions are LUMIERE estimates, and the combined UK+Ireland market counts as the UK.",
 ]
 
 
@@ -147,12 +149,24 @@ def run() -> None:
     films_out = films_table(films, money, ratings, fg)
     _write_table("films.json", films_out)
     _write_table("genre_year.json", genre_year(films, money, fg))
-    country_genre = netflix.with_columns(
-        source=pl.lit("netflix"),
-        share=pl.col("share").round(4),
-        coverage=pl.col("coverage").round(4),
-        fuzzy_share=pl.col("fuzzy_share").round(4),
-    ).select(SCHEMA["country_genre.json"])
+    lumiere_path = interim / "country_genre_lumiere.parquet"
+    sources = [("netflix", netflix)]
+    if lumiere_path.exists():
+        sources.append(("lumiere", pl.read_parquet(lumiere_path)))
+    else:
+        print("lumiere cinema shares skipped: run `movies scrape --source lumiere` and derive")
+    country_genre = pl.concat(
+        [
+            df.with_columns(
+                source=pl.lit(name),
+                share=pl.col("share").round(4),
+                coverage=pl.col("coverage").round(4),
+                fuzzy_share=pl.col("fuzzy_share").round(4),
+                estimated_share=pl.col("estimated_share").round(4),
+            ).select(SCHEMA["country_genre.json"])
+            for name, df in sources
+        ]
+    )
     _write_table("country_genre.json", country_genre)
     countries = pl.read_csv(
         paths.REFERENCE / "countries.csv", schema_overrides={"iso_numeric": pl.String}
@@ -181,7 +195,16 @@ def run() -> None:
                 "with_budget": films_out["budget_usd2025"].count(),
                 "with_revenue": films_out["revenue_usd2025"].count(),
                 "with_gap": films_out["gap"].count(),
-                "netflix_countries": country_genre["country_iso2"].n_unique(),
+                "netflix_countries": netflix["country_iso2"].n_unique(),
+                **(
+                    {
+                        "lumiere_markets": country_genre.filter(pl.col("source") == "lumiere")[
+                            "country_iso2"
+                        ].n_unique()
+                    }
+                    if len(sources) > 1
+                    else {}
+                ),
                 **(
                     {"franchises": franchises_out["collection_id"].n_unique()}
                     if franchises_out is not None

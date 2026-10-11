@@ -55,6 +55,7 @@ export interface CountryGenreRow {
   score: number | null
   coverage: number | null
   fuzzy_share: number | null
+  estimated_share: number | null
 }
 
 export interface CountryRow {

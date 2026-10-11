@@ -19,7 +19,7 @@ SCHEMA: dict[str, list[str]] = {
     ],
     "country_genre.json": [
         "source", "country_iso2", "year", "genre", "family", "share", "score", "coverage",
-        "fuzzy_share",
+        "fuzzy_share", "estimated_share",
     ],
     "countries.json": ["iso2", "iso_numeric", "name", "region", "subregion"],
     "genre_families.json": ["genre", "family", "family_order", "colour"],
@@ -124,7 +124,7 @@ def check(data_dir: Path) -> list[str]:
         bad_sums = [k for k, s in sums.items() if abs(s - 1) > 1e-3]
         if bad_sums:
             errors.append(f"country_genre.json: shares do not sum to 1 for {bad_sums[:5]}")
-        for col in ("coverage", "fuzzy_share"):
+        for col in ("coverage", "fuzzy_share", "estimated_share"):
             if _outside(cg[col], 0, 1):
                 errors.append(f"country_genre.json: {col} outside 0-1")
         if any(f > c + 1e-9 for f, c in zip(cg["fuzzy_share"], cg["coverage"], strict=True)):
