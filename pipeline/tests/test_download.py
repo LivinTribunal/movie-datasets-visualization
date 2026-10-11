@@ -42,6 +42,12 @@ def test_size_mismatch_or_missing_file_is_not_skipped(data_root: Path):
     assert not download.is_up_to_date({}, SRC, paths.DATA)
 
 
+def test_renamed_http_file_is_not_skipped(data_root: Path):
+    (data_root / "raw/src/a.csv").write_bytes(b"12345")
+    renamed = Source(name="src", description="d", kind="http", urls=(("b.csv", "u"),), version="1")
+    assert not download.is_up_to_date(make_lock("src", {"raw/src/a.csv": 5}), renamed, paths.DATA)
+
+
 def test_leftover_part_file_does_not_count(data_root: Path):
     (data_root / "raw/src" / download.PART_NAME).write_bytes(b"12345")
     assert not download.is_up_to_date(make_lock("src", {"raw/src/a.csv": 5}), SRC, paths.DATA)

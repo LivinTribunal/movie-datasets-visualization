@@ -76,9 +76,9 @@ REGISTRY: tuple[Source, ...] = (
     ),
     Source(
         name="cpi",
-        description="FRED CPIAUCSL (US CPI, all urban consumers)",
+        description="FRED CPIAUCNS (US CPI-U, not seasonally adjusted, from 1913)",
         kind="http",
-        urls=(("CPIAUCSL.csv", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL"),),
+        urls=(("CPIAUCNS.csv", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCNS"),),
         version="live",
     ),
     Source(
