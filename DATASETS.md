@@ -65,7 +65,7 @@ rate and commit only derived numbers, never page contents.
 | `wikipedia` | English Wikipedia infobox (raw wikitext through the MediaWiki API) | enwiki title from the crosswalk | notable films missing budget or gross (~4k) | `budget`, `gross` text, parsed | money coverage | crosswalk | ⏳ |
 | `bom_title` | `boxofficemojo.com/title/{imdb_id}` | IMDb id | notable films missing revenue (~4k) | domestic, international, worldwide gross | money coverage | – | ❌ robots.txt disallows all crawlers (D16) |
 | `bom_country` | `boxofficemojo.com/year/{year}/?area={ISO2}` | title + year (fuzzy) | ~97 markets × years | yearly gross per film per market, theatres, distributor | T1, T4, X2 | – | ❌ robots.txt disallows all crawlers (D16) |
-| `lumiere` | [LUMIERE](https://lumiere.obs.coe.int) film pages | Wikidata P4282 | notable films released after 1996 (~89 % have an id) | admissions per European market per year | T1, T4, X2 | crosswalk | ⏳ |
+| `lumiere` | [LUMIERE](https://lumiere.obs.coe.int) `/movie/{id}` (admissions table) | Wikidata P4282 | notable films with an id (11,920) | admissions per European market per year, with LUMIERE's `estimated` flag; `GB_IE` is a combined market | T1, T4, X2 | crosswalk | 🔄 scraper written, run pending |
 | `tmdb_collections` | TMDB API `/movie/{id}` | TMDB id | notable subset (13,080 calls) | `belongs_to_collection` (franchises) | T6 | `TMDB_API_KEY` in `.env` | 🔄 running since 2026-10-11 |
 | `pageviews` | Wikimedia Pageviews API | Wikipedia titles per language | – | monthly views per language edition | – | – | ➖ |
 
