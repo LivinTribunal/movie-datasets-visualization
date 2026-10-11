@@ -82,3 +82,25 @@ def test_missing_frames_give_null_columns_in_order():
         "mc_critic_reviews", "audience_100", "mc_user_100", "letterboxd_100", "gap",
     ]  # fmt: skip
     assert out.select("metascore_100", "mc_critic_reviews", "mc_user_100").row(0) == (None,) * 3
+
+
+def _rt(rows: list[tuple]) -> pl.DataFrame:
+    return pl.DataFrame(
+        rows,
+        schema={"imdb_id": pl.String, "tomatometer": pl.Int8, "audience_score": pl.Int8},
+        orient="row",
+    )
+
+
+def test_rt_recent_overrides_clapper_per_value_and_gap_follows():
+    films = _films(
+        [
+            ("tt1", 7.0, 7.0, 100, 60, 80),
+            ("tt2", 7.0, 7.0, 100, 60, 80),
+            ("tt3", 7.0, 7.0, 100, 60, 80),
+        ]
+    )
+    out = ratings(films, rt_recent=_rt([("tt1", 70, 95), ("tt2", None, 50)]))
+    assert out["tomatometer_100"].to_list() == [70.0, 60.0, 60.0]
+    assert out["audience_100"].to_list() == [95.0, 50.0, 80.0]
+    assert out["gap"].to_list() == [25.0, -10.0, 20.0]
