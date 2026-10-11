@@ -9,6 +9,9 @@ const SCORES = [
   ['tmdb_100', 'TMDB'],
   ['tomatometer_100', 'Tomatometer'],
   ['audience_100', 'Audience score'],
+  ['metascore_100', 'Metascore'],
+  ['mc_user_100', 'Metacritic users'],
+  ['letterboxd_100', 'Letterboxd'],
   ['gap', 'Gap (audience − critics)'],
 ] as const
 

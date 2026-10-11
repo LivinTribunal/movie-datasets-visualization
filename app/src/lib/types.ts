@@ -28,6 +28,9 @@ export interface FilmRow {
   tmdb_100: number | null
   tomatometer_100: number | null
   audience_100: number | null
+  metascore_100: number | null
+  mc_user_100: number | null
+  letterboxd_100: number | null
   gap: number | null
 }
 

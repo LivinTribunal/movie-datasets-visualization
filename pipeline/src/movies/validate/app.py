@@ -11,7 +11,8 @@ SCHEMA: dict[str, list[str]] = {
         "imdb_id", "tmdb_id", "title", "year", "notable", "genres", "families", "countries",
         "imdb_votes", "budget_usd2025", "revenue_usd2025", "budget_src", "revenue_src",
         "budget_converted", "revenue_converted", "budget_disagree", "revenue_disagree",
-        "money_fuzzy", "roi", "imdb_100", "tmdb_100", "tomatometer_100", "audience_100", "gap",
+        "money_fuzzy", "roi", "imdb_100", "tmdb_100", "tomatometer_100", "audience_100",
+        "metascore_100", "mc_user_100", "letterboxd_100", "gap",
     ],
     "genre_year.json": [
         "subset", "year", "genre", "family", "films", "votes", "revenue_usd2025", "revenue_films",

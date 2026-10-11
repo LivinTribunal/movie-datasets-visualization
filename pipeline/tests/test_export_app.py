@@ -3,6 +3,7 @@ import datetime as dt
 import polars as pl
 
 from movies.export.app import films_table, franchises_table, genre_year, to_columns
+from movies.validate.app import SCHEMA
 
 FILMS = pl.DataFrame(
     {
@@ -38,9 +39,12 @@ RATINGS = pl.DataFrame(
         "tmdb_100": [None, None, None, None],
         "tomatometer_100": [80.0, 50.0, 90.0, None],
         "audience_100": [75.0, 55.0, None, None],
+        "metascore_100": [82.04, None, None, None],
+        "mc_user_100": [None, None, None, None],
+        "letterboxd_100": [92.0, None, None, None],
         "gap": [-5.0, 5.0, None, None],
     },
-    schema_overrides={"tmdb_100": pl.Float64},
+    schema_overrides={"tmdb_100": pl.Float64, "mc_user_100": pl.Float64},
 )
 FILM_GENRES = pl.DataFrame(
     {
@@ -132,6 +136,13 @@ FRANCHISES = pl.DataFrame(
         "revenue_vs_first": [0.50049, 1.0, None],
     }
 )
+
+
+def test_films_table_includes_scraped_scores_in_schema_order():
+    out = films_table(FILMS, MONEY, RATINGS, FILM_GENRES)
+    assert out.columns == SCHEMA["films.json"]
+    assert out["metascore_100"].to_list()[0] == 82.0
+    assert out["letterboxd_100"].to_list()[0] == 92.0
 
 
 def test_franchises_table_year_rounding_and_order():

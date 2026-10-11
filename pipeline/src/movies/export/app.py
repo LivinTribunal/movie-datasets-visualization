@@ -63,6 +63,9 @@ def films_table(
             tmdb_100=pl.col("tmdb_100").round(1),
             tomatometer_100=pl.col("tomatometer_100").round(1),
             audience_100=pl.col("audience_100").round(1),
+            metascore_100=pl.col("metascore_100").round(1),
+            mc_user_100=pl.col("mc_user_100").round(1),
+            letterboxd_100=pl.col("letterboxd_100").round(1),
             gap=pl.col("gap").round(1),
         )
     )
