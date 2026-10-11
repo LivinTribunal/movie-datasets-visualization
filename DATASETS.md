@@ -23,7 +23,7 @@ using it (keys, units, missing values) are in `AGENTS.md`. Decisions are in
 | `numbers_budgets` | [The Numbers budgets](https://www.kaggle.com/datasets/dahvid/movie-budgets-and-revenues) | Kaggle v1 | MIT | `data/raw/numbers_budgets/` | budget, domestic + worldwide gross: T2, T5, X1 | ✅ 0.5 MB, 6,518 rows |
 | `numbers_metrics` | [The Numbers + metrics](https://www.kaggle.com/datasets/michaelmatta0/movies-ultimate-metrics-features-and-metadata) | Kaggle v1 | MIT | `data/raw/numbers_metrics/` | gross split, franchise, source, creative type: T5, T6 | ✅ 10.4 MB, 6,569 rows (cleaned and raw files) |
 | `netflix` | [Netflix Top 10, all weeks by country](https://www.netflix.com/tudum/top10) (`all-weeks-countries.tsv`) | live file; **we use weeks up to 2026-09-27** (later weeks are dropped when cleaning); fetched with a browser User-Agent because Netflix serves an HTML page to the descriptive one | Netflix public data | `data/raw/netflix/` | streaming genre taste: T1, T4, X2 | ✅ 32.6 MB, 512,200 rows (films + TV), weeks 2021-07-04 to 2026-10-04, 94 countries |
-| `cpi` | [FRED CPIAUCSL](https://fred.stlouisfed.org/series/CPIAUCSL) | live (monthly, from 1947) | public domain (BLS) | `data/raw/cpi/` | inflation adjustment to 2025 USD | ✅ 956 monthly rows |
+| `cpi` | [FRED CPIAUCNS](https://fred.stlouisfed.org/series/CPIAUCNS) | live (monthly, from 1913, not seasonally adjusted) | public domain (BLS) | `data/raw/cpi/` | inflation adjustment to 2025 USD | ✅ 1,364 monthly rows |
 | `fx` | [World Bank PA.NUS.FCRF](https://data.worldbank.org/indicator/PA.NUS.FCRF) | live (yearly) | CC BY 4.0 | `data/raw/fx/` | converting non-USD money | ✅ 4.6 MB, 17,490 country-years (12,630 with a value) |
 | `world_atlas` | [world-atlas@2](https://github.com/topojson/world-atlas) (Natural Earth), 50m + 110m | npm v2 | ISC / public domain | `data/raw/world_atlas/` | map geometry: T1, X2 | ✅ 0.9 MB |
 | `countries_iso` | [ISO-3166 countries with regional codes](https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes) (`all.csv`): ISO-2, ISO-3, ISO numeric, UN M49 region and subregion | commit 145f1ad | CC BY-SA 4.0 | `data/raw/countries_iso/` | builds `data/reference/countries.csv` | ✅ 249 countries |
@@ -112,7 +112,7 @@ rate and commit only derived numbers, never page contents.
 | `rt_clapper.parquet` | 142,052 | 1,206 duplicate RT ids dropped (the fullest row kept); box office strings like `$31.4M` → USD |
 | `numbers_budgets.parquet`, `numbers_metrics.parquet` | 6,518 and 6,569 | `$0` gross → null; dates parsed; ids like `1,000` parsed (they were null before); in the metrics file two-digit years after 2026-10-01 moved back a century (`15-Dec-39` is 1939, not 2039) |
 | `netflix.parquet` | 255,170 | films only, weeks up to 2026-09-27, `score = 11 − rank` |
-| `cpi.parquet` | 80 years | yearly mean of the monthly index, `months` shows a partial year |
+| `cpi.parquet` | 114 years (1913–2026) | yearly mean of the monthly index, `months` shows a partial year |
 | `fx.parquet` | 12,537 (213 countries) | World Bank aggregates and empty values dropped, ISO-3 → ISO-2 |
 
 ## Join stage

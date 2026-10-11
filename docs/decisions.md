@@ -221,7 +221,7 @@ Choices the PLAN left open:
   no 2026 rates yet, nothing before 1960) gives a null USD value and the
   nominal amount stays.
 - **Inflation**: `*_usd2025 = *_usd × CPI(2025) / CPI(year)`. CPI starts in
-  1947, so older films have nominal USD but no 2025 value.
+  1913 (D18), so older films have nominal USD but no 2025 value.
 - **Disagreement**: `*_disagree` is true when at least two sources have a
   USD value and the largest is more than 1.25 times the smallest.
 - **ROI** = revenue / budget, only when the USD budget is at least $100,000.
@@ -291,3 +291,17 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   `estimated_share`. A market-year with fewer than 20 films is dropped as
   too noisy. The shares cover notable films with a LUMIERE id only, never
   a market's whole box office, and the app has to say so.
+
+### D18. CPI from 1913 (2026-10-11)
+
+- **What**: inflation uses FRED `CPIAUCNS` (CPI-U, not seasonally
+  adjusted, from 1913) instead of `CPIAUCSL` (seasonally adjusted, from
+  1947). We use yearly means, and BLS computes its official annual CPI-U
+  averages from the unadjusted series, so the adjustment changes nothing
+  we use.
+- **Why**: with `CPIAUCSL`, every film before 1947 had nominal USD and no
+  2025 value. That was 506 budgets, among them *Gone with the Wind*,
+  *Snow White* and *Bambi*. Films with a budget source but no
+  `budget_usd2025` drop from 557 to 54, and revenues from 373 to 15. The
+  rest are non-USD amounts from years with no World Bank rate (before
+  1960, or Taiwan), and those stay null.

@@ -11,14 +11,14 @@
     "version": "145f1ad"
   },
   "cpi": {
-    "downloaded_at": "2026-10-09T10:55:35Z",
+    "downloaded_at": "2026-10-11T20:59:40Z",
     "files": {
-      "raw/cpi/CPIAUCSL.csv": {
-        "bytes": 17744,
-        "sha256": "f8ecddf53a9a9a74dda92c2c4204e6039466fcb744bc74171b73b5f6aac48119"
+      "raw/cpi/CPIAUCNS.csv": {
+        "bytes": 25074,
+        "sha256": "f79e3a78837142293449cee4a1a9b1da7be677fb3e989ffb2ef48e8e7cf4cdd7"
       }
     },
-    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCNS",
     "version": "live"
   },
   "fx": {

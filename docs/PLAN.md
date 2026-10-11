@@ -97,7 +97,7 @@ work runs in parallel because the scrapes take days of wall-clock time.
 | LUMIERE | admissions per film per European market per year | scrape through the LUMIERE ID | notable films after 1996 |
 | Netflix Top 10 | weekly film ranks in 94 countries | `all-weeks-countries.tsv` | 255k film rows |
 | TMDB API `/movie/{id}` | `belongs_to_collection` (franchises) | API key, notable subset | ~13k calls |
-| FRED `CPIAUCSL`, World Bank `PA.NUS.FCRF` | inflation, exchange rates | CSV download | small |
+| FRED `CPIAUCNS`, World Bank `PA.NUS.FCRF` | inflation, exchange rates | CSV download | small |
 | Natural Earth / `world-atlas` | country shapes | npm package / TopoJSON | small |
 
 Links:
@@ -109,7 +109,7 @@ Links:
 [Netflix Top 10](https://www.netflix.com/tudum/top10) ·
 [LUMIERE](https://lumiere.obs.coe.int) ·
 [Wikidata SPARQL](https://query.wikidata.org) ·
-[FRED CPIAUCSL](https://fred.stlouisfed.org/series/CPIAUCSL) ·
+[FRED CPIAUCNS](https://fred.stlouisfed.org/series/CPIAUCNS) ·
 [World Bank FX](https://data.worldbank.org/indicator/PA.NUS.FCRF) ·
 [world-atlas](https://github.com/topojson/world-atlas)
 

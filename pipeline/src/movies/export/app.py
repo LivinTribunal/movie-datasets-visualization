@@ -16,7 +16,8 @@ from movies.validate.app import SCHEMA
 
 NOTES = [
     "Money is converted at release-year World Bank rates and inflated with CPI to 2025 USD.",
-    "Films before 1947 have no 2025 USD value: the CPI series starts in 1947.",
+    "Films before 1913 have no 2025 USD value (the CPI series starts in 1913), and neither do"
+    " non-USD amounts from a year without a World Bank rate.",
     "Budgets under $1,000 and revenues under $10,000 are dropped as unreliable.",
     "Fuzzy title matches to The Numbers are flagged (money_fuzzy).",
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",

@@ -123,6 +123,10 @@ def is_up_to_date(lock: dict, src: Source, data_root: Path) -> bool:
     entry = lock.get(src.name)
     if not entry or not entry.get("files") or entry.get("version") != src.version:
         return False
+    # a renamed registry file is not in the lock yet
+    expected = [f"raw/{src.name}/{fn}" for fn, _ in src.urls]
+    if src.kind == "http" and any(rel not in entry["files"] for rel in expected):
+        return False
     for rel, info in entry["files"].items():
         f = data_root / rel
         if not f.is_file() or f.stat().st_size != info["bytes"]:

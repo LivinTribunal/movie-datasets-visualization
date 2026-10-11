@@ -103,7 +103,7 @@ Pipeline steps one at a time: `uv run movies <stage> [--source NAME]`.
 - **Missing** is null, never `0`, `-1` or `""`. TMDB's `0` budget, revenue
   and runtime are recoded to null when the data is cleaned.
 - **Money**: store nominal values and `*_usd2025` (FX at the release-year
-  average, then CPI `CPIAUCSL` to 2025). Every money column has a source
+  average, then CPI `CPIAUCNS` to 2025). Every money column has a source
   column (`budget_src`, `revenue_src`). **Never impute money.**
 - **Ratings**: rescaled to 0–100 in columns ending `_100`. Critics: tomatometer and
   metascore. Audience: audience_score, imdb_rating, mc_user_score,
