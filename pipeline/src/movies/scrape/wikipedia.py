@@ -50,7 +50,8 @@ NOTE_TEMPLATE = re.compile(r"\{\{\s*(?:efn|refn|sfn|sfnp)\b", re.I)
 # annotations that are not part of the value
 NOISE_TEMPLATE = re.compile(
     r"\{\{\s*(?:estimation|circa|increase|decrease|steady|usdcy|inflation(?:-year)?"
-    r"|citation needed|cn)\s*(?=[|}])",
+    r"|citation needed|cn|better source needed|better source|dubious|clarify"
+    r"|failed verification|according to whom|update needed|when)\s*(?=[|}])",
     re.I,
 )
 SMALL_TAG = re.compile(r"</?small\b[^>]*>", re.I)
@@ -63,13 +64,26 @@ LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")
 ITEM_SPLIT = re.compile(r"<br\s*/?>|\n|\|", re.I)
 GROSS_SPLIT = re.compile(ITEM_SPLIT.pattern + r"|\s+or\s+", re.I)
 CODE_TEMPLATE = re.compile(
-    r"\{\{\s*(US\$|USD|GBP|EUR|INR|CN¥|¥|CNY|JPY|KRW)\s*\|\s*([^{}|]*?)\s*(?:\|[^{}]*)?\}\}", re.I
+    r"\{\{\s*(US\$|USD|GBP|EUR|INR|CN¥|¥|CNY|JPY|KRW|£|€|Euro)\s*\|\s*([^{}|]*?)\s*(?:\|[^{}]*)?\}\}",
+    re.I,
 )
 CURRENCY_TEMPLATE = re.compile(
     r"\{\{\s*currency\s*\|\s*([^{}|]*?)\s*\|\s*([A-Za-z]{3})\s*[^{}]*\}\}", re.I
 )
-TEMPLATE_CODES = {"US$": "USD", "CN¥": "CNY", "¥": "JPY"}
-DASH = re.compile(r"&[nm]dash;|\{\{\s*[nm]dash\s*\}\}", re.I)
+TEMPLATE_CODES = {"US$": "USD", "CN¥": "CNY", "¥": "JPY", "£": "GBP", "€": "EUR", "EURO": "EUR"}
+# {{XXX}} is a bare currency code glued to the amount
+CODE_ONLY = re.compile(r"\{\{\s*([A-Z]{3})\s*\}\}")
+# {{INRConvert|31.6|c}}: the 2nd param is the scale; a number there is a range, left alone
+INR_CONVERT = re.compile(
+    r"\{\{\s*INRConvert\s*\|\s*(\d[\d,.]*)\s*(?:\|\s*(lc|[clmbk])\s*(?=[|}]))?"
+    r"(?:\|\s*[a-z]+\s*=[^{}|]*)*\}\}",
+    re.I,
+)
+INR_SCALES = {
+    "c": " crore", "l": " lakh", "lc": " lakh crore", "m": " million", "b": " billion",
+    "k": " thousand",
+}  # fmt: skip
+DASH = re.compile(r"&[nm]dash;|\{\{\s*(?:e?[nm])dash\s*\}\}", re.I)
 SPACE = re.compile(r"&nbsp;|&#160;|&thinsp;|\{\{\s*nbsp\s*\}\}", re.I)
 
 # a bare ¥ is left out: Chinese articles use it for yuan, so it is ambiguous
@@ -82,11 +96,11 @@ SYMBOLS = {
     "JP¥": "JPY", "JPY": "JPY",
     "₩": "KRW", "KRW": "KRW",
     "A$": "AUD", "AU$": "AUD", "AUD": "AUD",
-    "C$": "CAD", "CA$": "CAD", "CAD": "CAD",
+    "C$": "CAD", "CA$": "CAD", "CAD$": "CAD", "CAD": "CAD",
     "HK$": "HKD", "HKD": "HKD",
     "R$": "BRL", "BRL": "BRL",
     "MX$": "MXN", "NZ$": "NZD", "S$": "SGD", "NT$": "TWD",
-    "₣": "FRF", "FF": "FRF", "DM": "DEM",
+    "₽": "RUB", "₣": "FRF", "FF": "FRF", "DM": "DEM",
 }  # fmt: skip
 CURRENCY = re.compile(
     "("
@@ -272,7 +286,11 @@ def _parse_item(piece: str) -> tuple[float | None, str | None, str]:
 
 def _normalise(text: str) -> str:
     text = _strip_noise(text)
-    text = CODE_TEMPLATE.sub(lambda m: f"{TEMPLATE_CODES.get(m[1], m[1]).upper()} {m[2]}", text)
+    text = CODE_ONLY.sub(r"\1 ", text)
+    text = INR_CONVERT.sub(lambda m: f"INR {m[1]}{INR_SCALES.get((m[2] or '').lower(), '')}", text)
+    text = CODE_TEMPLATE.sub(
+        lambda m: f"{TEMPLATE_CODES.get(m[1].upper(), m[1].upper())} {m[2]}", text
+    )
     return CURRENCY_TEMPLATE.sub(lambda m: f"{m[2].upper()} {m[1]}", text)
 
 
@@ -292,6 +310,10 @@ def parse_gross(text: str) -> tuple[float | None, str | None]:
     """First item that is the whole gross: no territory, rentals or re-release qualifier."""
     for item in _items(text, GROSS_SPLIT):
         amount, currency, rest = _parse_item(item)
+        # "HK$34.7 million (US$4.4 million)": a converted amount is no qualifier
+        paren = re.fullmatch(r"\((.*)\)", rest)
+        if paren and (conv := _parse_item(paren[1]))[0] is not None and not conv[2]:
+            rest = ""
         words = re.sub(r"[^a-z]+", " ", rest.lower()).strip()
         if amount is not None and (
             words.startswith("equivalent to") or not GROSS_NOTES.sub("", words).strip()
