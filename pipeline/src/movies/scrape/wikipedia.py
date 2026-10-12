@@ -83,7 +83,7 @@ INR_SCALES = {
     "c": " crore", "l": " lakh", "lc": " lakh crore", "m": " million", "b": " billion",
     "k": " thousand",
 }  # fmt: skip
-DASH = re.compile(r"&[nm]dash;|\{\{\s*(?:e?[nm])dash\s*\}\}", re.I)
+DASH = re.compile(r"&[nm]dash;|\{\{\s*e?[nm]\s?dash\s*\}\}", re.I)
 SPACE = re.compile(r"&nbsp;|&#160;|&thinsp;|\{\{\s*nbsp\s*\}\}", re.I)
 
 # a bare ¥ is left out: Chinese articles use it for yuan, so it is ambiguous

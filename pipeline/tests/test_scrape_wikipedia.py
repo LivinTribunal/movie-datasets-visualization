@@ -188,6 +188,7 @@ def test_parse_gross(text, amount, currency):
         ("$30&mdash;35 million", 3.5e7),
         ("{{INR}}125{{endash}}130 crore", 1.3e9),
         ("$30{{emdash}}35 million", 3.5e7),
+        ("{{INR}}200{{en dash}}220 crore", 2.2e9),
         ("$5{{nbsp}}million", 5e6),
         ("$5&thinsp;million", 5e6),
     ],
