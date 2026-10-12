@@ -331,3 +331,27 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   its upper bound, like the Wikidata pick that keeps the largest amount.
   A currency it cannot name gives null, and `wp_*_text` keeps the cleaned
   field so every value can be checked against its source text.
+
+### D20. Wrong money amounts: a hand-checked skip list, no automatic rule (2026-10-12)
+
+- **What**: `data/overrides/money.csv` lists single source values that are
+  wrong (`imdb_id`, `field`, `source`, `note`). `derive money` treats each
+  as missing, so the next source in the order fills in, and `*_src` names
+  the source actually used. The list has 11 rows. We filled it by
+  checking every notable film in the top and bottom 0.5% of ROI where two
+  sources differ by 5× or more, and the note on each row gives both
+  amounts.
+- **Why not a rule**: we tested "drop TMDB when Wikipedia or Wikidata
+  differs by 5× or more" on the full data. For notable films without a
+  The Numbers value, it would have hit 37 budgets and 137 revenues. Most
+  of those revenues are TMDB holding a single-territory gross, and the
+  fallback sources have their own unit errors: Wikidata gives *KILL*
+  (2024) a 478 M USD budget, and Wikipedia writes *The Beyond*'s lira
+  gross with a £. So the rule would trade one set of wrong values for
+  another. Most extreme ROIs are real, and two or more sources agree on
+  them: *Blair Witch*, *Halloween*, *Rocky*, the Bruce Lee films, and
+  *Obsession* (2026) at 0.75 M budget and 522 M gross.
+- **What stays**: the `*_disagree` flags still mark every film whose
+  sources differ by more than 1.25×. Netflix originals such as *Red
+  Notice* keep their tiny theatrical gross: it is right, but their ROI
+  means nothing, and the app should say so where ROI is shown.

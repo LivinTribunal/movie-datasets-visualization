@@ -19,6 +19,8 @@ NOTES = [
     "Films before 1913 have no 2025 USD value (the CPI series starts in 1913), and neither do"
     " non-USD amounts from a year without a World Bank rate.",
     "Budgets under $1,000 and revenues under $10,000 are dropped as unreliable.",
+    "Money comes from The Numbers, else TMDB, else Wikidata, else the Wikipedia infobox"
+    " (budget_src, revenue_src); a few amounts checked by hand as wrong are skipped.",
     "Fuzzy title matches to The Numbers are flagged (money_fuzzy).",
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
     "The TMDB average is null under 50 votes.",
