@@ -51,7 +51,7 @@ NOTE_TEMPLATE = re.compile(r"\{\{\s*(?:efn|refn|sfn|sfnp)\b", re.I)
 NOISE_TEMPLATE = re.compile(
     r"\{\{\s*(?:estimation|circa|increase|decrease|steady|usdcy|inflation(?:-year)?"
     r"|citation needed|cn|better source needed|better source|dubious|clarify"
-    r"|failed verification|according to whom|update needed|when)\s*(?=[|}])",
+    r"|failed verification|according to whom|update needed|when|est|estimated)\s*(?=[|}])",
     re.I,
 )
 SMALL_TAG = re.compile(r"</?small\b[^>]*>", re.I)
@@ -64,15 +64,24 @@ LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")
 ITEM_SPLIT = re.compile(r"<br\s*/?>|\n|\|", re.I)
 GROSS_SPLIT = re.compile(ITEM_SPLIT.pattern + r"|\s+or\s+", re.I)
 CODE_TEMPLATE = re.compile(
-    r"\{\{\s*(US\$|USD|GBP|EUR|INR|CN¥|¥|CNY|JPY|KRW|£|€|Euro)\s*\|\s*([^{}|]*?)\s*(?:\|[^{}]*)?\}\}",
+    r"\{\{\s*(US\$|USD|GBP|EUR|INR|CN¥|¥|CNY|JPY|KRW|£|€|Euro|JP¥|₹)\s*\|\s*([^{}|]*?)\s*(?:\|[^{}]*)?\}\}",
     re.I,
 )
 CURRENCY_TEMPLATE = re.compile(
     r"\{\{\s*currency\s*\|\s*([^{}|]*?)\s*\|\s*([A-Za-z]{3})\s*[^{}]*\}\}", re.I
 )
-TEMPLATE_CODES = {"US$": "USD", "CN¥": "CNY", "¥": "JPY", "£": "GBP", "€": "EUR", "EURO": "EUR"}
+TEMPLATE_CODES = {
+    "US$": "USD",
+    "CN¥": "CNY",
+    "¥": "JPY",
+    "£": "GBP",
+    "€": "EUR",
+    "EURO": "EUR",
+    "JP¥": "JPY",
+    "₹": "INR",
+}
 # {{XXX}} is a bare currency code glued to the amount
-CODE_ONLY = re.compile(r"\{\{\s*([A-Z]{3})\s*\}\}")
+CODE_ONLY = re.compile(r"\{\{\s*([A-Z]{3})\s*(?:\|\s*link\s*=\s*\w+\s*)?\}\}")
 # {{INRConvert|31.6|c}}: the 2nd param is the scale; a number there is a range, left alone
 INR_CONVERT = re.compile(
     r"\{\{\s*INRConvert\s*\|\s*(\d[\d,.]*)\s*(?:\|\s*(lc|[clmbk])\s*(?=[|}]))?"
@@ -100,7 +109,7 @@ SYMBOLS = {
     "HK$": "HKD", "HKD": "HKD",
     "R$": "BRL", "BRL": "BRL",
     "MX$": "MXN", "NZ$": "NZD", "S$": "SGD", "NT$": "TWD",
-    "₽": "RUB", "₣": "FRF", "FF": "FRF", "DM": "DEM",
+    "₽": "RUB", "₤": "ITL", "USD$": "USD", "₣": "FRF", "FFR": "FRF", "FF": "FRF", "DM": "DEM",
 }  # fmt: skip
 CURRENCY = re.compile(
     "("
