@@ -24,6 +24,8 @@ _FIELDS = (
     ("budget", "numbers_budget", "budget", "budget", "wp_budget"),
     ("revenue", "numbers_worldwide_gross", "revenue", "box_office", "wp_gross"),
 )
+_SKIP_FIELDS = ("budget", "revenue")
+_SKIP_SOURCES = ("numbers", "tmdb", "wikidata", "wikipedia")
 _WIKIPEDIA_SCHEMA = {
     "imdb_id": pl.String,
     **{
@@ -92,12 +94,21 @@ def source_values(
     currencies: pl.DataFrame,
     fx: pl.DataFrame,
     wikipedia: pl.DataFrame | None = None,
+    skip: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """Per film, each source's budget and revenue; values under the floor become null.
 
     `drop_<source column>` flags the values the floor removed. A Wikidata value that cannot be
     converted to USD is kept (nominal only), and so is a Wikipedia one.
+    `skip` lists hand-checked wrong values (imdb_id, field, source); each becomes null after the
+    floor step and `skip_<source column>` flags it.
     """
+    if skip is None:
+        skip = pl.DataFrame(schema={"imdb_id": pl.String, "field": pl.String, "source": pl.String})
+    for col, allowed in (("field", _SKIP_FIELDS), ("source", _SKIP_SOURCES)):
+        bad = skip.filter(~pl.col(col).is_in(allowed))[col]
+        if len(bad):
+            raise ValueError(f"money skip {col} {bad[0]!r} is not one of {allowed}")
     picked = wikidata_pick(wiki, currencies)
     if wikipedia is None:
         wikipedia = pl.DataFrame(schema=_WIKIPEDIA_SCHEMA)
@@ -137,6 +148,31 @@ def source_values(
                 for c in (f"{col}_currency", f"{col}_usd")
             ],
         )
+        ids = skip.filter(pl.col("field") == field)
+        by_source = {
+            "numbers": num,
+            "tmdb": f"tmdb_{field}",
+            "wikidata": wiki_col,
+            "wikipedia": wp_col,
+        }
+        df = df.with_columns(
+            *[
+                pl.col("imdb_id")
+                .is_in(ids.filter(pl.col("source") == name)["imdb_id"].implode())
+                .alias(f"skip_{c}")
+                for name, c in by_source.items()
+            ]
+        ).with_columns(
+            *[
+                pl.when(pl.col(f"skip_{c}")).then(None).otherwise(pl.col(c)).alias(c)
+                for c in by_source.values()
+            ],
+            *[
+                pl.when(pl.col(f"skip_{col}")).then(None).otherwise(pl.col(c)).alias(c)
+                for col in (wiki_col, wp_col)
+                for c in (f"{col}_currency", f"{col}_usd")
+            ],
+        )
     return df
 
 
@@ -147,9 +183,10 @@ def money(
     fx: pl.DataFrame,
     cpi: pl.DataFrame,
     wikipedia: pl.DataFrame | None = None,
+    skip: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """One row per films row: value, currency, src, usd, usd2025 and a disagreement flag."""
-    df = source_values(films, wiki, currencies, fx, wikipedia)
+    df = source_values(films, wiki, currencies, fx, wikipedia, skip)
     cpi_base = cpi.filter(pl.col("year") == BASE_YEAR)["cpi"].item()
     cpi_tbl = cpi.select("year", pl.col("cpi").alias("cpi_year"))
     for field, num, _, _, _ in _FIELDS:
@@ -210,6 +247,12 @@ def _read_scraped(name: str, outcome: str) -> pl.DataFrame | None:
     return None
 
 
+def _skips() -> pl.DataFrame:
+    return pl.read_csv(paths.OVERRIDES / "money.csv", infer_schema_length=0).select(
+        "imdb_id", "field", "source"
+    )
+
+
 def run() -> None:
     films = pl.read_parquet(paths.INTERIM / "films.parquet")
     wiki = pl.read_parquet(paths.SCRAPED / "wikidata_money.parquet")
@@ -225,8 +268,9 @@ def run() -> None:
         f"wikidata statements in a unit not in currencies.csv, by unit_qid: {dict(top.iter_rows())}"
     )
     wikipedia = _read_scraped("wikipedia.parquet", "Wikipedia money stays out")
-    out = money(films, wiki, currencies, fx, cpi, wikipedia)
-    src = source_values(films, wiki, currencies, fx, wikipedia)
+    skip = _skips()
+    out = money(films, wiki, currencies, fx, cpi, wikipedia, skip)
+    src = source_values(films, wiki, currencies, fx, wikipedia, skip)
     out.write_parquet(paths.INTERIM / "money.parquet")
 
     joined = out.join(films.select("imdb_id", "notable"), on="imdb_id")
@@ -240,15 +284,15 @@ def run() -> None:
             f"{field} non-USD: {converted.height}, converted to USD: "
             f"{converted[f'{field}_usd'].is_not_null().sum()}"
         )
-        dropped = {
-            name: int(src[f"drop_{col}"].sum())
-            for name, col in (
-                ("numbers", num),
-                ("tmdb", f"tmdb_{field}"),
-                ("wikidata", f"wiki_{field}"),
-                ("wikipedia", f"wp_{field}"),
-            )
-        }
+        cols = (
+            ("numbers", num),
+            ("tmdb", f"tmdb_{field}"),
+            ("wikidata", f"wiki_{field}"),
+            ("wikipedia", f"wp_{field}"),
+        )
+        dropped = {name: int(src[f"drop_{col}"].sum()) for name, col in cols}
         print(f"{field} values dropped by the floor: {dropped}")
+        skipped = {name: int(src[f"skip_{col}"].sum()) for name, col in cols}
+        print(f"{field} values skipped by data/overrides/money.csv: {skipped}")
         print(f"{field} sources disagree: {out[f'{field}_disagree'].sum()}")
     print(f"films with ROI: {out['roi'].is_not_null().sum()}")

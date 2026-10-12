@@ -1,6 +1,7 @@
 from datetime import date
 
 import polars as pl
+import pytest
 
 from movies.derive.money import money, wikidata_pick
 
@@ -78,11 +79,21 @@ def _wp(rows: list[tuple]) -> pl.DataFrame:
     )
 
 
+def _skip(rows: list[tuple]) -> pl.DataFrame:
+    """(imdb_id, field, source)"""
+    schema = {"imdb_id": pl.String, "field": pl.String, "source": pl.String}
+    return pl.DataFrame(rows, schema=schema, orient="row")
+
+
 def _run(
-    films: list[tuple], wiki: list[tuple] | None = None, wp: list[tuple] | None = None
+    films: list[tuple],
+    wiki: list[tuple] | None = None,
+    wp: list[tuple] | None = None,
+    skip: list[tuple] | None = None,
 ) -> dict:
     wikipedia = None if wp is None else _wp(wp)
-    out = money(_films(films), _wiki(wiki or []), CURRENCIES, FX, CPI, wikipedia)
+    skips = None if skip is None else _skip(skip)
+    out = money(_films(films), _wiki(wiki or []), CURRENCIES, FX, CPI, wikipedia, skips)
     return out.row(0, named=True)
 
 
@@ -288,3 +299,47 @@ def test_wikipedia_counts_in_disagreement() -> None:
     films = [("tt1", 2010, None, 1e6, None, None)]
     assert _run(films, wp=[_wp_row(budget=5e6)])["budget_disagree"] is True
     assert _run(films, wp=[_wp_row(budget=1.1e6)])["budget_disagree"] is False
+
+
+def test_skipped_tmdb_budget_falls_through_to_wikidata() -> None:
+    films = [("tt1", 2010, None, 2.9e5, None, None)]
+    wiki = [("tt1", "budget", 2.3e6, "Q4917", None, None, "normal")]
+    row = _run(films, wiki, skip=[("tt1", "budget", "tmdb")])
+    assert (row["budget"], row["budget_src"]) == (2.3e6, "wikidata")
+
+
+def test_skipped_budget_with_nothing_after_it_is_null() -> None:
+    row = _run([("tt1", 2010, None, 2.9e5, None, None)], skip=[("tt1", "budget", "tmdb")])
+    assert row["budget"] is None and row["budget_src"] is None and row["roi"] is None
+
+
+def test_skip_is_per_field() -> None:
+    films = [("tt1", 2010, None, 6e6, None, 9e6)]
+    row = _run(films, skip=[("tt1", "revenue", "tmdb")])
+    assert (row["budget"], row["budget_src"]) == (6e6, "tmdb")
+    assert row["revenue"] is None
+
+
+def test_skipped_value_is_left_out_of_the_disagreement() -> None:
+    films = [("tt1", 2010, None, 1e6, None, None)]
+    row = _run(films, wp=[_wp_row(budget=5e6)], skip=[("tt1", "budget", "tmdb")])
+    assert row["budget_disagree"] is False and row["budget_src"] == "wikipedia"
+
+
+def test_skipping_wikidata_nulls_its_currency_too() -> None:
+    films = [("tt1", 2010, None, None, None, None)]
+    wiki = [("tt1", "budget", 8e6, "Q4916", None, None, "normal")]
+    row = _run(films, wiki, [_wp_row(budget=3e6)], skip=[("tt1", "budget", "wikidata")])
+    assert (row["budget_src"], row["budget_currency"]) == ("wikipedia", "USD")
+
+
+def test_unknown_skip_source_raises() -> None:
+    with pytest.raises(ValueError, match="imdb"):
+        _run([("tt1", 2010, None, 6e6, None, None)], skip=[("tt1", "budget", "imdb")])
+
+
+def test_unlisted_film_is_unchanged_by_a_skip() -> None:
+    films = _films([("tt1", 2010, None, 6e6, None, None), ("tt2", 2010, None, 7e6, None, None)])
+    out = money(films, _wiki([]), CURRENCIES, FX, CPI, None, _skip([("tt1", "budget", "tmdb")]))
+    row = out.filter(pl.col("imdb_id") == "tt2").row(0, named=True)
+    assert (row["budget"], row["budget_src"]) == (7e6, "tmdb")
