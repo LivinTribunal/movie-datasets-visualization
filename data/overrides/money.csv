@@ -1,0 +1,12 @@
+imdb_id,field,source,note
+tt6108090,budget,tmdb,"TMDB $286,284; Wikipedia ₹15 crore (about $2.3M)"
+tt9387250,budget,tmdb,TMDB $70M; Wikipedia $8M
+tt1014762,budget,numbers,The Numbers $500k; Wikipedia $12M
+tt0073341,revenue,tmdb,"TMDB $13,000; Wikipedia $11M"
+tt1456661,revenue,tmdb,"TMDB $48,000; Wikidata $20.1M"
+tt34886821,revenue,tmdb,"TMDB $69,000; Wikipedia $10.7M"
+tt1316536,revenue,numbers,"The Numbers $12,000; TMDB and Wikipedia $358,399"
+tt0052365,revenue,tmdb,"TMDB $20,000; Wikidata $6M"
+tt2091935,revenue,tmdb,"TMDB $35,000; Wikipedia $830,374"
+tt27688034,revenue,tmdb,"TMDB $93,000; Wikipedia $5.2M"
+tt13097336,revenue,tmdb,"TMDB $74,000; Wikipedia $515,875"
