@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sheet 3 Film lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#005a8c}a:hover{color:#003d5f}
+</style>
+</head>
+<body>
+<div style="width: 1240px; height: 1754px; box-sizing: border-box; padding: 16px; background: #2f3237; color: #1a1d21; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); grid-template-rows: 260px 760px minmax(0, 1fr); gap: 16px">
+
+  <section style="grid-column: 1; grid-row: 1 / span 2; background: #fff; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; min-height: 0">
+    <h2 style="margin: 0; font-size: 26px; font-weight: 600">Layout</h2>
+    <div style="flex-grow: 1; border: 2px solid #1a1d21; border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #fafbfc">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1.5px dashed #9aa1ab; border-radius: 4px; padding: 8px 10px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; background: #1a1d21; color: #fff; padding: 2px 7px; border-radius: 3px">F</span>
+        <span style="font-weight: 600; font-size: 15px">Film Lab</span>
+        <span style="font-size: 13px; border: 1.5px solid #1a1d21; padding: 2px 8px; border-radius: 4px">axes: critics vs audience ▾</span>
+        <span style="font-size: 13px; border: 1.5px solid #005a8c; background: #005a8c; color: #fff; padding: 2px 8px; border-radius: 12px">notable</span>
+        <span style="font-size: 13px; border: 1.5px solid #9aa1ab; padding: 2px 8px; border-radius: 12px">all</span>
+        <span style="font-size: 13px; border: 1.5px solid #9aa1ab; padding: 2px 8px; border-radius: 12px">USD 2025</span>
+        <span style="font-size: 13px; color: #3d444d; margin-left: auto">genres ☐☑☑☐☐☐☐☐</span>
+      </div>
+      <div style="display: flex; gap: 12px; min-height: 0">
+        <div style="flex: 2 1 0; border: 1.5px solid #1a1d21; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; background: #fff">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; background: #1a1d21; color: #fff; padding: 2px 7px; border-radius: 3px">A</span><span style="font-size: 14px; font-weight: 600">Film scatter (canvas, ~25k points)</span></div>
+          <svg viewBox="0 0 420 330" style="width: 100%; height: auto" role="img" aria-label="Sketch of a scatter of critic score against audience score with a y equals x diagonal and a brushed rectangle">
+            <line x1="40" y1="290" x2="410" y2="290" stroke="#1a1d21" style="stroke-width: 1.2"></line>
+            <line x1="40" y1="10" x2="40" y2="290" stroke="#1a1d21" style="stroke-width: 1.2"></line>
+            <line x1="40" y1="290" x2="410" y2="10" stroke="#5b6470" style="stroke-width: 1.5; stroke-dasharray: 6 4"></line>
+            <text x="350" y="36" style="font-size: 10px" fill="#5b6470">critics = audience</text>
+            <circle cx="90" cy="200" r="3" fill="#542788"></circle><circle cx="110" cy="230" r="3" fill="#998ec3"></circle><circle cx="140" cy="200" r="3" fill="#998ec3"></circle><circle cx="160" cy="215" r="3" fill="#d8daeb"></circle><circle cx="190" cy="170" r="3" fill="#d8daeb"></circle><circle cx="210" cy="160" r="3" fill="#f7f7f7" stroke="#9aa1ab"></circle><circle cx="230" cy="140" r="3" fill="#f7f7f7" stroke="#9aa1ab"></circle><circle cx="250" cy="150" r="3" fill="#fee0b6"></circle><circle cx="270" cy="120" r="3" fill="#d8daeb"></circle><circle cx="290" cy="110" r="3" fill="#fee0b6"></circle><circle cx="310" cy="90" r="3" fill="#f7f7f7" stroke="#9aa1ab"></circle><circle cx="330" cy="70" r="3" fill="#f1a340"></circle><circle cx="350" cy="60" r="3" fill="#fee0b6"></circle><circle cx="370" cy="40" r="3" fill="#f7f7f7" stroke="#9aa1ab"></circle><circle cx="200" cy="200" r="3" fill="#998ec3"></circle><circle cx="240" cy="190" r="3" fill="#998ec3"></circle><circle cx="180" cy="130" r="3" fill="#fee0b6"></circle><circle cx="260" cy="100" r="3" fill="#fee0b6"></circle><circle cx="300" cy="140" r="3" fill="#d8daeb"></circle><circle cx="320" cy="120" r="3" fill="#d8daeb"></circle>
+            <circle cx="80" cy="70" r="5" fill="#b35806"></circle><text x="88" y="66" style="font-size: 10px">fan favourite, critics hated</text>
+            <circle cx="360" cy="250" r="5" fill="#542788"></circle><text x="250" y="270" style="font-size: 10px">critics loved, audience not</text>
+            <rect x="250" y="80" width="90" height="70" fill="#005a8c" stroke="#005a8c" style="fill-opacity: 0.08; stroke-width: 1.5"></rect>
+            <text x="150" y="312" style="font-size: 11px" fill="#3d444d">critics score (0–100)</text>
+            <text x="14" y="200" style="font-size: 11px" fill="#3d444d" transform="rotate(-90 14 200)">audience score (0–100)</text>
+          </svg>
+        </div>
+        <div style="flex: 1 1 0; border: 1.5px solid #1a1d21; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; background: #fff">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; background: #1a1d21; color: #fff; padding: 2px 7px; border-radius: 3px">B</span><span style="font-size: 14px; font-weight: 600">Gap per genre (ridgeline)</span></div>
+          <svg viewBox="0 0 200 330" style="width: 100%; height: auto" role="img" aria-label="Sketch of a ridgeline of the critic audience gap per genre family">
+            <line x1="100" y1="10" x2="100" y2="300" stroke="#9aa1ab" style="stroke-width: 1; stroke-dasharray: 3 3"></line>
+            <text x="0" y="40" style="font-size: 10px">Horror</text><path d="M50 44 C70 44 80 14 100 20 C120 26 130 44 190 44 Z" fill="#cfd4da" stroke="#1a1d21"></path>
+            <text x="0" y="80" style="font-size: 10px">Comedy</text><path d="M50 84 C80 84 90 56 110 58 C130 60 140 84 190 84 Z" fill="#cfd4da" stroke="#1a1d21"></path>
+            <text x="0" y="120" style="font-size: 10px">Action</text><path d="M50 124 C90 124 100 92 120 94 C140 96 150 124 190 124 Z" fill="#005a8c" style="fill-opacity: 0.35" stroke="#005a8c"></path>
+            <text x="0" y="160" style="font-size: 10px">Drama</text><path d="M50 164 C70 164 76 136 92 138 C110 140 130 164 190 164 Z" fill="#cfd4da" stroke="#1a1d21"></path>
+            <text x="0" y="200" style="font-size: 10px">Family</text><path d="M50 204 C80 204 96 172 112 176 C128 180 140 204 190 204 Z" fill="#cfd4da" stroke="#1a1d21"></path>
+            <text x="0" y="240" style="font-size: 10px">Docu</text><path d="M50 244 C66 244 72 216 86 218 C100 220 120 244 190 244 Z" fill="#cfd4da" stroke="#1a1d21"></path>
+            <line x1="50" y1="300" x2="190" y2="300" stroke="#1a1d21"></line>
+            <text x="44" y="316" style="font-size: 9px" fill="#3d444d">critics ←</text><text x="96" y="316" style="font-size: 9px" fill="#3d444d">0</text><text x="140" y="316" style="font-size: 9px" fill="#3d444d">→ audience</text>
+          </svg>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px; flex-grow: 1; min-height: 0">
+        <div style="flex: 1 1 0; border: 1.5px solid #1a1d21; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; background: #fff">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; background: #1a1d21; color: #fff; padding: 2px 7px; border-radius: 3px">C</span><span style="font-size: 14px; font-weight: 600">Film card</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+            <span style="font-weight: 600; font-size: 15px">[FILM TITLE] (year)</span>
+            <span style="color: #3d444d">Action · Sci-fi · franchise: [NAME] #3</span>
+            <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr); row-gap: 4px; align-items: center">
+              <span>Tomatometer</span><span style="display: block; height: 10px; width: 62%; background: #542788"></span>
+              <span>Metascore</span><span style="display: block; height: 10px; width: 58%; background: #542788"></span>
+              <span>Audience</span><span style="display: block; height: 10px; width: 88%; background: #b35806"></span>
+              <span>IMDb</span><span style="display: block; height: 10px; width: 80%; background: #b35806"></span>
+            </div>
+            <span>Budget $160M <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; border: 1px solid #9aa1ab; padding: 0 4px; border-radius: 3px">src: Wikipedia</span> · in 2025 USD: $210M</span>
+          </div>
+        </div>
+        <div style="flex: 1 1 0; border: 1.5px solid #1a1d21; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; background: #fff">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; background: #1a1d21; color: #fff; padding: 2px 7px; border-radius: 3px">D</span><span style="font-size: 14px; font-weight: 600">Selection table (sortable)</span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 54px 54px 54px; font-size: 12px; row-gap: 5px; column-gap: 6px">
+            <span style="font-weight: 600">film</span><span style="font-weight: 600">critics</span><span style="font-weight: 600">aud.</span><span style="font-weight: 600">gap ▾</span>
+            <span>[FILM A]</span><span>32</span><span>91</span><span style="color: #b35806">+59</span>
+            <span>[FILM B]</span><span>41</span><span>88</span><span style="color: #b35806">+47</span>
+            <span>[FILM C]</span><span>95</span><span>52</span><span style="color: #542788">−43</span>
+            <span>[FILM D]</span><span>89</span><span>50</span><span style="color: #542788">−39</span>
+            <span style="color: #5b6470; grid-column: 1 / span 4">… 214 films in the brush</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="grid-column: 2; grid-row: 1; background: #fff; padding: 20px 24px; display: grid; grid-template-columns: 90px minmax(0, 1fr); row-gap: 10px; column-gap: 12px; align-content: start; font-size: 16px">
+    <span style="color: #5b6470; text-align: right">Title:</span><span style="font-weight: 600">Film Lab</span>
+    <span style="color: #5b6470; text-align: right">Author:</span><span>[NAME, UČO]</span>
+    <span style="color: #5b6470; text-align: right">Date:</span><span>[DATE]</span>
+    <span style="color: #5b6470; text-align: right">Sheet:</span><span>3 of 5</span>
+    <span style="color: #5b6470; text-align: right">Task:</span><span>T2 money vs ratings, T3 critic–audience gap, T5 budget vs popularity and ratings, X1 genre ROI</span>
+  </section>
+
+  <section style="grid-column: 2; grid-row: 2; background: #fff; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; font-size: 15px; line-height: 1.45">
+    <h2 style="margin: 0; font-size: 26px; font-weight: 600">Operations</h2>
+    <p style="margin: 0"><b>1. Pick an axis preset in F.</b> Critics vs audience (T3), revenue vs critics (T2), budget vs rating with bubble size = votes (T5), ROI per genre (X1). The axes animate to the new positions, so you can follow the same films.</p>
+    <p style="margin: 0"><b>2. Brush in A.</b> The brushed films fill the table D, and their gap distribution is drawn as an outline over every ridge in B.</p>
+    <p style="margin: 0"><b>3. Zoom and pan in A.</b> Zoomed out, the points become hexbins so dense areas do not turn into one blob.</p>
+    <p style="margin: 0"><b>4. Hover a point or a table row.</b> Card C shows all scores and the money with its source.</p>
+    <p style="margin: 0"><b>5. Click a ridge in B.</b> Filters A and D to that genre family. Click again to clear.</p>
+    <p style="margin: 0"><b>6. Switch subset and USD in F.</b> Notable films (≥ 10k votes) or all; nominal or 2025 USD. The axis labels change with it.</p>
+  </section>
+
+  <section style="grid-column: 1; grid-row: 3; background: #fff; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; min-height: 0">
+    <h2 style="margin: 0; font-size: 26px; font-weight: 600">Focus</h2>
+    <p style="margin: 0; font-size: 15px; color: #3d444d"><b style="color: #1a1d21">Big idea:</b> one scatter, many questions. The same 25k films are re-plotted by axis presets, and every other view explains the selection you brushed.</p>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <svg viewBox="0 0 200 130" style="width: 100%; height: auto; background: #fafbfc; border: 1.5px solid #1a1d21; border-radius: 4px" role="img" aria-label="Diverging gap colour scale from purple to orange">
+          <rect x="20" y="30" width="23" height="20" fill="#542788"></rect><rect x="43" y="30" width="23" height="20" fill="#998ec3"></rect><rect x="66" y="30" width="23" height="20" fill="#d8daeb"></rect><rect x="89" y="30" width="23" height="20" fill="#f7f7f7" stroke="#9aa1ab"></rect><rect x="112" y="30" width="23" height="20" fill="#fee0b6"></rect><rect x="135" y="30" width="23" height="20" fill="#f1a340"></rect><rect x="158" y="30" width="23" height="20" fill="#b35806"></rect>
+          <text x="20" y="68" style="font-size: 10px">critics higher</text><text x="125" y="68" style="font-size: 10px">audience higher</text>
+          <text x="20" y="100" style="font-size: 10px" fill="#3d444d">gap = audience − critics</text><text x="20" y="114" style="font-size: 10px" fill="#3d444d">(points, 0–100 scale)</text>
+        </svg>
+        <span style="font-size: 13px"><b>Gap colour</b>: PuOr, never red–green. Position already shows the gap; colour makes the outliers pop.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <svg viewBox="0 0 200 130" style="width: 100%; height: auto; background: #fafbfc; border: 1.5px solid #1a1d21; border-radius: 4px" role="img" aria-label="Budget against rating on a log axis with bubble size for votes">
+          <line x1="25" y1="110" x2="190" y2="110" stroke="#1a1d21"></line><line x1="25" y1="10" x2="25" y2="110" stroke="#1a1d21"></line>
+          <circle cx="50" cy="70" r="4" fill="#9aa1ab" style="fill-opacity: 0.6"></circle><circle cx="80" cy="50" r="7" fill="#9aa1ab" style="fill-opacity: 0.6"></circle><circle cx="110" cy="60" r="10" fill="#9aa1ab" style="fill-opacity: 0.6"></circle><circle cx="140" cy="45" r="14" fill="#9aa1ab" style="fill-opacity: 0.6"></circle><circle cx="165" cy="65" r="9" fill="#9aa1ab" style="fill-opacity: 0.6"></circle>
+          <text x="30" y="124" style="font-size: 9px" fill="#3d444d">budget (2025 USD, log) $1M · $10M · $100M</text>
+        </svg>
+        <span style="font-size: 13px"><b>Money preset</b>: log x axis that says so on the label; bubble = IMDb votes. Films without a budget are left out and counted in a note ("[N] films hidden: no budget").</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <svg viewBox="0 0 200 130" style="width: 100%; height: auto; background: #fafbfc; border: 1.5px solid #1a1d21; border-radius: 4px" role="img" aria-label="Hexbin density view when zoomed out">
+          <polygon points="60,40 72,33 84,40 84,54 72,61 60,54" fill="#c6dbef" stroke="#fff"></polygon><polygon points="84,40 96,33 108,40 108,54 96,61 84,54" fill="#6baed6" stroke="#fff"></polygon><polygon points="108,40 120,33 132,40 132,54 120,61 108,54" fill="#3182bd" stroke="#fff"></polygon><polygon points="72,61 84,54 96,61 96,75 84,82 72,75" fill="#6baed6" stroke="#fff"></polygon><polygon points="96,61 108,54 120,61 120,75 108,82 96,75" fill="#08519c" stroke="#fff"></polygon><polygon points="120,61 132,54 144,61 144,75 132,82 120,75" fill="#3182bd" stroke="#fff"></polygon><polygon points="84,82 96,75 108,82 108,96 96,103 84,96" fill="#c6dbef" stroke="#fff"></polygon><polygon points="108,82 120,75 132,82 132,96 120,103 108,96" fill="#6baed6" stroke="#fff"></polygon>
+          <text x="20" y="122" style="font-size: 10px" fill="#3d444d">darker = more films per cell</text>
+        </svg>
+        <span style="font-size: 13px"><b>Zoomed out</b>: hexbin density (sequential Blues), so the overplotting of ~25k points does not hide the shape.</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="grid-column: 2; grid-row: 3; background: #fff; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.45">
+    <h2 style="margin: 0; font-size: 26px; font-weight: 600">Discussion</h2>
+    <div style="font-weight: 600; color: #005a8c">Supports</div>
+    <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px">
+      <li>T2, T3, T5 and X1 with position, the most precise channel.</li>
+      <li>Outliers can be found and named: the most interesting films for T3.</li>
+      <li>Brushing links "which films" (A, D) with "how typical" (B).</li>
+      <li>Money always shows where it came from and whether it is inflation-adjusted.</li>
+    </ul>
+    <div style="font-weight: 600; color: #b35806">Misses</div>
+    <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px">
+      <li>No countries, so T1 and X2 are not covered.</li>
+      <li>No time axis or series, so T4 and T6 are not covered.</li>
+      <li>Presets can confuse: the same dot moves when the axes change.</li>
+      <li>Many films lack a budget, so the money presets show a smaller, biased subset.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>
