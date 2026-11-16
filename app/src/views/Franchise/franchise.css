@@ -1,0 +1,6 @@
+.franchise-chart { position: absolute; inset: 0; }
+.franchise-chart svg { display: block; }
+.franchise-chart text { fill: var(--muted); font-size: 11px; }
+.franchise-chart .axis-label { fill: var(--ink); }
+.franchise-chart .grid line { stroke: var(--grid); }
+.franchise-empty { margin: 0; padding: 12px; color: var(--muted); }

@@ -14,12 +14,12 @@ Rules for every brief:
 
 | Wave | Brief | Status |
 |---|---|---|
-| 1 | `p1-country-sources.md` | ready |
-| 1 | `p2a-pack-export.md` | ready |
-| 1 | `p2b-validate.md` | ready |
-| 2 | `a1-data-layer.md` | ready |
-| 2 | `a2-shell.md` | ready |
-| 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` | written after A2 lands |
+| 1 | `p1-country-sources.md` | done (#26) |
+| 1 | `p2a-pack-export.md` | done (#26) |
+| 1 | `p2b-validate.md` | done (#26) |
+| 2 | `a1-data-layer.md` | done (#26) |
+| 2 | `a2-shell.md` | done (#26) |
+| 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` (shared context: `_views-common.md`) | done |
 | 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | written after wave 3 |
 | 5 | `q-e2e-budgets-deploy.md` | written after wave 4 |
 

@@ -282,7 +282,7 @@ rests on.
 - A click that is not a drag toggles the country in `countries` (at most 6).
   Selected countries get a thick ink outline.
 - Scores are summed over the years of `yearRange` that the source has.
-- Modes, switched below the map:
+- Modes, switched in the panel header:
   - **share of genre** (default): share of the selected family in that
     country, sequential Blues, domain 0 to the largest share on screen.
   - **top genre**: the family with the largest share, in its family colour.
