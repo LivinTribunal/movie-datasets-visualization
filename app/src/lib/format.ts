@@ -33,7 +33,11 @@ export function fmtPct(n: number | null): string {
 }
 
 export function fmtRatio(n: number | null): string {
-  return missing(n) ? NO_DATA : `${n.toFixed(1)}×`
+  if (missing(n)) return NO_DATA
+  const a = Math.abs(n)
+  // toFixed(1) would print 0.04 as 0.0
+  const s = a >= 100 ? fmtInt(n) : a >= 1 ? String(+n.toFixed(1)) : String(+n.toPrecision(2))
+  return `${s}×`
 }
 
 export function fmtValue(key: MeasureKey, value: number | null): string {

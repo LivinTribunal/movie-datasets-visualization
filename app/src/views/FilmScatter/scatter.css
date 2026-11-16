@@ -1,0 +1,13 @@
+.scatter { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.scatter-presets { display: flex; flex-wrap: wrap; gap: 3px; padding: 4px 8px 0; }
+.scatter-presets .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.scatter-plot { position: relative; flex: 1; min-height: 0; }
+.scatter-canvas, .scatter-svg { position: absolute; top: 0; left: 0; }
+.scatter-svg { font-size: 11px; font-variant-numeric: tabular-nums; }
+.scatter-grid line { stroke: var(--grid); }
+.scatter-grid text { fill: var(--muted); }
+.scatter-title { fill: var(--muted); font-size: 11px; }
+.scatter-diagonal { stroke: var(--muted); stroke-dasharray: 4 3; }
+.scatter-franchise text { fill: var(--ink); font-weight: 600; }
+.scatter-brush .selection { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); }
+.panel-tools select { max-width: 150px; font-size: 12px; }

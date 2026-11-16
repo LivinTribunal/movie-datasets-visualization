@@ -12,6 +12,9 @@ describe('format', () => {
     expect(fmtPct(0.213)).toBe('21%')
     expect(fmtPct(0.062)).toBe('6.2%')
     expect(fmtRatio(3.21)).toBe('3.2×')
+    expect(fmtRatio(0.04)).toBe('0.04×')
+    expect(fmtRatio(1)).toBe('1×')
+    expect(fmtRatio(1638.2)).toBe('1,638×')
     expect(fmtImdb(111161)).toBe('tt0111161')
   })
   it('picks by measure', () => {
