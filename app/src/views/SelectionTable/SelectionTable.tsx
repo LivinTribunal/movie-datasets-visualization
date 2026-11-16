@@ -13,7 +13,7 @@ import { useStore } from '../../state/store'
 import { Rows } from './Rows'
 import './table.css'
 
-const ROW_H = 24
+const ROW_H = 30
 const isLog = (key: MeasureKey) => MEASURES[key].scale === 'log'
 
 function headerUnit(key: MeasureKey, money: 'usd2025' | 'nominal'): string {
@@ -37,6 +37,7 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   const [scrollTop, setScrollTop] = useState(0)
   const scroller = useRef<HTMLDivElement | null>(null)
   const frame = useRef(0)
+  const menu = useRef<HTMLDetailsElement | null>(null)
 
   const xCol = measureColumn(data.films, x, money)
   const yCol = measureColumn(data.films, y, money)
@@ -56,6 +57,21 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   }, [rows])
 
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
+
+  useEffect(() => {
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (!menu.current) return
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !menu.current.contains(e.target as Node)) {
+        menu.current.open = false
+      }
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
 
   const cols = columns.map((k) => measureColumn(data.films, k, money))
   const maxima = columns.map((k, i) => (k === 'budget' || k === 'revenue' ? columnMax(cols[i], rows) : 0))
@@ -80,7 +96,7 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   const note = `${fmtInt(rows.length)} films ${brush ? 'inside the scatter brush' : 'pass the filters'} · bars share one scale per column`
 
   const tools = (
-    <details className="columns-menu">
+    <details ref={menu} className="columns-menu">
       <summary>columns</summary>
       <div className="columns-list">
         {MEASURE_KEYS.map((k) => (
@@ -93,6 +109,10 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
     </details>
   )
 
+  const showUnit = (k: MeasureKey) => {
+    const unit = headerUnit(k, money)
+    return unit !== '' && unit.toLowerCase() !== MEASURES[k].short.toLowerCase()
+  }
   const [start, end] = visibleWindow(scrollTop, height, ROW_H, rows.length)
   const ariaSort = (key: MeasureKey | 'title') =>
     sort.key === key ? (sort.desc ? 'descending' : 'ascending') : undefined
@@ -107,14 +127,14 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
                 <div role="row" className="trow thead-row" style={{ gridTemplateColumns: template }}>
                   <div role="columnheader" aria-sort={ariaSort('title')} className="cell">
                     <button type="button" onClick={() => clickHeader('title')}>
-                      <span>film</span> <span className="sort-arrow">{arrow('title')}</span>
+                      <span>Film</span> <span className="sort-arrow">{arrow('title')}</span>
                     </button>
                   </div>
                   {columns.map((k) => (
                     <div key={k} role="columnheader" aria-sort={ariaSort(k)} className="cell">
                       <button type="button" onClick={() => clickHeader(k)}>
-                        <span>{MEASURES[k].label}</span>
-                        <small>{headerUnit(k, money)}</small>
+                        <span className="th-label">{MEASURES[k].short}</span>
+                        {showUnit(k) && <small>{headerUnit(k, money)}</small>}
                         <span className="sort-arrow">{arrow(k)}</span>
                       </button>
                     </div>

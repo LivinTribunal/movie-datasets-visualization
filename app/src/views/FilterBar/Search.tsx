@@ -14,6 +14,7 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
   const toggleCountry = useStore((s) => s.toggleCountry)
   const setFranchise = useStore((s) => s.setFranchise)
   const setFilm = useStore((s) => s.setFilm)
+  const setTab = useStore((s) => s.setTab)
   const text = useLazy(loadText)
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -53,8 +54,13 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
 
   const pick = (item: Item) => {
     if (item.kind === 'country') toggleCountry(item.iso2)
-    else if (item.kind === 'franchise') setFranchise(item.id)
-    else setFilm(item.row)
+    else if (item.kind === 'franchise') {
+      setFranchise(item.id)
+      setTab('franchises')
+    } else {
+      setFilm(item.row)
+      if (useStore.getState().tab === 'taste') setTab('ratings')
+    }
     setQuery('')
     setOpen(false)
   }

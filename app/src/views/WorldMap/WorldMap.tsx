@@ -19,6 +19,11 @@ import { MapLegend } from './MapLegend'
 import { MapPaths, type MapShape } from './MapPaths'
 import './worldmap.css'
 
+const SOURCE = [
+  { value: 'netflix', label: 'Netflix' },
+  { value: 'cinema', label: 'Cinema' },
+  { value: 'production', label: 'Made here' },
+] as const
 const MODES: { value: MapMode; label: string }[] = [
   { value: 'share', label: 'share of genre' },
   { value: 'top', label: 'top genre' },
@@ -55,6 +60,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
   const mapMode = useStore((s) => s.mapMode)
   const selected = useStore((s) => s.countries)
   const setMapMode = useStore((s) => s.setMapMode)
+  const setSource = useStore((s) => s.setSource)
   const setFamily = useStore((s) => s.setFamily)
   const toggleCountry = useStore((s) => s.toggleCountry)
 
@@ -105,7 +111,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
   const path = useMemo(() => {
     if (width === 0 || height === 0 || features.length === 0) return null
     const projection = geoEqualEarth().fitExtent(
-      [[4, 4], [width - 4, height - 4]],
+      [[10, 10], [width - 10, height - 10]],
       { type: 'FeatureCollection', features },
     )
     return geoPath(projection)
@@ -168,16 +174,19 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     [geometry, colouring, mapMode, stats, cinema, netflix],
   )
 
+  const ready = path !== null && features.length > 0
+
   useEffect(() => {
     const svg = svgRef.current
-    if (!svg || width === 0 || height === 0) return
+    if (!svg || !ready || width === 0 || height === 0) return
     const behaviour = zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 12])
       .extent([[0, 0], [width, height]])
       .translateExtent([[0, 0], [width, height]])
       .on('zoom', (e) => {
         gRef.current?.setAttribute('transform', e.transform.toString())
-        setZoomed(e.transform.k !== 1 || e.transform.x !== 0 || e.transform.y !== 0)
+        // zooming in then out leaves float dust in the transform
+        setZoomed(Math.abs(e.transform.k - 1) > 1e-3 || Math.abs(e.transform.x) > 0.5 || Math.abs(e.transform.y) > 0.5)
       })
     const sel = select(svg)
     sel.call(behaviour).on('dblclick.zoom', null)
@@ -185,7 +194,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     return () => {
       sel.on('.zoom', null)
     }
-  }, [width, height])
+  }, [width, height, ready])
 
   const zoomBy = (k: number) => {
     const svg = svgRef.current
@@ -244,7 +253,6 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     )
   }, [hover, data, family, mapMode, stats, cinema, netflix, world, source])
 
-  const ready = path !== null && features.length > 0
   const nWithData = mapMode === 'diff' ? (diffs?.size ?? 0) : stats.size
   const note = nWithData === 0 ? emptyNote(mapMode === 'diff' ? 'cinema' : source, yearRange) : `${nWithData} countries with data`
 
@@ -258,7 +266,12 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
       title="World map"
       className="area-a"
       note={note}
-      tools={<ChipGroup label="Map mode" options={MODES} value={mapMode} onChange={setMapMode} />}
+      tools={
+        <>
+          <ChipGroup label="Map source" options={[...SOURCE]} value={source} onChange={setSource} />
+          <ChipGroup label="Map mode" options={MODES} value={mapMode} onChange={setMapMode} />
+        </>
+      }
     >
       <div ref={bodyRef} className="worldmap">
         {!ready && <p className="stub">Loading map…</p>}
@@ -267,8 +280,8 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
             <svg ref={svgRef} width={width} height={height}>
               <defs>
                 <pattern id="map-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="6" height="6" fill="var(--panel)" />
-                  <line x1="0" y1="0" x2="0" y2="6" stroke="var(--grid)" strokeWidth="2" />
+                  <rect width="6" height="6" fill="var(--fill)" />
+                  <line x1="0" y1="0" x2="0" y2="6" stroke="var(--fill-2)" strokeWidth="1.5" />
                 </pattern>
               </defs>
               <g ref={gRef}>
@@ -276,11 +289,16 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
                 {geometry.filter((g) => g.iso2 && selected.includes(g.iso2)).map((g) => (
                   <path key={g.key} d={g.d} className="country-selected" />
                 ))}
+                {hover && geometry.filter((g) => g.iso2 === hover.iso2).map((g) => (
+                  <path key={g.key} d={g.d} className="country-hover" />
+                ))}
               </g>
             </svg>
             <div className="map-zoom">
-              <button type="button" className="btn" aria-label="Zoom in" onClick={() => zoomBy(ZOOM_STEP)}>+</button>
-              <button type="button" className="btn" aria-label="Zoom out" onClick={() => zoomBy(1 / ZOOM_STEP)}>−</button>
+              <div className="map-zoom-group">
+                <button type="button" aria-label="Zoom in" onClick={() => zoomBy(ZOOM_STEP)}>+</button>
+                <button type="button" aria-label="Zoom out" onClick={() => zoomBy(1 / ZOOM_STEP)}>−</button>
+              </div>
               {zoomed && <button type="button" className="btn" onClick={resetZoom}>reset view</button>}
             </div>
             <MapLegend

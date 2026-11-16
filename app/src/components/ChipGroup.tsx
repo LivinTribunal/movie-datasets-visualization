@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 export interface ChipOption<T> {
   value: T
   label: string
@@ -14,7 +16,7 @@ interface ChipGroupProps<T extends string | number> {
 
 export function ChipGroup<T extends string | number>({ label, options, value, onChange }: ChipGroupProps<T>) {
   return (
-    <div className="chips" role="radiogroup" aria-label={label}>
+    <div className={options.some((o) => o.colour) ? 'chips' : 'chips segmented'} role="radiogroup" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -23,6 +25,7 @@ export function ChipGroup<T extends string | number>({ label, options, value, on
           aria-checked={o.value === value}
           className="chip"
           title={o.title}
+          style={o.colour ? ({ '--c': o.colour } as CSSProperties) : undefined}
           onClick={() => onChange(o.value)}
         >
           {o.colour && <span className="swatch" style={{ background: o.colour }} />}

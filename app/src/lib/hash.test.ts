@@ -26,6 +26,7 @@ describe('round trip', () => {
   it('restores a full non-default state', () => {
     const v: Values = {
       ...defaults(),
+      tab: 'franchises',
       yearRange: [1950, 2000],
       family: 3,
       genreOnly: true,
@@ -48,6 +49,12 @@ describe('round trip', () => {
     const { brush, hoverFilm, about, ...expected } = v
     expect(decode(`#${hash}`)).toEqual(expected)
     expect([brush, hoverFilm, about]).toEqual([null, null, false])
+  })
+
+  it('writes the tab only when it is not the default', () => {
+    expect(encodeHash({ ...defaults(), tab: 'ratings' }, defaults(), imdb)).toBe('tab=ratings')
+    expect(decode('tab=franchises')).toEqual({ tab: 'franchises' })
+    expect(decode('tab=bogus')).toEqual({})
   })
 
   it('round-trips a descending sort', () => {

@@ -255,6 +255,15 @@ toolbar slot. Charts size themselves from the panel with a `ResizeObserver`.
 Every tooltip names what the number is, its unit and how many entries it
 rests on.
 
+### Layout: three workspaces (D29)
+
+The panels are grouped into three workspaces, switched with tabs in the top
+bar and stored as `tab` in the store and the hash: *Taste by country* (A, B,
+E), *Money & ratings* (C, E, G) and *Franchises* (D, C, G). Only the active
+workspace is mounted. The filter row is shared and also shows the selection
+as chips (countries, franchise, pinned film, scatter brush). The map source
+control sits in panel A. Details: `../briefs/s7-workspaces.md`.
+
 ### F. Filter bar
 
 - Title "Movie Explorer". Year range as a two-thumb slider with the numbers

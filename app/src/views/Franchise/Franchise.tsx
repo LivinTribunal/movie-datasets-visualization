@@ -150,11 +150,11 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
                 <text className="axis-label" transform={`translate(-48,${innerH / 2}) rotate(-90)`} textAnchor="middle">
                   {y === 'rating' ? 'IMDb rating vs the first film (points on 0–100)' : 'box office vs the first film (×, log, 2025 USD)'}
                 </text>
-                <line x1={0} x2={innerW} y1={yScale(baseline)} y2={yScale(baseline)} stroke="var(--muted)" />
+                <line x1={0} x2={innerW} y1={yScale(baseline)} y2={yScale(baseline)} stroke="var(--line)" />
                 <g clipPath="url(#fr-clip)">
                   <Lines lines={lines} x={xScale} y={yScale} familyBit={family} colour={f.colour} />
                   {median.length > 1 && (
-                  <path d={path(median) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2} strokeDasharray="5 4" />
+                  <path d={path(median) ?? ''} fill="none" stroke="var(--ink-2)" strokeWidth={1.5} strokeDasharray="4 3" />
                   )}
                 </g>
                 {medianEnd && (
@@ -165,12 +165,12 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
                 {selected && lastSel && (
                   <g>
                     <g clipPath="url(#fr-clip)">
-                      <path d={path(selected.points) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2.5} />
+                      <path d={path(selected.points) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2.25} />
                       {selected.points.map((p) => (
-                        <circle key={p.k} cx={xScale(p.k)} cy={yScale(p.v)} r={3} fill="var(--ink)" />
+                        <circle key={p.k} cx={xScale(p.k)} cy={yScale(p.v)} r={3} fill="var(--ink)" stroke="#fff" strokeWidth={1.5} />
                       ))}
                     </g>
-                    <text x={xScale(lastSel.k) + 6} y={yScale(lastSel.v)} dy="0.32em" style={{ fill: 'var(--ink)' }}>
+                    <text x={xScale(lastSel.k) + 6} y={yScale(lastSel.v)} dy="0.32em" className="halo">
                       {truncate(fr.collections.get(selected.id) ?? '')}
                     </text>
                   </g>

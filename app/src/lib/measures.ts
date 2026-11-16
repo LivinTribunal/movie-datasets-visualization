@@ -8,26 +8,27 @@ export type Money = 'usd2025' | 'nominal'
 
 export interface Measure {
   label: string
+  short: string
   unit: string
   scale: 'linear' | 'log'
   domain?: [number, number]
 }
 
 export const MEASURES: Record<MeasureKey, Measure> = {
-  tomatometer: { label: 'critics (Tomatometer)', unit: '0–100', scale: 'linear', domain: [0, 100] },
-  metascore: { label: 'critics (Metascore)', unit: '0–100', scale: 'linear' },
-  audience: { label: 'audience (Rotten Tomatoes)', unit: '0–100', scale: 'linear' },
-  imdb: { label: 'IMDb rating', unit: '0–100', scale: 'linear' },
-  mc_user: { label: 'Metacritic users', unit: '0–100', scale: 'linear' },
-  letterboxd: { label: 'Letterboxd', unit: '0–100', scale: 'linear' },
-  tmdb: { label: 'TMDB rating', unit: '0–100', scale: 'linear' },
-  gap: { label: 'gap, audience − critics', unit: 'points', scale: 'linear', domain: [-100, 100] },
-  budget: { label: 'budget', unit: '2025 USD or nominal USD', scale: 'log' },
-  revenue: { label: 'box office', unit: '2025 USD or nominal USD', scale: 'log' },
-  roi: { label: 'ROI, box office ÷ budget', unit: '×', scale: 'log' },
-  votes: { label: 'IMDb votes', unit: 'count', scale: 'log' },
-  year: { label: 'release year', unit: 'year', scale: 'linear' },
-  runtime: { label: 'runtime', unit: 'minutes', scale: 'linear' },
+  tomatometer: { label: 'critics (Tomatometer)', short: 'Tomatometer', unit: '0–100', scale: 'linear', domain: [0, 100] },
+  metascore: { label: 'critics (Metascore)', short: 'Metascore', unit: '0–100', scale: 'linear' },
+  audience: { label: 'audience (Rotten Tomatoes)', short: 'RT audience', unit: '0–100', scale: 'linear' },
+  imdb: { label: 'IMDb rating', short: 'IMDb', unit: '0–100', scale: 'linear' },
+  mc_user: { label: 'Metacritic users', short: 'MC users', unit: '0–100', scale: 'linear' },
+  letterboxd: { label: 'Letterboxd', short: 'Letterboxd', unit: '0–100', scale: 'linear' },
+  tmdb: { label: 'TMDB rating', short: 'TMDB', unit: '0–100', scale: 'linear' },
+  gap: { label: 'gap, audience − critics', short: 'Gap', unit: 'points', scale: 'linear', domain: [-100, 100] },
+  budget: { label: 'budget', short: 'Budget', unit: '2025 USD or nominal USD', scale: 'log' },
+  revenue: { label: 'box office', short: 'Box office', unit: '2025 USD or nominal USD', scale: 'log' },
+  roi: { label: 'ROI, box office ÷ budget', short: 'ROI', unit: '×', scale: 'log' },
+  votes: { label: 'IMDb votes', short: 'Votes', unit: 'count', scale: 'log' },
+  year: { label: 'release year', short: 'Year', unit: 'year', scale: 'linear' },
+  runtime: { label: 'runtime', short: 'Runtime', unit: 'minutes', scale: 'linear' },
 }
 
 export const MEASURE_KEYS = Object.keys(MEASURES) as MeasureKey[]

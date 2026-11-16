@@ -27,9 +27,9 @@ function gapText(v: number): string {
   return r > 0 ? `+${r}` : r < 0 ? `−${-r}` : '0'
 }
 
-interface CellProps { kind: 'bar' | 'gap' | 'plain'; k: MeasureKey; v: number; max: number }
+interface CellProps { kind: 'bar' | 'gap' | 'plain'; k: MeasureKey; v: number; max: number; sorted: boolean }
 
-const Cell: FC<CellProps> = ({ kind, k, v, max }) => {
+const Cell: FC<CellProps> = ({ kind, k, v, max, sorted }) => {
   if (Number.isNaN(v)) return <div role="cell" className="cell cell-num cell-missing">no data</div>
   if (kind === 'gap') {
     const style: CSSProperties = {
@@ -43,7 +43,7 @@ const Cell: FC<CellProps> = ({ kind, k, v, max }) => {
     const width = scaleMax > 0 ? clamp01(v / scaleMax) * 100 : 0
     return (
       <div role="cell" className="cell cell-num cell-bar">
-        <span className="cell-bar-fill" style={{ width: `${width}%` }} />
+        <span className={sorted ? 'cell-bar-fill cell-bar-sorted' : 'cell-bar-fill'} style={{ width: `${width}%` }} />
         <span className="cell-bar-text">{fmtValue(k, v)}</span>
       </div>
     )
@@ -54,6 +54,7 @@ const Cell: FC<CellProps> = ({ kind, k, v, max }) => {
 export const Rows: FC<RowsProps> = memo(({ rows, start, end, columns, cols, maxima, titles, data, pinned, template }) => {
   const setFilm = useStore((s) => s.setFilm)
   const setHoverFilm = useStore((s) => s.setHoverFilm)
+  const sortKey = useStore((s) => s.sort.key)
   const { families, films } = data
 
   const items = []
@@ -90,7 +91,7 @@ export const Rows: FC<RowsProps> = memo(({ rows, start, end, columns, cols, maxi
           <span className="cell-title" title={label}>{label}</span>
         </div>
         {columns.map((k, c) => (
-          <Cell key={k} kind={cellKind(k)} k={k} v={cols[c][row]} max={maxima[c]} />
+          <Cell key={k} kind={cellKind(k)} k={k} v={cols[c][row]} max={maxima[c]} sorted={sortKey === k} />
         ))}
       </div>,
     )

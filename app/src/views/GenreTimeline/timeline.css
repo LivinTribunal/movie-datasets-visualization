@@ -1,9 +1,15 @@
 .timeline { position: absolute; inset: 0; display: flex; flex-direction: column; }
 .tl-chart { flex: 1; min-height: 0; position: relative; }
 .tl-chart svg { display: block; }
-.tl-legend { margin: 0; padding: 2px 8px; font-size: 12px; color: var(--muted); }
 .tl-empty { margin: 0; padding: 8px; color: var(--muted); }
-.tl-axis text { fill: var(--muted); font-size: 11px; }
-.tl-axis line { stroke: var(--grid); }
-.tl-brush .selection { fill: var(--ink); fill-opacity: 0.12; stroke: var(--ink); stroke-width: 1; }
+.tl-axis text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.tl-axis line { stroke: var(--line); }
+.tl-axis .tl-grid { stroke: rgba(255, 255, 255, 0.35); }
+.tl-band { transition: opacity 120ms var(--ease); }
+.tl-bands.hovering .tl-band { opacity: 0.55; }
+.tl-bands.hovering .tl-band.is-hover { opacity: 1; }
+.tl-brush .selection { fill: var(--accent); fill-opacity: 0.08; stroke: var(--accent); stroke-width: 1; rx: 3; shape-rendering: auto; }
+.tl-brush .handle { fill: var(--accent); fill-opacity: 1; width: 4px; rx: 2; }
+.tl-brush .handle--w { transform: translateX(1px); }
+.tl-brush .handle--e { transform: translateX(1px); }
 .tl-measure { font: inherit; font-size: 12px; }

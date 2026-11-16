@@ -1,26 +1,39 @@
-.filmcard { position: absolute; inset: 0; overflow-y: auto; padding: 8px; font-size: 12px; }
-.filmcard-hint { margin: 0; padding: 12px; color: var(--muted); }
-.fc-head { display: flex; gap: 10px; }
+.filmcard { position: absolute; inset: 0; overflow-y: auto; padding: 4px 2px 8px; font-size: 12px; }
+.filmcard-hint { margin: 0; padding: 12px; color: var(--muted); text-align: center; }
+.filmcard-hint svg { display: block; margin: 8px auto 10px; color: var(--faint); }
+.fc-head { display: flex; gap: 12px; }
 .fc-info { min-width: 0; }
-.fc-info h3 { margin: 0 0 2px; font-size: 15px; }
-.fc-info p { margin: 0 0 2px; color: var(--muted); }
-.poster { flex: none; width: 92px; height: 138px; background: var(--grid); }
+.fc-info h3 { margin: 0 0 3px; font-size: 17px; font-weight: 650; letter-spacing: -0.015em; }
+.fc-info p { margin: 0 0 2px; color: var(--muted); font-size: 12.5px; }
+.poster { flex: none; width: 92px; height: 138px; background: var(--fill); border-radius: 8px; box-shadow: var(--shadow-pop); overflow: hidden; }
 .poster img { display: block; width: 92px; height: 138px; }
 .poster-empty { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--muted); font-size: 11px; }
-.fc-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
-.fc-btn { border: 1px solid var(--grid); border-radius: 12px; background: var(--panel); padding: 1px 8px; cursor: pointer; font: inherit; }
-.fc-btn:hover { border-color: var(--accent); }
-.fc-btn[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: #fff; }
-.fc-group { margin-top: 8px; }
-.fc-group h4 { margin: 0 0 3px; font-size: 12px; text-transform: uppercase; color: var(--muted); }
-.fc-score { display: grid; grid-template-columns: 9em 1fr 3em; align-items: center; gap: 6px; padding: 1px 0; }
-.fc-bar { height: 8px; background: var(--grid); }
-.fc-bar span { display: block; height: 100%; background: var(--ink); }
-.fc-value { font-variant-numeric: tabular-nums; }
+.fc-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0; }
+.fc-btn {
+  height: 24px; border: 0; border-radius: var(--radius-m); background: var(--fill); padding: 0 10px; cursor: pointer;
+  font: inherit; color: var(--ink); transition: background-color 120ms var(--ease), transform 120ms var(--ease);
+}
+.fc-btn:hover { background: var(--fill-2); }
+.fc-btn:active { transform: scale(0.97); }
+.fc-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fc-btn[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); }
+.fc-chips .fc-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-info a { color: var(--accent); text-decoration: none; }
+.fc-info a:hover { text-decoration: underline; }
+.fc-group { margin-top: 10px; }
+.fc-group h4 { margin: 0 0 4px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; color: var(--muted); }
+.fc-score { display: grid; grid-template-columns: 9em 1fr 3em; align-items: center; gap: 8px; padding: 2px 0; font-size: 12px; }
+.fc-bar { height: 6px; border-radius: 3px; background: var(--fill); overflow: hidden; }
+.fc-bar span { display: block; height: 100%; border-radius: 3px; background: var(--ink-2); }
+.fc-audience .fc-bar span { background: var(--accent); }
+.fc-value { font-variant-numeric: tabular-nums; font-weight: 600; }
 .fc-score .fc-value { text-align: right; }
 .fc-label { color: var(--muted); }
-.fc-unit { color: var(--muted); }
-.fc-gap { margin: 6px 0 0; font-variant-numeric: tabular-nums; }
-.fc-money { display: grid; grid-template-columns: 9em 1fr; gap: 2px 6px; padding: 2px 0; }
-.fc-badges { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 3px; }
-.fc-badge { border: 1px solid var(--grid); border-radius: 3px; padding: 0 4px; color: var(--muted); font-size: 11px; }
+.fc-unit { color: var(--muted); font-weight: 400; }
+.fc-gap { margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+.fc-money { display: grid; grid-template-columns: 9em 1fr; gap: 3px 8px; padding: 3px 0; }
+.fc-badges { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; }
+.fc-badge { display: inline-flex; align-items: center; height: 20px; border-radius: 10px; background: var(--fill); padding: 0 8px; color: var(--muted); font-size: 11px; }
+@media (prefers-reduced-motion: reduce) {
+  .fc-btn:active { transform: none; }
+}
