@@ -25,7 +25,7 @@ test('the app loads, filters, brushes, pins and restores from the hash', async (
   await expect(page.locator('.area-c')).toHaveCount(0)
 
   await page.getByRole('radio', { name: 'Horror' }).click()
-  await expect(page.locator('.area-a')).toContainText('share of Horror')
+  await expect(page.locator('.area-a')).toContainText(/share of horror/i)
 
   await page.getByRole('button', { name: 'Zoom in' }).click()
   await expect(page.getByRole('button', { name: 'reset view' })).toBeVisible()
@@ -54,12 +54,12 @@ test('the app loads, filters, brushes, pins and restores from the hash', async (
   await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5, { steps: 10 })
   await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.7, { steps: 10 })
   await page.mouse.up()
-  await expect(page.locator('.area-e .panel-note')).toContainText('inside the scatter brush')
+  await expect(page.locator('.area-e .panel-note')).toContainText('inside the brush')
 
-  await expect(page.getByRole('button', { name: 'Clear brush', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Remove scatter brush' })).toBeVisible()
 
   await page.locator('.area-e [role="row"]').nth(1).click()
-  await expect(card).not.toContainText('Hover a point or a table row to see a film')
+  await expect(card).not.toContainText('Hover a dot or a row to see a film')
   const title = (await card.locator('h3').innerText()).trim()
   expect(title).not.toBe('')
   await expect(page).toHaveURL(/film=tt/)

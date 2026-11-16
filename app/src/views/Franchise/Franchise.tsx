@@ -15,8 +15,8 @@ import './franchise.css'
 const M = { left: 60, right: 90, top: 8, bottom: 34 }
 const HIT = 12
 const Y_OPTIONS: { value: FranchiseY; label: string }[] = [
-  { value: 'rating', label: 'rating' },
-  { value: 'revenue', label: 'box office' },
+  { value: 'rating', label: 'Rating' },
+  { value: 'revenue', label: 'Box office' },
 ]
 
 const truncate = (s: string) => (s.length > 14 ? `${s.slice(0, 13)}…` : s)
@@ -89,7 +89,13 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
     if (k === 1) what = 'the first film'
     else if (y === 'rating') what = `${signed(hoveredPoint.v)} points vs #1`
     else what = `${fmtRatio(hoveredPoint.v)} the box office of #1`
-    return `${name} · ${film} · ${what}`
+    return (
+      <>
+        <b>{name}</b><br />
+        {film}<br />
+        {what}
+      </>
+    )
   }
 
   const yTicks = y === 'rating' ? yScale.ticks(6) : [0.01, 0.1, 1, 10, 100]
@@ -97,21 +103,19 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
   const medianEnd = median.length ? median[median.length - 1] : null
   const lastSel = selected ? selected.points[selected.points.length - 1] : null
   const outside = y === 'revenue' ? outsideCount(lines, 1 / RATIO_MAX, RATIO_MAX) : 0
-  const what = y === 'rating' ? 'are rated below' : 'earned less than'
+  const what = y === 'rating' ? 'rate below' : 'earn less than'
 
   const note = (
     <>
-      {share(stat.all)} of sequels {what} #1 · {f.name}:{' '}
-      {share(stat.family)} ({fmtInt(stat.family.franchises)} franchises)
-      {cut && ' · installments after #10 are not shown'}
-      {outside > 0 && ` · ${fmtInt(outside)} values outside 0.01×–100× run off the chart`}
+      {share(stat.all)} of sequels {what} the first film ({share(stat.family)} in {f.name}, {fmtInt(stat.family.franchises)} franchises).
+      {cut && ' Films after the 10th are not shown.'}
+      {outside > 0 && ` ${fmtInt(outside)} values outside 0.01×–100× run off the chart.`}
     </>
   )
 
   return (
     <Panel
-      letter="D"
-      title="Franchise lines"
+      title="Sequels against the first film"
       className="area-d"
       tools={<ChipGroup label="Y axis" options={Y_OPTIONS} value={y} onChange={setFranchiseY} />}
       note={note}
@@ -177,8 +181,8 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
                 )}
                 {hovered && hoveredPoint && (
                   <g pointerEvents="none">
-                    <path d={path(hovered.points) ?? ''} fill="none" stroke="var(--accent)" strokeWidth={2} />
-                    <circle cx={xScale(hoveredPoint.k)} cy={yScale(hoveredPoint.v)} r={4} fill="var(--accent)" />
+                    <path d={path(hovered.points) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2} />
+                    <circle cx={xScale(hoveredPoint.k)} cy={yScale(hoveredPoint.v)} r={4} fill="var(--ink)" />
                   </g>
                 )}
               </g>

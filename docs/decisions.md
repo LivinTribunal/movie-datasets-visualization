@@ -462,3 +462,16 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   small. Grouping by question (T1/T4/X2, T2/T3/T5/X1, T6) keeps linked views
   side by side and large. The map source control moved into the map panel
   because it changes nothing else.
+
+### D30. Chrome in black and white, colour only for data (2026-11-16)
+
+- **What**: the interface uses black, white and greys. Hue appears only where
+  it encodes a genre family or a quantity. Selection, hover and brush are
+  ink. Titles and tabs are set in condensed Archivo (self-hosted), the top bar
+  is a black band with a stripe in the selected genre's colour, and panels are
+  flat with a border instead of shadowed cards. Panel titles say what the
+  chart shows and notes are full sentences.
+- **Why**: the first restyle looked like every generated dashboard (rounded
+  shadowed cards, pills, a blue accent), and the blue competed with two of the
+  eight genre colours. With no chrome colour, any colour the reader sees is
+  data, which is the lecture's rule for colour taken to its end.

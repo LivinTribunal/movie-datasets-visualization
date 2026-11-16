@@ -8,16 +8,16 @@ import { Search } from './Search'
 import { YearSlider } from './YearSlider'
 
 const GENRE_MODE = [
-  { value: 'highlight', label: 'highlight', title: 'The genre only highlights films' },
-  { value: 'filter', label: 'filter', title: 'The genre also filters films' },
+  { value: 'highlight', label: 'Dimmed', title: 'Films of other genres are dimmed' },
+  { value: 'filter', label: 'Hidden', title: 'Films of other genres are hidden' },
 ]
 const SUBSET = [
-  { value: 'notable', label: 'notable', title: '≥ 10,000 IMDb votes' },
-  { value: 'all', label: 'all', title: '≥ 1,000 IMDb votes' },
+  { value: 'notable', label: '10,000+ votes', title: '≥ 10,000 IMDb votes' },
+  { value: 'all', label: '1,000+ votes', title: '≥ 1,000 IMDb votes' },
 ] as const
 const MONEY = [
-  { value: 'usd2025', label: '2025 USD', title: 'inflation-adjusted to 2025 USD' },
-  { value: 'nominal', label: 'nominal', title: 'as reported, not adjusted' },
+  { value: 'usd2025', label: '2025 dollars', title: 'inflation-adjusted to 2025 USD' },
+  { value: 'nominal', label: 'As reported', title: 'as reported, not adjusted' },
 ] as const
 const TABS = [
   { value: 'taste', label: 'Taste by country' },
@@ -50,8 +50,8 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
   const hasSelection = countries.length > 0 || franchise !== null || film !== null || brush !== null
 
   return (
-    <header className="panel filter-bar area-f">
-      <div className="filter-row">
+    <header className="area-f">
+      <div className="marquee">
         <h1>
           <img src="favicon.svg" alt="" width="24" height="24" />
           Movie Explorer
@@ -63,36 +63,50 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
             </button>
           ))}
         </div>
-        <Search data={data} />
-        <div className="filter-spacer">
-          <YearSlider />
-          <ChipGroup label="Film subset" value={subset} onChange={setSubset} options={[...SUBSET]} />
-          <ChipGroup label="Money" value={money} onChange={setMoney} options={[...MONEY]} />
+        <div className="marquee-tools">
+          <Search data={data} />
           <button type="button" className="btn" onClick={reset}>
-            Reset
+            Reset filters
           </button>
           <button type="button" className="btn" onClick={() => setAbout(true)}>
-            About
+            About the data
           </button>
         </div>
       </div>
-      <div className="filter-row filter-row-groups">
+      <div className="family-stripe" />
+      <div className="filter-strip">
+        <div className="filter-row">
           <ChipGroup
             label="Genre family"
             value={family}
             onChange={setFamily}
             options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
           />
-          <ChipGroup
-            label="Genre highlight or filter"
-            value={genreOnly ? 'filter' : 'highlight'}
-            onChange={(v) => setGenreOnly(v === 'filter')}
-            options={GENRE_MODE}
-          />
-        <div className="selection">
-          <span className="group-label">selection</span>
-          {!hasSelection && <span className="selection-hint">nothing yet: click a country, a point, a table row or a franchise line</span>}
-          <>
+          <div className="filter-group">
+            <span className="group-label">Other genres</span>
+            <ChipGroup
+              label="Other genres"
+              value={genreOnly ? 'filter' : 'highlight'}
+              onChange={(v) => setGenreOnly(v === 'filter')}
+              options={GENRE_MODE}
+            />
+          </div>
+        </div>
+        <div className="filter-row filter-row-2">
+          <div className="filter-group">
+            <span className="group-label">Years</span>
+            <YearSlider />
+          </div>
+          <div className="filter-group">
+            <span className="group-label">Films with</span>
+            <ChipGroup label="Films with" value={subset} onChange={setSubset} options={[...SUBSET]} />
+          </div>
+          <div className="filter-group">
+            <span className="group-label">Money in</span>
+            <ChipGroup label="Money in" value={money} onChange={setMoney} options={[...MONEY]} />
+          </div>
+          <div className="selection">
+            {!hasSelection && <span className="selection-hint">Nothing selected. Click a country, a dot, a row or a line.</span>}
             {countries.map((iso2) => {
               const name = data.countryByIso2.get(iso2)?.name ?? iso2
               return (
@@ -126,13 +140,13 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
             )}
             {brush !== null && (
               <span className="country-chip">
-                <span>scatter brush</span>
-                <button type="button" aria-label="Clear brush" onClick={() => setBrush(null)}>
+                <span>Scatter brush</span>
+                <button type="button" aria-label="Remove scatter brush" onClick={() => setBrush(null)}>
                   ×
                 </button>
               </span>
             )}
-          </>
+          </div>
         </div>
       </div>
     </header>

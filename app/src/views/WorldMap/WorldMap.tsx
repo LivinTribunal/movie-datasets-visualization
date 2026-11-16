@@ -21,13 +21,13 @@ import './worldmap.css'
 
 const SOURCE = [
   { value: 'netflix', label: 'Netflix' },
-  { value: 'cinema', label: 'Cinema' },
-  { value: 'production', label: 'Made here' },
+  { value: 'cinema', label: 'Cinemas' },
+  { value: 'production', label: 'Made there' },
 ] as const
 const MODES: { value: MapMode; label: string }[] = [
-  { value: 'share', label: 'share of genre' },
-  { value: 'top', label: 'top genre' },
-  { value: 'diff', label: 'cinema − streaming' },
+  { value: 'share', label: 'Share' },
+  { value: 'top', label: 'Top genre' },
+  { value: 'diff', label: 'Cinemas − Netflix' },
 ]
 
 type CountryFeature = Feature<Geometry, { name: string }> & { id?: string }
@@ -43,6 +43,8 @@ function sourceLabel(stat: CountryStat, source: string): string {
   if (source === 'production') return 'films produced here (TMDB)'
   return stat.measure === 'gross_usd' ? 'US box office (The Numbers)' : 'cinema admissions (LUMIERE)'
 }
+
+const WHERE = { netflix: 'on Netflix', cinema: 'in cinemas', production: 'among films made there' } as const
 
 const yearsLabel = ([a, b]: [number, number]) => (a === b ? `${a}` : `${a}–${b}`)
 
@@ -244,9 +246,11 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     if (!s) return <><b>{name}</b><br />no data in this source and window</>
     return (
       <>
-        <b>{name}</b> · top genre: {data.families[topFamily(s)].name}<br />
-        selected ({familyName}): {fmtPct(share(s, family))} · all countries: {fmtPct(world[family])}<br />
-        based on {fmtInt(s.entries)} entries, {yearsLabel(s.years)} · source: {sourceLabel(s, source)}
+        <b>{name}</b><br />
+        top genre: {data.families[topFamily(s)].name}<br />
+        {familyName}: {fmtPct(share(s, family))} here, {fmtPct(world[family])} in all countries<br />
+        based on {fmtInt(s.entries)} entries, {yearsLabel(s.years)}<br />
+        source: {sourceLabel(s, source)}
         {s.estimated > 0 && <><br />estimated by LUMIERE: {Math.round(s.estimated * 100)}%</>}
         {s.fuzzy > 0 && <><br />fuzzy title matches: {Math.round(s.fuzzy * 100)}%</>}
       </>
@@ -260,10 +264,15 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     ? { lo: `−${(colouring.max * 100).toFixed(0)} pp`, hi: `+${(colouring.max * 100).toFixed(0)} pp`, unit: 'cinema share − Netflix share (percentage points)' }
     : { lo: '0%', hi: `${fmtPct(colouring.max)}${colouring.clipped ? ' or more' : ''}`, unit: `share of ${data.families[family].name} (% of genre score)` }
 
+  const title = mapMode === 'diff'
+    ? `${data.families[family].name}: cinemas minus Netflix`
+    : mapMode === 'top'
+      ? `Top genre ${WHERE[source]}`
+      : `Share of ${data.families[family].name} ${WHERE[source]}`
+
   return (
     <Panel
-      letter="A"
-      title="World map"
+      title={title}
       className="area-a"
       note={note}
       tools={
@@ -299,7 +308,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
                 <button type="button" aria-label="Zoom in" onClick={() => zoomBy(ZOOM_STEP)}>+</button>
                 <button type="button" aria-label="Zoom out" onClick={() => zoomBy(1 / ZOOM_STEP)}>−</button>
               </div>
-              {zoomed && <button type="button" className="btn" onClick={resetZoom}>reset view</button>}
+              {zoomed && <button type="button" className="btn" onClick={resetZoom}>Reset view</button>}
             </div>
             <MapLegend
               mode={mapMode}

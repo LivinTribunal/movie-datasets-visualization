@@ -22,7 +22,8 @@ Rules for every brief:
 | 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` (shared context: `_views-common.md`) | done (#27) |
 | 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | done (#28) |
 | 5 | `q-e2e-budgets-deploy.md` | done (#29) |
-| 6 | `s-visual-polish.md`, `s-interaction-fixes.md`, `s7-workspaces.md` | done |
+| 6 | `s-visual-polish.md`, `s-interaction-fixes.md`, `s7-workspaces.md` | done (#30) |
+| 7 | `s8-identity-and-copy.md` | done |
 
 Later briefs are written when the code they build on exists, so their
 anchors point at real files.
