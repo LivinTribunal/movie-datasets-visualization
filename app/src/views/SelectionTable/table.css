@@ -42,7 +42,7 @@
 .columns-menu { position: relative; font-size: 12px; }
 .columns-menu summary {
   display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: var(--radius-s);
-  cursor: pointer; color: var(--muted); list-style: none; transition: background-color 120ms var(--ease);
+  cursor: pointer; color: var(--ink-2); list-style: none; transition: background-color 120ms var(--ease);
 }
 .columns-menu summary::-webkit-details-marker { display: none; }
 .columns-menu summary::after { content: '▾'; font-size: 9px; }

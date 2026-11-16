@@ -183,7 +183,7 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      title="Genre shares by year"
+      title={`Genre share of ${option.label} by year`}
       className="area-b"
       tools={
         <select
@@ -204,8 +204,8 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
       }
       note={
         <>
-          A film in n genres counts 1/n in each. Hatched years have under {THIN} films.
-          {measure === 'votes' && ' Votes measure popularity, not rating.'}
+          Films with n genres count 1/n per genre. Hatched: under {THIN} films.
+          {measure === 'votes' && ' IMDb votes measure popularity.'}
         </>
       }
     >

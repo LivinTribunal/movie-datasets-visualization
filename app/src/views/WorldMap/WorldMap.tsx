@@ -6,7 +6,6 @@ import {
 import { feature } from 'topojson-client'
 import type { Feature, FeatureCollection, Geometry } from 'geojson'
 import type { GeometryCollection, Topology } from 'topojson-specification'
-import { ChipGroup } from '../../components/ChipGroup'
 import { Panel } from '../../components/Panel'
 import { Tooltip } from '../../components/Tooltip'
 import { THIN, countryStats, share, shareDiff, topFamily, worldShares, type CountryStat } from '../../lib/countryShares'
@@ -20,14 +19,14 @@ import { MapPaths, type MapShape } from './MapPaths'
 import './worldmap.css'
 
 const SOURCE = [
-  { value: 'netflix', label: 'Netflix' },
-  { value: 'cinema', label: 'Cinemas' },
-  { value: 'production', label: 'Made there' },
+  { value: 'netflix', label: 'Netflix top 10' },
+  { value: 'cinema', label: 'Cinema admissions' },
+  { value: 'production', label: 'Films produced' },
 ] as const
 const MODES: { value: MapMode; label: string }[] = [
-  { value: 'share', label: 'Share' },
+  { value: 'share', label: 'Share of genre' },
   { value: 'top', label: 'Top genre' },
-  { value: 'diff', label: 'Cinemas − Netflix' },
+  { value: 'diff', label: 'Cinema − Netflix' },
 ]
 
 type CountryFeature = Feature<Geometry, { name: string }> & { id?: string }
@@ -43,8 +42,6 @@ function sourceLabel(stat: CountryStat, source: string): string {
   if (source === 'production') return 'films produced here (TMDB)'
   return stat.measure === 'gross_usd' ? 'US box office (The Numbers)' : 'cinema admissions (LUMIERE)'
 }
-
-const WHERE = { netflix: 'on Netflix', cinema: 'in cinemas', production: 'among films made there' } as const
 
 const yearsLabel = ([a, b]: [number, number]) => (a === b ? `${a}` : `${a}–${b}`)
 
@@ -264,11 +261,12 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     ? { lo: `−${(colouring.max * 100).toFixed(0)} pp`, hi: `+${(colouring.max * 100).toFixed(0)} pp`, unit: 'cinema share − Netflix share (percentage points)' }
     : { lo: '0%', hi: `${fmtPct(colouring.max)}${colouring.clipped ? ' or more' : ''}`, unit: `share of ${data.families[family].name} (% of genre score)` }
 
+  const sourceName = SOURCE.find((o) => o.value === source)?.label ?? source
   const title = mapMode === 'diff'
-    ? `${data.families[family].name}: cinemas minus Netflix`
+    ? `Cinema minus Netflix share of ${data.families[family].name}`
     : mapMode === 'top'
-      ? `Top genre ${WHERE[source]}`
-      : `Share of ${data.families[family].name} ${WHERE[source]}`
+      ? `${sourceName}: top genre`
+      : `${sourceName}: share of ${data.families[family].name}`
 
   return (
     <Panel
@@ -277,8 +275,12 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
       note={note}
       tools={
         <>
-          <ChipGroup label="Map source" options={[...SOURCE]} value={source} onChange={setSource} />
-          <ChipGroup label="Map mode" options={MODES} value={mapMode} onChange={setMapMode} />
+          <select aria-label="Map source" value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
+            {SOURCE.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select aria-label="Map mode" value={mapMode} onChange={(e) => setMapMode(e.target.value as MapMode)}>
+            {MODES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
         </>
       }
     >
@@ -308,7 +310,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
                 <button type="button" aria-label="Zoom in" onClick={() => zoomBy(ZOOM_STEP)}>+</button>
                 <button type="button" aria-label="Zoom out" onClick={() => zoomBy(1 / ZOOM_STEP)}>−</button>
               </div>
-              {zoomed && <button type="button" className="btn" onClick={resetZoom}>Reset view</button>}
+              {zoomed && <button type="button" className="btn" onClick={resetZoom}>Reset zoom</button>}
             </div>
             <MapLegend
               mode={mapMode}

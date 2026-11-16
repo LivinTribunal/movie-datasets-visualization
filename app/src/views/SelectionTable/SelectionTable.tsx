@@ -93,8 +93,8 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
     if (next.length > 0) setColumns(next)
   }
 
-  const title = `${fmtInt(rows.length)} films${brush ? ' inside the brush' : ''}`
-  const note = brush ? 'Films inside the brush. Clear it to see all.' : undefined
+  const title = `Films${brush ? ' in brush' : ''} (${fmtInt(rows.length)})`
+  const note = brush ? 'Filtered by the scatter brush.' : undefined
 
   const tools = (
     <details ref={menu} className="columns-menu">

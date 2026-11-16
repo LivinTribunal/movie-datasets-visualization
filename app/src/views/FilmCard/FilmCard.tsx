@@ -25,14 +25,8 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const row = hover ?? pinned
   if (row === null) {
     return (
-      <Panel title="Film" className="area-g">
-        <p className="filmcard-hint">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" />
-          </svg>
-          Hover a dot or a row to see a film. Click to pin it.
-        </p>
+      <Panel title="Film details" className="area-g">
+        <p className="filmcard-hint">No film selected.</p>
       </Panel>
     )
   }
@@ -72,7 +66,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   )
 
   return (
-    <Panel title="Film" className="area-g">
+    <Panel title="Film details" className="area-g">
       <div className="filmcard">
         <div className="fc-head">
           <Poster row={row} />

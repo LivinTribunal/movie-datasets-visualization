@@ -7,18 +7,6 @@ import { useStore } from '../../state/store'
 import { Search } from './Search'
 import { YearSlider } from './YearSlider'
 
-const GENRE_MODE = [
-  { value: 'highlight', label: 'Dimmed', title: 'Films of other genres are dimmed' },
-  { value: 'filter', label: 'Hidden', title: 'Films of other genres are hidden' },
-]
-const SUBSET = [
-  { value: 'notable', label: '10,000+ votes', title: '≥ 10,000 IMDb votes' },
-  { value: 'all', label: '1,000+ votes', title: '≥ 1,000 IMDb votes' },
-] as const
-const MONEY = [
-  { value: 'usd2025', label: '2025 dollars', title: 'inflation-adjusted to 2025 USD' },
-  { value: 'nominal', label: 'As reported', title: 'as reported, not adjusted' },
-] as const
 const TABS = [
   { value: 'taste', label: 'Taste by country' },
   { value: 'ratings', label: 'Money & ratings' },
@@ -51,9 +39,9 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <header className="area-f">
-      <div className="marquee">
+      <div className="app-head">
         <h1>
-          <img src="favicon.svg" alt="" width="24" height="24" />
+          <img src="favicon.svg" alt="" width="16" height="16" />
           Movie Explorer
         </h1>
         <div className="tabs" role="tablist" aria-label="Workspace">
@@ -63,17 +51,16 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
             </button>
           ))}
         </div>
-        <div className="marquee-tools">
+        <div className="head-tools">
           <Search data={data} />
-          <button type="button" className="btn" onClick={reset}>
-            Reset filters
+          <button type="button" className="text-btn" onClick={reset}>
+            Reset
           </button>
-          <button type="button" className="btn" onClick={() => setAbout(true)}>
-            About the data
+          <button type="button" className="text-btn" onClick={() => setAbout(true)}>
+            About
           </button>
         </div>
       </div>
-      <div className="family-stripe" />
       <div className="filter-strip">
         <div className="filter-row">
           <ChipGroup
@@ -82,35 +69,33 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
             onChange={setFamily}
             options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
           />
-          <div className="filter-group">
-            <span className="group-label">Other genres</span>
-            <ChipGroup
-              label="Other genres"
-              value={genreOnly ? 'filter' : 'highlight'}
-              onChange={(v) => setGenreOnly(v === 'filter')}
-              options={GENRE_MODE}
-            />
-          </div>
         </div>
         <div className="filter-row filter-row-2">
           <div className="filter-group">
             <span className="group-label">Years</span>
             <YearSlider />
           </div>
-          <div className="filter-group">
-            <span className="group-label">Films with</span>
-            <ChipGroup label="Films with" value={subset} onChange={setSubset} options={[...SUBSET]} />
-          </div>
-          <div className="filter-group">
-            <span className="group-label">Money in</span>
-            <ChipGroup label="Money in" value={money} onChange={setMoney} options={[...MONEY]} />
-          </div>
+          <label className="check">
+            <input type="checkbox" checked={genreOnly} onChange={(e) => setGenreOnly(e.target.checked)} />
+            Only this genre
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={subset === 'all'} onChange={(e) => setSubset(e.target.checked ? 'all' : 'notable')} />
+            Include films under 10,000 votes
+          </label>
+          <label className="filter-group">
+            <span className="group-label">Money</span>
+            <select value={money} onChange={(e) => setMoney(e.target.value as typeof money)}>
+              <option value="usd2025">2025 USD</option>
+              <option value="nominal">Nominal USD</option>
+            </select>
+          </label>
           <div className="selection">
-            {!hasSelection && <span className="selection-hint">Nothing selected. Click a country, a dot, a row or a line.</span>}
+            {hasSelection && <span>Selected:</span>}
             {countries.map((iso2) => {
               const name = data.countryByIso2.get(iso2)?.name ?? iso2
               return (
-                <span key={iso2} className="country-chip">
+                <span key={iso2} className="sel-item">
                   <span title={name}>{name}</span>
                   <button type="button" aria-label={`Remove ${name}`} onClick={() => toggleCountry(iso2)}>
                     ×
@@ -119,7 +104,7 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
               )
             })}
             {franchise !== null && (
-              <span className="country-chip">
+              <span className="sel-item">
                 <button type="button" className="chip-name" onClick={() => setTab('franchises')}>
                   {data.franchises.collections.get(franchise) ?? 'franchise'}
                 </button>
@@ -129,7 +114,7 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
               </span>
             )}
             {film !== null && (
-              <span className="country-chip">
+              <span className="sel-item">
                 <button type="button" className="chip-name" onClick={() => setTab('ratings')}>
                   {text?.title[film] ?? fmtImdb(data.films.imdb[film])}
                 </button>
@@ -139,7 +124,7 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
               </span>
             )}
             {brush !== null && (
-              <span className="country-chip">
+              <span className="sel-item">
                 <span>Scatter brush</span>
                 <button type="button" aria-label="Remove scatter brush" onClick={() => setBrush(null)}>
                   ×

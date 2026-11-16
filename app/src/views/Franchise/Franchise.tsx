@@ -103,19 +103,19 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
   const medianEnd = median.length ? median[median.length - 1] : null
   const lastSel = selected ? selected.points[selected.points.length - 1] : null
   const outside = y === 'revenue' ? outsideCount(lines, 1 / RATIO_MAX, RATIO_MAX) : 0
-  const what = y === 'rating' ? 'rate below' : 'earn less than'
+  const what = y === 'rating' ? 'Below' : 'Earned less than'
 
   const note = (
     <>
-      {share(stat.all)} of sequels {what} the first film ({share(stat.family)} in {f.name}, {fmtInt(stat.family.franchises)} franchises).
-      {cut && ' Films after the 10th are not shown.'}
-      {outside > 0 && ` ${fmtInt(outside)} values outside 0.01×–100× run off the chart.`}
+      {what} the first film: {share(stat.all)} of sequels; {share(stat.family)} in {f.name} ({fmtInt(stat.family.franchises)} franchises).
+      {cut && ' Only installments 1–10 shown.'}
+      {outside > 0 && ` ${fmtInt(outside)} values outside 0.01×–100× are clipped.`}
     </>
   )
 
   return (
     <Panel
-      title="Sequels against the first film"
+      title={`Sequel ${y === 'rating' ? 'rating' : 'box office'} relative to the first film`}
       className="area-d"
       tools={<ChipGroup label="Y axis" options={Y_OPTIONS} value={y} onChange={setFranchiseY} />}
       note={note}

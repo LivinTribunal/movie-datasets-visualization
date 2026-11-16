@@ -5,7 +5,7 @@
 .country-selected { fill: none; stroke: var(--ink); stroke-width: 1.75px; vector-effect: non-scaling-stroke; pointer-events: none; }
 .country-hover { fill: none; stroke: var(--ink); stroke-width: 1px; vector-effect: non-scaling-stroke; pointer-events: none; }
 .map-zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.map-zoom-group { display: flex; flex-direction: column; background: #fff; border-radius: var(--radius-m); box-shadow: var(--shadow-pop); overflow: hidden; }
+.map-zoom-group { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-m); box-shadow: var(--shadow-pop); overflow: hidden; }
 .map-zoom-group button {
   width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: var(--ink);
   font-size: 15px; line-height: 1; cursor: pointer; transition: background-color 120ms var(--ease), transform 120ms var(--ease);
@@ -23,8 +23,9 @@
   gap: 6px;
   max-width: min(240px, 60%);
   padding: 8px 10px;
-  background: var(--panel);
-  border-radius: var(--radius-m);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 3px;
   box-shadow: var(--shadow-pop);
   font-size: 11px;
   pointer-events: none;
