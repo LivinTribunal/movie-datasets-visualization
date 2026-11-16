@@ -475,3 +475,14 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   shadowed cards, pills, a blue accent), and the blue competed with two of the
   eight genre colours. With no chrome colour, any colour the reader sees is
   data, which is the lecture's rule for colour taken to its end.
+
+### D31. Plain controls and system type; D30's black band and poster type dropped (2026-11-16)
+
+- **What**: white page, system font, no panel boxes (neighbouring views are
+  split by a thin rule), native-looking selects and checkboxes, the genre
+  legend doubles as the genre picker. Chart titles are literal ("Audience
+  (Rotten Tomatoes) vs critics (Tomatometer)"). D30's rule that colour is
+  reserved for data stays.
+- **Why**: both earlier restyles added a visual identity and both read as
+  machine-made to the team. A plain tool keeps attention on the charts, and
+  each control looks like what it does.

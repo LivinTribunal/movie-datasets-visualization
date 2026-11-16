@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from './state/store'
 import { loadData } from './lib/data'
 import type { AppData } from './lib/types'
@@ -15,7 +15,6 @@ import { WorldMap } from './views/WorldMap/WorldMap'
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
   const tab = useStore((s) => s.tab)
-  const family = useStore((s) => s.family)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -28,9 +27,9 @@ export default function App() {
     return (
       <div className="app">
         <header className="area-f">
-          <div className="marquee">
+          <div className="app-head">
             <h1>
-              <img src="favicon.svg" alt="" width="24" height="24" />
+              <img src="favicon.svg" alt="" width="16" height="16" />
               Movie Explorer
             </h1>
             <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
@@ -41,7 +40,7 @@ export default function App() {
   }
 
   return (
-    <div className="app" style={{ '--family': data.families[family]?.colour } as CSSProperties}>
+    <div className="app">
       <FilterBar data={data} />
       <main key={tab} className="workspace" data-tab={tab}>
         {tab === 'taste' && (

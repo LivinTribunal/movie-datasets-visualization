@@ -15,9 +15,11 @@ const isLog = (key: MeasureKey) => MEASURES[key].scale === 'log'
 
 function hiddenNote(rows: number, missingX: number, missingY: number, xKey: MeasureKey, yKey: MeasureKey): string {
   const gaps: [number, string][] = [[missingX, MEASURES[xKey].short], [missingY, MEASURES[yKey].short]]
-  const parts = gaps.filter(([n]) => n > 0).map(([n, k]) => `${fmtInt(n)} no ${k}`)
-  return `${fmtInt(rows)} films.${parts.length ? ` ${parts.join(' and ').replace(' no ', ' more have no ')}.` : ''}`
+  const parts = gaps.filter(([n]) => n > 0).map(([n, k]) => `${fmtInt(n)} ${k}`)
+  return `${fmtInt(rows)} films.${parts.length ? ` Missing: ${parts.join(', ')}.` : ''}`
 }
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
   const x = useStore((s) => s.x)
@@ -82,7 +84,7 @@ export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      title="Every film as a dot"
+      title={`${cap(MEASURES[y].label)} vs ${MEASURES[x].label}`}
       className="area-c"
       tools={tools}
       note={hiddenNote(rows.length, missingX, missingY, x, y)}
