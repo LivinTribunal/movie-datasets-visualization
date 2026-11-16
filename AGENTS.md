@@ -10,6 +10,9 @@ and audience ratings**, and **genre taste over time and per country**
 (cinemas and Netflix) relate.
 
 - Plan, timeline and visualization draft: `docs/PLAN.md`. Read it first.
+- App build spec (final design, data files, store, panels):
+  `docs/superpowers/specs/2026-11-16-movie-explorer-app-design.md`. One brief
+  per implementation slice is in `docs/superpowers/briefs/`.
 - Every dataset, its version, licence, path and status: `DATASETS.md`. Update
   it whenever a source is added or its status changes.
 - Design sheets are drawn on paper and scanned into `docs/design-sheets/`
