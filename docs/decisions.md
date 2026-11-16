@@ -428,3 +428,22 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - **Why**: one pass over 56k rows takes well under a millisecond, so a
   worker would only add message passing. The costs that matter are download
   size and needless re-renders, and a budget keeps both from creeping.
+
+### D27. The franchise box-office axis is fixed at 0.01× to 100× (2026-11-16)
+
+- **What**: in panel D the box-office ratio to the first film is drawn on a
+  log axis from 0.01× to 100×. Lines that leave it are cut at the edge, and
+  the note under the chart says how many values are outside.
+- **Why**: the real ratios run from 0.0001× to 1,638× (21 of 996 sequel
+  values are outside the fixed range). A data-driven axis spent most of its
+  height on those few and squeezed the rest into a narrow band around 1×.
+
+### D28. The map's share scale tops out at the largest well-covered country (2026-11-16)
+
+- **What**: in "share of genre" mode the colour scale ends at the largest
+  share among countries with at least 30 entries. A country under 30 entries
+  (dotted outline) with a larger share takes the darkest colour, and the
+  legend then reads "N % or more".
+- **Why**: in the production source one country with a single film has a
+  share of 100 %, which made every other country pale. The dotted outline
+  already tells the reader that such a country rests on thin data.

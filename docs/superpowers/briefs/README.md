@@ -20,8 +20,8 @@ Rules for every brief:
 | 2 | `a1-data-layer.md` | done (#26) |
 | 2 | `a2-shell.md` | done (#26) |
 | 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` (shared context: `_views-common.md`) | done (#27) |
-| 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | done |
-| 5 | `q-e2e-budgets-deploy.md` | written after wave 4 |
+| 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | done (#28) |
+| 5 | `q-e2e-budgets-deploy.md` | done |
 
 Later briefs are written when the code they build on exists, so their
 anchors point at real files.
