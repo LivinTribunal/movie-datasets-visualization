@@ -33,6 +33,10 @@ def _names(col: str) -> pl.Expr:
     )
 
 
+def _top(col: str, n: int) -> pl.Expr:
+    return _empty_to_null(_names(col).list.head(n))
+
+
 def _empty_to_null(expr: pl.Expr) -> pl.Expr:
     return pl.when(expr.list.len() == 0).then(None).otherwise(expr)
 
@@ -75,6 +79,18 @@ def parse(raw: pl.LazyFrame, names: pl.DataFrame) -> pl.DataFrame:
             _num("popularity").alias("popularity"),
             _empty_to_null(_names("genres")).alias("genres"),
             _empty_to_null(pl.col("production_countries")).alias("production_countries"),
+            _empty_to_null(
+                pl.col("keywords")
+                .str.split("|")
+                .list.eval(pl.element().str.strip_chars().str.to_lowercase())
+                .list.eval(pl.element().filter(pl.element() != ""))
+            ).alias("keywords"),
+            _empty_to_null(_names("production_companies")).alias("companies"),
+            _top("cast", 5).alias("cast"),
+            _top("writers", 3).alias("writers"),
+            pl.when(pl.col("overview").str.strip_chars() != "")
+            .then(pl.col("overview").str.strip_chars())
+            .alias("overview"),
         )
         .collect()
     )

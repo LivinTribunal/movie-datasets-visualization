@@ -1,8 +1,11 @@
 import { create } from 'zustand'
+import type { StoryCategory } from '../lib/filter'
 import type { MeasureKey, Money } from '../lib/measures'
 
 export type { Money }
 export type Subset = 'notable' | 'all'
+export type Story = 'any' | StoryCategory
+export type Studio = 'any' | 'major' | 'independent'
 export type Source = 'netflix' | 'cinema' | 'production'
 export type Tab = 'taste' | 'ratings' | 'franchises'
 export type MapMode = 'share' | 'top' | 'diff'
@@ -24,6 +27,8 @@ interface Values {
   genreOnly: boolean
   subset: Subset
   money: Money
+  story: Story
+  studio: Studio
   source: Source
   mapMode: MapMode
   /** ISO-2, at most MAX_COUNTRIES. */
@@ -52,6 +57,8 @@ interface Actions {
   setGenreOnly: (genreOnly: boolean) => void
   setSubset: (subset: Subset) => void
   setMoney: (money: Money) => void
+  setStory: (story: Story) => void
+  setStudio: (studio: Studio) => void
   setSource: (source: Source) => void
   setMapMode: (mapMode: MapMode) => void
   toggleCountry: (iso2: string) => void
@@ -79,6 +86,8 @@ const initial = (): Values => ({
   genreOnly: false,
   subset: 'notable',
   money: 'usd2025',
+  story: 'any',
+  studio: 'any',
   source: 'netflix',
   mapMode: 'share',
   countries: [],
@@ -112,6 +121,8 @@ export const useStore = create<State>()((set) => ({
   setGenreOnly: (genreOnly) => set({ genreOnly }),
   setSubset: (subset) => set({ subset }),
   setMoney: (money) => set({ money }),
+  setStory: (story) => set({ story }),
+  setStudio: (studio) => set({ studio }),
   setSource: (source) => set({ source }),
   setMapMode: (mapMode) => set({ mapMode }),
   toggleCountry: (iso2) =>

@@ -1,0 +1,55 @@
+origin,label,category
+numbers,Original Screenplay,original
+numbers,Based on Fiction Book/Short Story,book
+numbers,Based on Factual Book/Article,book
+numbers,Based on Comic/Graphic Novel,comic
+numbers,Based on Real Life Events,true_story
+numbers,Based on Play,stage
+numbers,Based on Musical or Opera,stage
+numbers,Based on Ballet,stage
+numbers,Remake,screen
+numbers,Based on TV,screen
+numbers,Based on Game,screen
+numbers,Based on Movie,screen
+numbers,Spin-Off,screen
+numbers,Based on Short Film,screen
+numbers,Based on Web Series,screen
+numbers,Based on Folk Tale/Legend/Fairytale,other
+numbers,Based on Religious Text,other
+numbers,Based on Toy,other
+numbers,Based on Theme Park Ride,other
+numbers,Based on Musical Group,other
+numbers,Based on Song,other
+numbers,Based on Poem,other
+numbers,Compilation,other
+tmdb,based on comic,comic
+tmdb,based on graphic novel,comic
+tmdb,based on manga,comic
+tmdb,based on webcomic or webtoon,comic
+tmdb,based on play or musical,stage
+tmdb,based on opera,stage
+tmdb,based on video game,screen
+tmdb,based on tv series,screen
+tmdb,based on short film,screen
+tmdb,based on cartoon,screen
+tmdb,based on anime,screen
+tmdb,based on web series,screen
+tmdb,based on movie,screen
+tmdb,live action remake,screen
+tmdb,spin off,screen
+tmdb,based on toy,other
+tmdb,based on fairy tale,other
+tmdb,"based on myths, legends or folklore",other
+tmdb,"based on song, poem or rhyme",other
+tmdb,based on light novel,book
+tmdb,based on young adult novel,book
+tmdb,based on children's book,book
+tmdb,based on short story,book
+tmdb,based on novel or book,book
+tmdb,"based on magazine, newspaper or article",book
+tmdb,based on memoir or autobiography,true_story
+tmdb,based on real person,true_story
+tmdb,based on true story,true_story
+tmdb,remake,screen
+tmdb,reboot,screen
+tmdb,biography,true_story

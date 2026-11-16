@@ -19,7 +19,7 @@ const assets = join(dist, 'assets')
 const budgets = [
   { name: 'js', bytes: gzipped(list(assets, '.js')), limit: 200_000 },
   { name: 'css', bytes: gzipped(list(assets, '.css')), limit: 20_000 },
-  { name: 'data', bytes: raw(list(join(dist, 'data'))), limit: 8_000_000 },
+  { name: 'data', bytes: raw(list(join(dist, 'data'))), limit: 12_000_000 },
 ]
 
 let failed = false

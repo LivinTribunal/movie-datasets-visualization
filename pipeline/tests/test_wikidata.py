@@ -77,3 +77,32 @@ def test_parse_money_floats_qids_and_null_qualifiers():
         11,
     )
     assert isinstance(rows[0][3], float)
+
+
+def test_aggregate_extra_unions_wins_and_noms_and_picks_first_id():
+    id_rows = wikidata.parse_ids(load("sparql_ids.json"))
+    df = wikidata.aggregate_extra(
+        wikidata.parse_awards(load("sparql_awards.json")),
+        wikidata.parse_extids(load("sparql_extids.json")),
+        id_rows,
+    )
+    rows = {r["imdb_id"]: r for r in df.iter_rows(named=True)}
+    assert df.columns == [
+        "imdb_id",
+        "qid",
+        "oscar_wins",
+        "oscar_noms",
+        "csfd_id",
+        "filmaffinity_id",
+        "allocine_id",
+        "douban_id",
+    ]
+    assert df["imdb_id"].to_list() == sorted(df["imdb_id"].to_list())
+    assert (rows["tt0000001"]["oscar_wins"], rows["tt0000001"]["oscar_noms"]) == (1, 2)
+    assert rows["tt0000001"]["filmaffinity_id"] == "film111111"
+    assert (rows["tt0000002"]["oscar_wins"], rows["tt0000002"]["oscar_noms"]) == (0, 1)
+    assert rows["tt0000002"]["csfd_id"] == "1111"
+    assert rows["tt0000002"]["douban_id"] is None
+    assert (rows["tt0000003"]["oscar_wins"], rows["tt0000003"]["oscar_noms"]) == (0, 0)
+    assert rows["tt0000003"]["csfd_id"] is None
+    assert "tt0000009" not in rows  # no QID in id_rows

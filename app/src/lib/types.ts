@@ -27,8 +27,24 @@ export interface Films {
   roi: Float64Array
   budget_src: DictColumn
   revenue_src: DictColumn
-  /** Bits: 0 budget converted, 1 revenue converted, 2 budget sources disagree, 3 revenue sources disagree, 4 fuzzy money match. */
+  /** Bits: 0 budget converted, 1 revenue converted, 2 budget sources disagree, 3 revenue sources disagree, 4 fuzzy money match, 5 numbers_fuzzy (opening, theatres, legs, video: fuzzy title match). */
   flags: Uint8Array
+  /** Dict order: original, book, comic, true_story, stage, screen, other. */
+  story_source: DictColumn
+  /** numbers | tmdb */
+  story_source_src: DictColumn
+  /** G, PG, PG-13, R, NC-17, NR */
+  age_rating: DictColumn
+  /** disney, warner, universal, sony, paramount, fox, lionsgate, mgm, independent */
+  studio: DictColumn
+  opening_usd: Float64Array
+  opening_usd2025: Float64Array
+  /** US gross ÷ opening weekend. */
+  legs: Float64Array
+  video_usd2025: Float64Array
+  theaters: Float64Array
+  oscar_wins: Float64Array
+  oscar_noms: Float64Array
   imdb_100: Float64Array
   tmdb_100: Float64Array
   tomatometer_100: Float64Array
@@ -41,6 +57,20 @@ export interface Films {
   /** NaN when the film is not part of an exported franchise. */
   collection_id: Float64Array
   installment: Float64Array
+}
+
+/** One films_detail_{k}.pack shard: notable rows [shard_size * k, shard_size * (k + 1)). */
+export interface FilmsDetail {
+  rows: number
+  overview: (string | null)[]
+  cast: (string | null)[]
+  writers: (string | null)[]
+  companies: (string | null)[]
+  qid: (string | null)[]
+  csfd_id: (string | null)[]
+  filmaffinity_id: (string | null)[]
+  allocine_id: (string | null)[]
+  douban_id: (string | null)[]
 }
 
 /** films_text.pack, same rows as Films. */
@@ -114,6 +144,7 @@ export interface Meta {
   notes: string[]
   attribution: string[]
   sources: Record<string, string>
+  detail: { shard_size: number; shards: number }
 }
 
 export interface AppData {

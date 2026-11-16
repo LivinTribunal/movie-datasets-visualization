@@ -37,3 +37,6 @@
 @media (prefers-reduced-motion: reduce) {
   .fc-btn:active { transform: none; }
 }
+.fc-about p { margin: 0 0 6px; line-height: 1.4; }
+.fc-about a { color: var(--accent); text-decoration: none; }
+.fc-about a:hover { text-decoration: underline; }

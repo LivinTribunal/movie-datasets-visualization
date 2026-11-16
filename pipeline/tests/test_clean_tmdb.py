@@ -85,3 +85,15 @@ def test_poster_path_kept_and_blank_is_null() -> None:
     out = clean(raw, NAMES)
     assert _row(out, 1)["poster_path"] == "/abc.jpg"
     assert _row(out, 2)["poster_path"] is None
+
+
+def test_keywords_companies_cast_writers_overview(films: pl.DataFrame) -> None:
+    r = _row(films, 1)
+    assert r["keywords"] == ["space opera", "robot", "heist"]
+    assert r["companies"] == ["Acme", "Beta Films"]
+    assert r["cast"] == ["A", "B", "C", "D", "E"]
+    assert r["writers"] == ["W1", "W2", "W3"]
+    assert r["overview"] == "A plot."
+    r = _row(films, 2)
+    for col in ("keywords", "companies", "cast", "writers", "overview"):
+        assert r[col] is None

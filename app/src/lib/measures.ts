@@ -3,6 +3,7 @@ import type { Films } from './types'
 export type MeasureKey =
   | 'tomatometer' | 'metascore' | 'audience' | 'imdb' | 'mc_user' | 'letterboxd' | 'tmdb'
   | 'gap' | 'budget' | 'revenue' | 'roi' | 'votes' | 'year' | 'runtime'
+  | 'opening' | 'theaters' | 'legs' | 'oscar_noms'
 
 export type Money = 'usd2025' | 'nominal'
 
@@ -29,13 +30,17 @@ export const MEASURES: Record<MeasureKey, Measure> = {
   votes: { label: 'IMDb votes', short: 'Votes', unit: 'count', scale: 'log' },
   year: { label: 'release year', short: 'Year', unit: 'year', scale: 'linear' },
   runtime: { label: 'runtime', short: 'Runtime', unit: 'minutes', scale: 'linear' },
+  opening: { label: 'opening weekend, US', short: 'Opening', unit: '2025 USD or nominal USD', scale: 'log' },
+  theaters: { label: 'widest release', short: 'Theatres', unit: 'theatres', scale: 'linear' },
+  legs: { label: 'legs, US gross ÷ opening weekend', short: 'Legs', unit: '×', scale: 'log' },
+  oscar_noms: { label: 'Oscar nominations', short: 'Oscar noms', unit: 'count', scale: 'linear' },
 }
 
 export const MEASURE_KEYS = Object.keys(MEASURES) as MeasureKey[]
 
 type NumColumn = { [K in keyof Films]: Films[K] extends Float64Array ? K : never }[keyof Films]
 
-const COLUMN: Record<Exclude<MeasureKey, 'budget' | 'revenue'>, NumColumn> = {
+const COLUMN: Record<Exclude<MeasureKey, 'budget' | 'revenue' | 'opening'>, NumColumn> = {
   tomatometer: 'tomatometer_100',
   metascore: 'metascore_100',
   audience: 'audience_100',
@@ -48,17 +53,21 @@ const COLUMN: Record<Exclude<MeasureKey, 'budget' | 'revenue'>, NumColumn> = {
   votes: 'imdb_votes',
   year: 'year',
   runtime: 'runtime',
+  theaters: 'theaters',
+  legs: 'legs',
+  oscar_noms: 'oscar_noms',
 }
 
 export function measureColumn(films: Films, key: MeasureKey, money: Money): Float64Array {
   if (key === 'budget') return money === 'usd2025' ? films.budget_usd2025 : films.budget_usd
   if (key === 'revenue') return money === 'usd2025' ? films.revenue_usd2025 : films.revenue_usd
+  if (key === 'opening') return money === 'usd2025' ? films.opening_usd2025 : films.opening_usd
   return films[COLUMN[key]]
 }
 
 export function axisLabel(key: MeasureKey, money: Money): string {
   const { label, unit, scale } = MEASURES[key]
-  const u = key === 'budget' || key === 'revenue' ? (money === 'usd2025' ? '2025 USD' : 'nominal USD') : unit
+  const u = key === 'budget' || key === 'revenue' || key === 'opening' ? (money === 'usd2025' ? '2025 USD' : 'nominal USD') : unit
   return `${label} (${u}${scale === 'log' ? ', log' : ''})`
 }
 

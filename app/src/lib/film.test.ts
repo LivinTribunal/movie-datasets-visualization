@@ -37,6 +37,17 @@ function films(): Films {
     mc_critic_reviews: NaNs(3),
     collection_id: NaNs(3),
     installment: NaNs(3),
+    story_source: { codes: new Uint8Array(3).fill(255), values: [], nullCode: 255 },
+    story_source_src: { codes: new Uint8Array(3).fill(255), values: [], nullCode: 255 },
+    age_rating: { codes: new Uint8Array(3).fill(255), values: [], nullCode: 255 },
+    studio: { codes: new Uint8Array(3).fill(255), values: [], nullCode: 255 },
+    opening_usd: NaNs(3),
+    opening_usd2025: NaNs(3),
+    legs: NaNs(3),
+    video_usd2025: NaNs(3),
+    theaters: NaNs(3),
+    oscar_wins: NaNs(3),
+    oscar_noms: NaNs(3),
   }
 }
 

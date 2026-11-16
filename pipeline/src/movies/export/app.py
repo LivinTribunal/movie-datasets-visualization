@@ -6,12 +6,14 @@ data/interim. Output is deterministic (sorted, no timestamps) so a re-run gives 
 """
 
 import json
+import math
 import shutil
 from pathlib import Path
 
 import polars as pl
 
 from movies import paths
+from movies.derive.extras import DETAIL_COLUMNS
 from movies.export.pack import Col, dict_col, list_col, num, str_col, write_pack
 from movies.validate.app import SCHEMA
 
@@ -22,7 +24,7 @@ NOTES = [
     "Budgets under $1,000 and revenues under $10,000 are dropped as unreliable.",
     "Money comes from The Numbers, else TMDB, else Wikidata, else the Wikipedia infobox"
     " (budget_src, revenue_src); a few amounts checked by hand as wrong are skipped.",
-    "Fuzzy title matches to The Numbers are flagged (money_fuzzy).",
+    "Fuzzy title matches to The Numbers are flagged (money_fuzzy, numbers_fuzzy).",
     "Genre shares use 1/n weights: a film with n genres counts 1/n in each.",
     "The TMDB average is null under 50 votes.",
     "Rotten Tomatoes scores of films from 2023 on come from the RT pages (October 2026), older"
@@ -30,6 +32,16 @@ NOTES = [
     "Netflix shares cover only matched titles; see the coverage column.",
     "Scores are on 0–100: IMDb, TMDB and Metacritic users ×10, Letterboxd ×20. "
     "The Metacritic user score is null under 10 user ratings.",
+]
+EXTRA_NOTES = [
+    "Opening weekend (US only) and estimated home-video sales are inflated with CPI to 2025 USD;"
+    " both come from The Numbers.",
+    "Home-video sales are The Numbers' estimates.",
+    "Story source comes from The Numbers, else from the first TMDB keyword that names one"
+    " (story_source_src); a film with neither has none.",
+    "Studio is the group of the first production company that is one of eight major groups,"
+    " else independent.",
+    "Oscar nominations and wins are counted from Wikidata (distinct categories).",
 ]
 CINEMA_NOTES = [
     "Cinema genre shares come from LUMIERE admissions of notable films only; UK and Ireland "
@@ -61,7 +73,24 @@ FLAG_COLUMNS = [
     "budget_disagree",
     "revenue_disagree",
     "money_fuzzy",
+    "numbers_fuzzy",
 ]
+STORY_SOURCES = ["original", "book", "comic", "true_story", "stage", "screen", "other"]
+STORY_ORIGINS = ["numbers", "tmdb"]
+AGE_RATINGS = ["G", "PG", "PG-13", "R", "NC-17", "NR"]
+STUDIOS = [
+    "disney",
+    "warner",
+    "universal",
+    "sony",
+    "paramount",
+    "fox",
+    "lionsgate",
+    "mgm",
+    "independent",
+]
+EXTRA_F32 = ["opening_usd", "opening_usd2025", "legs", "video_usd2025"]
+DETAIL_SHARD = 1000
 RATING_COLUMNS = [
     "imdb_100",
     "tmdb_100",
@@ -93,6 +122,14 @@ FILM_COLUMNS = [
     "mc_critic_reviews",
     "collection_id",
     "installment",
+    "story_source",
+    "story_source_src",
+    "age_rating",
+    "studio",
+    *EXTRA_F32,
+    "theaters",
+    "oscar_wins",
+    "oscar_noms",
 ]
 FRANCHISE_RATINGS = ["imdb_100", "tomatometer_100", "audience_100"]
 FRANCHISE_COLUMNS = [
@@ -127,6 +164,7 @@ def films_table(
     ratings: pl.DataFrame,
     film_genres: pl.DataFrame,
     franchises: pl.DataFrame,
+    extras: pl.DataFrame,
 ) -> pl.DataFrame:
     """Every film, most voted first, in logical form (lists and booleans, not yet bit-packed)."""
     genres = film_genres.group_by("imdb_id", maintain_order=True).agg(
@@ -144,6 +182,7 @@ def films_table(
         .join(ratings, on="imdb_id", how="left")
         .join(genres, on="imdb_id", how="left")
         .join(parts, on="imdb_id", how="left")
+        .join(extras.drop(DETAIL_COLUMNS), on="imdb_id", how="left")
         .with_columns(
             pl.col("genres").fill_null([]),
             pl.col("families").fill_null([]),
@@ -151,6 +190,7 @@ def films_table(
             _converted("revenue_converted", "revenue_currency"),
             pl.col("budget_disagree").fill_null(False),
             pl.col("revenue_disagree").fill_null(False),
+            pl.col("numbers_fuzzy").fill_null(False),
             money_fuzzy=(
                 (pl.col("numbers_match") == "fuzzy")
                 & ((pl.col("budget_src") == "numbers") | (pl.col("revenue_src") == "numbers"))
@@ -201,11 +241,35 @@ def write_films(
         num("mc_critic_reviews", df["mc_critic_reviews"], "u16", null=U16_NULL),
         num("collection_id", df["collection_id"], "u32", null=U32_NULL),
         num("installment", df["installment"], "u8", null=U8_NULL),
+        dict_col("story_source", df["story_source"], STORY_SOURCES, null=U8_NULL),
+        dict_col("story_source_src", df["story_source_src"], STORY_ORIGINS, null=U8_NULL),
+        dict_col("age_rating", df["age_rating"], AGE_RATINGS, null=U8_NULL),
+        dict_col("studio", df["studio"], STUDIOS, null=U8_NULL),
+        *(num(c, df[c], "f32") for c in EXTRA_F32),
+        num("theaters", df["theaters"], "u16", null=U16_NULL),
+        num("oscar_wins", df["oscar_wins"], "u8", null=U8_NULL),
+        num("oscar_noms", df["oscar_noms"], "u8", null=U8_NULL),
     ]
     meta = {"notable": int(df["notable"].sum()), "genres": genres, "families": families}
     write_pack(core_path, df.height, meta, cols)
     write_pack(text_path, df.height, {}, [str_col(c, df[c]) for c in ("title", "director")])
     write_pack(poster_path, df.height, {}, [str_col("poster", df["poster"])])
+
+
+def write_detail(df: pl.DataFrame, notable: int, out_dir: Path) -> int:
+    """Write films_detail_{k}.pack for the first `notable` rows, `DETAIL_SHARD` rows each.
+
+    Stale films_detail_*.pack files are deleted first. Returns the number of shards.
+    """
+    for stale in out_dir.glob("films_detail_*.pack"):
+        stale.unlink()
+    shards = math.ceil(notable / DETAIL_SHARD)
+    for k in range(shards):
+        start = k * DETAIL_SHARD
+        part = df.slice(start, min(start + DETAIL_SHARD, notable) - start)
+        cols = [str_col(c, part[c]) for c in DETAIL_COLUMNS]
+        write_pack(out_dir / f"films_detail_{k}.pack", part.height, {}, cols)
+    return shards
 
 
 def country_tables(
@@ -356,6 +420,7 @@ def run() -> None:
     ratings = pl.read_parquet(interim / "ratings.parquet")
     fg = pl.read_parquet(interim / "film_genres.parquet")
     franchises = pl.read_parquet(interim / "franchises.parquet")
+    extras = pl.read_parquet(interim / "extras.parquet")
     paths.APP_DATA.mkdir(parents=True, exist_ok=True)
     for name in REMOVED:
         (paths.APP_DATA / name).unlink(missing_ok=True)
@@ -369,7 +434,7 @@ def run() -> None:
     _write_table("countries.json", countries.select(SCHEMA["countries.json"]))
     _write_table("genre_families.json", families.select(SCHEMA["genre_families.json"]))
 
-    films_out = films_table(films, money, ratings, fg, franchises)
+    films_out = films_table(films, money, ratings, fg, franchises, extras)
     write_films(
         films_out,
         genres,
@@ -403,6 +468,14 @@ def run() -> None:
         paths.APP_DATA / "country_year.pack",
     )
 
+    notable = int(films_out["notable"].sum())
+    detail = films_out.select("imdb_id").join(
+        extras.select("imdb_id", *DETAIL_COLUMNS), on="imdb_id", how="left"
+    )
+    shards = write_detail(detail, notable, paths.APP_DATA)
+    detail_mb = sum(f.stat().st_size for f in paths.APP_DATA.glob("films_detail_*.pack")) / 1e6
+    print(f"films_detail_*.pack: {shards} shards, {detail_mb:.2f} MB")
+
     franchises_out = franchises_table(franchises, films_out, fg, family_names)
     write_franchises(franchises_out, paths.APP_DATA / "franchises.pack")
     for name in (
@@ -430,16 +503,20 @@ def run() -> None:
             "base_year": 2025,
             "counts": {
                 "films": films_out.height,
-                "notable": int(films_out["notable"].sum()),
+                "notable": notable,
                 "with_budget": films_out["budget_usd2025"].count(),
                 "with_revenue": films_out["revenue_usd2025"].count(),
                 "with_gap": films_out["gap"].count(),
+                "with_opening": films_out["opening_usd"].count(),
+                "with_story_source": films_out["story_source"].count(),
+                "with_oscars": int((films_out["oscar_noms"] > 0).sum()),
                 "netflix_countries": n_countries("netflix"),
                 "cinema_markets": n_countries("cinema"),
                 "production_countries": n_countries("production"),
                 "franchises": franchises_out["collection_id"].n_unique(),
             },
-            "notes": NOTES + (CINEMA_NOTES if has_cinema else []),
+            "detail": {"shard_size": DETAIL_SHARD, "shards": shards},
+            "notes": NOTES + EXTRA_NOTES + (CINEMA_NOTES if has_cinema else []),
             "attribution": ATTRIBUTION,
             "sources": SOURCES,
         },

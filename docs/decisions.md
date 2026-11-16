@@ -497,3 +497,31 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   one best. Both later restyles were meant to look less generic, and to the
   team both looked more generic. The controls work the same in all three, so
   nothing functional is lost.
+
+### D33. Extra film data: story source, studio, release numbers, Oscars, external ids (2026-11-16)
+
+- **What**: the unused TMDB and The Numbers columns and two more Wikidata
+  queries go into the app (spec `2026-11-16-extra-data-design.md`). Story
+  source and studio become filters, opening weekend, widest release, legs and
+  Oscar nominations become measures, and the rest shows on the film card.
+  Per-film text (overview, cast, links) for notable films ships in shards of
+  1,000 rows that the card fetches on demand. The data size budget rises from
+  8 to 12 MB.
+- **Why**: all three sources were already local or already queried, so they
+  add coverage with no new licence or scraper. Story source and studio answer
+  a new question for T2/T5 (do adaptations or majors earn or score more), and
+  the release numbers explain box office better than budget alone. The text
+  is too large for the first load, so it is split and fetched lazily; the
+  first load stays the same size.
+- **Rules kept**: a missing story source is null, never "original"; Oscar
+  counts are null without a Wikidata item; home-video sales are labelled as
+  estimates; opening weekend is US only and says so.
+
+### D34. Scraper contact comes from `MOVIES_CONTACT` (2026-11-16)
+
+- **What**: the User-Agent contact is read from the `MOVIES_CONTACT`
+  environment variable (put it in `.env`). Without it the UA names the
+  repository URL.
+- **Why**: a personal e-mail address hard-coded in a public repo is sent with
+  every request whoever runs the code. The repository URL still lets a site
+  owner reach us, which is what the scraping rules ask for.

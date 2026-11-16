@@ -1,0 +1,11 @@
+{
+  "head": {"vars": ["imdb", "film", "csfd", "fa", "allocine", "douban"]},
+  "results": {
+    "bindings": [
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "csfd": {"type": "literal", "value": "9999"}, "fa": {"type": "literal", "value": "film111111"}, "allocine": {"type": "literal", "value": "5000"}, "douban": {"type": "literal", "value": "7000"}},
+      {"imdb": {"type": "literal", "value": "tt0000002"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"}, "csfd": {"type": "literal", "value": "2222"}},
+      {"imdb": {"type": "literal", "value": "tt0000002"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"}, "csfd": {"type": "literal", "value": "1111"}},
+      {"imdb": {"type": "literal", "value": "tt0000009"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q900"}, "csfd": {"type": "literal", "value": "4"}}
+    ]
+  }
+}

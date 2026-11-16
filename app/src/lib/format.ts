@@ -45,8 +45,10 @@ export function fmtValue(key: MeasureKey, value: number | null): string {
   switch (key) {
     case 'budget':
     case 'revenue':
+    case 'opening':
       return fmtMoney(value)
     case 'roi':
+    case 'legs':
       return fmtRatio(value)
     case 'year':
       return missing(value) ? NO_DATA : String(Math.round(value))

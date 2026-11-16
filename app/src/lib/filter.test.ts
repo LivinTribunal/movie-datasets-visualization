@@ -13,9 +13,12 @@ const films = {
     codes: Uint16Array.from([0, 1, 0, 1]),
     values: ['US', 'FR'],
   },
+  // story: book, original, null, book. studio: disney, independent, null, sony.
+  story_source: { codes: Uint8Array.from([1, 0, 255, 1]), values: ['original', 'book'], nullCode: 255 },
+  studio: { codes: Uint8Array.from([0, 1, 255, 2]), values: ['disney', 'independent', 'sony'], nullCode: 255 },
 } as unknown as Films
 
-const all: FilmFilter = { yearRange: null, subset: 'all', countries: [], genreOnly: false, family: 0 }
+const all: FilmFilter = { yearRange: null, subset: 'all', countries: [], genreOnly: false, family: 0, story: 'any', studio: 'any' }
 const rows = (f: Partial<FilmFilter>) => Array.from(filmMask(films, { ...all, ...f }))
 
 describe('filmMask', () => {
@@ -39,6 +42,15 @@ describe('filmMask', () => {
   it('filters by family only when genreOnly is on', () => {
     expect(rows({ family: 2, genreOnly: false })).toEqual([1, 1, 1, 1])
     expect(rows({ family: 2, genreOnly: true })).toEqual([0, 0, 1, 1])
+  })
+  it('filters by story source and fails a null story', () => {
+    expect(rows({ story: 'book' })).toEqual([1, 0, 0, 1])
+    expect(rows({ story: 'original' })).toEqual([0, 1, 0, 0])
+    expect(rows({ story: 'comic' })).toEqual([0, 0, 0, 0])
+  })
+  it('filters by studio group and fails a null studio', () => {
+    expect(rows({ studio: 'major' })).toEqual([1, 0, 0, 1])
+    expect(rows({ studio: 'independent' })).toEqual([0, 1, 0, 0])
   })
 })
 

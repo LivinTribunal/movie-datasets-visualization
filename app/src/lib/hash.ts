@@ -14,6 +14,8 @@ export interface HashContext {
 const TAB = ['taste', 'ratings', 'franchises']
 const SUBSET = ['notable', 'all']
 const MONEY = ['usd2025', 'nominal']
+const STORY = ['any', 'original', 'book', 'comic', 'true_story', 'stage', 'screen', 'other']
+const STUDIO = ['any', 'major', 'independent']
 const SOURCE = ['netflix', 'cinema', 'production']
 const MAP_MODE = ['share', 'top', 'diff']
 const TIMELINE = ['films', 'votes', 'revenue', 'netflix']
@@ -32,6 +34,8 @@ export function encodeHash(values: Values, base: Values, imdb: Uint32Array): str
   put('go', values.genreOnly !== base.genreOnly, values.genreOnly ? '1' : '0')
   put('sub', values.subset !== base.subset, values.subset)
   put('money', values.money !== base.money, values.money)
+  put('st', values.story !== base.story, values.story)
+  put('stu', values.studio !== base.studio, values.studio)
   put('src', values.source !== base.source, values.source)
   put('map', values.mapMode !== base.mapMode, values.mapMode)
   put('c', !same(values.countries, base.countries), values.countries.join('.'))
@@ -77,6 +81,10 @@ export function decodeHash(hash: string, ctx: HashContext): Partial<Values> {
   if (sub) out.subset = sub
   const money = oneOf<Values['money']>(MONEY, p.get('money'))
   if (money) out.money = money
+  const st = oneOf<Values['story']>(STORY, p.get('st'))
+  if (st) out.story = st
+  const stu = oneOf<Values['studio']>(STUDIO, p.get('stu'))
+  if (stu) out.studio = stu
   const src = oneOf<Values['source']>(SOURCE, p.get('src'))
   if (src) out.source = src
   const map = oneOf<Values['mapMode']>(MAP_MODE, p.get('map'))

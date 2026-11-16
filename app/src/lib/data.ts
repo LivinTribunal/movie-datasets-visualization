@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchPack, type Pack } from './pack'
 import type {
-  AppData, Country, CountryGenre, CountryYear, Family, Films, FilmsText, Franchises, Meta,
+  AppData, Country, CountryGenre, CountryYear, Family, Films, FilmsDetail, FilmsText, Franchises, Meta,
 } from './types'
 
 async function fetchJson<T>(file: string): Promise<T> {
@@ -36,6 +36,17 @@ function buildFilms(p: Pack): Films {
     budget_src: p.dict('budget_src'),
     revenue_src: p.dict('revenue_src'),
     flags: p.raw('flags') as Uint8Array,
+    story_source: p.dict('story_source'),
+    story_source_src: p.dict('story_source_src'),
+    age_rating: p.dict('age_rating'),
+    studio: p.dict('studio'),
+    opening_usd: p.num('opening_usd'),
+    opening_usd2025: p.num('opening_usd2025'),
+    legs: p.num('legs'),
+    video_usd2025: p.num('video_usd2025'),
+    theaters: p.num('theaters'),
+    oscar_wins: p.num('oscar_wins'),
+    oscar_noms: p.num('oscar_noms'),
     imdb_100: p.num('imdb_100'),
     tmdb_100: p.num('tmdb_100'),
     tomatometer_100: p.num('tomatometer_100'),
@@ -52,6 +63,21 @@ function buildFilms(p: Pack): Films {
 
 function buildFilmsText(p: Pack): FilmsText {
   return { rows: p.rows, title: p.str('title'), director: p.str('director') }
+}
+
+function buildFilmsDetail(p: Pack): FilmsDetail {
+  return {
+    rows: p.rows,
+    overview: p.str('overview'),
+    cast: p.str('cast'),
+    writers: p.str('writers'),
+    companies: p.str('companies'),
+    qid: p.str('qid'),
+    csfd_id: p.str('csfd_id'),
+    filmaffinity_id: p.str('filmaffinity_id'),
+    allocine_id: p.str('allocine_id'),
+    douban_id: p.str('douban_id'),
+  }
 }
 
 function buildCountryGenre(p: Pack): CountryGenre {
@@ -161,6 +187,21 @@ export function loadText(): Promise<FilmsText> {
 export function loadPosters(): Promise<(string | null)[]> {
   posterPromise ??= fetchPack('data/films_poster.pack').then((p) => p.str('poster'))
   return posterPromise
+}
+
+const detailShards = new Map<number, Promise<FilmsDetail>>()
+
+/** The detail shard that holds a notable film row, and the row's index inside it. Null for rows outside the shards. */
+export async function loadDetail(row: number, meta: Meta): Promise<{ shard: FilmsDetail; index: number } | null> {
+  const { shard_size, shards } = meta.detail
+  if (row >= shards * shard_size) return null
+  const k = Math.floor(row / shard_size)
+  let promise = detailShards.get(k)
+  if (!promise) {
+    promise = fetchPack(`data/films_detail_${k}.pack`).then(buildFilmsDetail)
+    detailShards.set(k, promise)
+  }
+  return { shard: await promise, index: row - k * shard_size }
 }
 
 export function loadTopo(): Promise<unknown> {

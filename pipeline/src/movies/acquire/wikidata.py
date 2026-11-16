@@ -1,4 +1,5 @@
-"""Wikidata crosswalk: IMDb id -> QID, RT / Metacritic / LUMIERE ids, enwiki title, and money.
+"""Wikidata crosswalk: IMDb id -> QID, RT / Metacritic / LUMIERE ids, enwiki title, money, Oscars
+and the Czech / Spanish / French / Chinese site ids.
 
 Batches of IMDb ids go to the SPARQL endpoint (at most 1 request per second). Every raw response
 is cached in data/cache/wikidata/ first (the file name includes a hash of the query, so a changed
@@ -27,6 +28,7 @@ USD = "Q4917"
 TMDB_CSV = "tmdb/TMDB_all_movies.csv"
 IDS_OUT = "wikidata_ids.parquet"
 MONEY_OUT = "wikidata_money.parquet"
+EXTRA_OUT = "wikidata_extra.parquet"
 
 IDS_QUERY = """
 SELECT ?imdb ?film ?rt ?mc ?lumiere ?title WHERE {
@@ -62,9 +64,45 @@ SELECT ?imdb ?film ?prop ?amount ?unit ?time ?precision ?rank ?place WHERE {
 }
 """
 
-QUERIES = (("ids", IDS_QUERY), ("money", MONEY_QUERY))
+# Oscar categories: the award is an instance (P31) or part (P361) of Academy Award (Q19020).
+# Check this class pattern on the real run against Titanic (tt0120338: 11 wins, 14 nominations),
+# The Shawshank Redemption (tt0111161: 0 / 7) and The Godfather (tt0068646: 3 / 11).
+AWARDS_QUERY = """
+SELECT ?imdb ?film ?award ?kind WHERE {
+  VALUES ?imdb { __IDS__ }
+  ?film wdt:P345 ?imdb .
+  {
+    ?film p:P166/ps:P166 ?award .
+    BIND("win" AS ?kind)
+  } UNION {
+    ?film p:P1411/ps:P1411 ?award .
+    BIND("nom" AS ?kind)
+  }
+  ?award (wdt:P31|wdt:P361) wd:Q19020 .
+}
+"""
+
+EXTIDS_QUERY = """
+SELECT ?imdb ?film ?csfd ?fa ?allocine ?douban WHERE {
+  VALUES ?imdb { __IDS__ }
+  ?film wdt:P345 ?imdb .
+  OPTIONAL { ?film wdt:P2529 ?csfd }
+  OPTIONAL { ?film wdt:P480 ?fa }
+  OPTIONAL { ?film wdt:P1265 ?allocine }
+  OPTIONAL { ?film wdt:P4529 ?douban }
+}
+"""
+
+QUERIES = (
+    ("ids", IDS_QUERY),
+    ("money", MONEY_QUERY),
+    ("awards", AWARDS_QUERY),
+    ("extids", EXTIDS_QUERY),
+)
 
 IDS_COLUMNS = ["qid", "rt_id", "mc_id", "lumiere_id", "enwiki_title"]
+EXTID_COLUMNS = ["csfd_id", "filmaffinity_id", "allocine_id", "douban_id"]
+EXTID_VARS = dict(zip(EXTID_COLUMNS, ["csfd", "fa", "allocine", "douban"], strict=True))
 MONEY_SCHEMA = {
     "imdb_id": pl.String,
     "qid": pl.String,
@@ -196,6 +234,63 @@ def parse_money(payload: dict) -> list[tuple]:
     return rows
 
 
+def parse_awards(payload: dict) -> list[tuple[str | None, str | None, str | None, str | None]]:
+    """Tuples (imdb, film qid, award qid, kind) with kind `win` or `nom`."""
+    return [
+        (_val(b, "imdb"), _qid(_val(b, "film")), _qid(_val(b, "award")), _val(b, "kind"))
+        for b in payload["results"]["bindings"]
+    ]
+
+
+def parse_extids(payload: dict) -> list[dict[str, str | None]]:
+    rows = []
+    for b in payload["results"]["bindings"]:
+        row = {"imdb_id": _val(b, "imdb"), "qid": _qid(_val(b, "film"))}
+        row |= {col: _val(b, var) for col, var in EXTID_VARS.items()}
+        rows.append(row)
+    return rows
+
+
+def aggregate_extra(
+    award_rows: list[tuple],
+    extid_rows: list[dict[str, str | None]],
+    id_rows: list[dict[str, str | None]],
+) -> pl.DataFrame:
+    """One row per imdb_id with a QID: Oscar wins / nominations and the site ids.
+
+    Counts are distinct award QIDs; nominations include the wins. Several site ids -> the first
+    after sorting.
+    """
+    qids = {r["imdb_id"]: r["qid"] for r in id_rows if r["qid"] is not None}
+    wins: dict[str, set[str]] = {}
+    noms: dict[str, set[str]] = {}
+    for imdb, _film, award, kind in award_rows:
+        if imdb not in qids or award is None:
+            continue
+        noms.setdefault(imdb, set()).add(award)
+        if kind == "win":
+            wins.setdefault(imdb, set()).add(award)
+    ext: dict[str, dict[str, set[str]]] = {}
+    for r in extid_rows:
+        if r["imdb_id"] not in qids:
+            continue
+        cols = ext.setdefault(r["imdb_id"], {c: set() for c in EXTID_COLUMNS})
+        for c in EXTID_COLUMNS:
+            if r[c] is not None:
+                cols[c].add(r[c])
+    ids = sorted(qids)
+    data: dict[str, list] = {
+        "imdb_id": ids,
+        "qid": [qids[i] for i in ids],
+        "oscar_wins": [len(wins.get(i, ())) for i in ids],
+        "oscar_noms": [len(noms.get(i, ())) for i in ids],
+    }
+    for c in EXTID_COLUMNS:
+        data[c] = [min(ext[i][c]) if i in ext and ext[i][c] else None for i in ids]
+    schema = dict.fromkeys(data, pl.String) | {"oscar_wins": pl.Int16, "oscar_noms": pl.Int16}
+    return pl.DataFrame(data, schema=schema)
+
+
 def _sort_key(row: tuple) -> tuple:
     return tuple("" if v is None else str(v) for v in row)
 
@@ -232,7 +327,7 @@ def _pct(n: int, total: int) -> str:
 
 
 def build() -> list[Path]:
-    """Run the whole crosswalk; returns the two Parquet files written."""
+    """Run the whole crosswalk; returns the three Parquet files written."""
     csv = paths.RAW / TMDB_CSV
     if not csv.exists():
         raise RuntimeError(f"{csv} is missing; run `movies acquire --source tmdb` first")
@@ -243,17 +338,24 @@ def build() -> list[Path]:
 
     id_rows: list[dict[str, str | None]] = []
     money_rows: set[tuple] = set()
+    award_rows: set[tuple] = set()
+    extid_rows: list[dict[str, str | None]] = []
     for batch in batches(ids):
-        ids_file, money_file = (cache_path(cache_dir, k, t, batch) for k, t in QUERIES)
+        files = [cache_path(cache_dir, k, t, batch) for k, t in QUERIES]
+        ids_file, money_file, awards_file, extids_file = files
         id_rows += parse_ids(json.loads(ids_file.read_text()))
         money_rows |= set(parse_money(json.loads(money_file.read_text())))
+        award_rows |= set(parse_awards(json.loads(awards_file.read_text())))
+        extid_rows += parse_extids(json.loads(extids_file.read_text()))
 
     ids_df = aggregate_ids(id_rows)
     money_df = pl.DataFrame(sorted(money_rows, key=_sort_key), schema=MONEY_SCHEMA, orient="row")
     paths.SCRAPED.mkdir(parents=True, exist_ok=True)
-    out = [paths.SCRAPED / IDS_OUT, paths.SCRAPED / MONEY_OUT]
+    extra_df = aggregate_extra(sorted(award_rows, key=_sort_key), extid_rows, id_rows)
+    out = [paths.SCRAPED / IDS_OUT, paths.SCRAPED / MONEY_OUT, paths.SCRAPED / EXTRA_OUT]
     ids_df.write_parquet(out[0])
     money_df.write_parquet(out[1])
+    extra_df.write_parquet(out[2])
 
     n = ids_df.height
     print(f"  {IDS_OUT}: {n:,} rows of {len(ids):,} queried ({_pct(n, len(ids))})")
@@ -265,4 +367,9 @@ def build() -> list[Path]:
     for prop, g in money_df.group_by("property", maintain_order=True):
         usd = (g["unit_qid"] == USD).sum()
         print(f"    {prop[0]}: {g.height:,} rows, {g['imdb_id'].n_unique():,} films, USD {usd:,}")
+    print(f"  {EXTRA_OUT}: {extra_df.height:,} rows")
+    for c in ["oscar_wins", "oscar_noms"]:
+        print(f"    {c}: films with > 0 {_pct((extra_df[c] > 0).sum(), extra_df.height)}")
+    for c in EXTID_COLUMNS:
+        print(f"    {c}: present {_pct(extra_df[c].is_not_null().sum(), extra_df.height)}")
     return out

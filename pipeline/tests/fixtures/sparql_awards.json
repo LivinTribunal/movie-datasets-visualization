@@ -1,0 +1,11 @@
+{
+  "head": {"vars": ["imdb", "film", "award", "kind"]},
+  "results": {
+    "bindings": [
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q102427"}, "kind": {"type": "literal", "value": "win"}},
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q102427"}, "kind": {"type": "literal", "value": "nom"}},
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q103360"}, "kind": {"type": "literal", "value": "nom"}},
+      {"imdb": {"type": "literal", "value": "tt0000002"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q103360"}, "kind": {"type": "literal", "value": "nom"}}
+    ]
+  }
+}

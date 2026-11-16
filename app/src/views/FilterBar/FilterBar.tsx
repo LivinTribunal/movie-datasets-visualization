@@ -19,6 +19,15 @@ const MONEY = [
   { value: 'usd2025', label: '2025 USD', title: 'inflation-adjusted to 2025 USD' },
   { value: 'nominal', label: 'nominal', title: 'as reported, not adjusted' },
 ] as const
+const STUDIO = [
+  { value: 'any', label: 'any', title: 'any studio' },
+  { value: 'major', label: 'major', title: 'Disney, Warner Bros., Universal, Sony, Paramount, 20th Century Fox, Lionsgate or MGM' },
+  { value: 'independent', label: 'indie', title: 'any other studio' },
+] as const
+const STORY = [
+  ['any', 'any story'], ['original', 'original'], ['book', 'book'], ['comic', 'comic'],
+  ['true_story', 'true story'], ['stage', 'stage'], ['screen', 'film/TV'], ['other', 'other'],
+] as const
 const TABS = [
   { value: 'taste', label: 'Taste by country' },
   { value: 'ratings', label: 'Money & ratings' },
@@ -39,6 +48,10 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
   const setGenreOnly = useStore((s) => s.setGenreOnly)
   const setSubset = useStore((s) => s.setSubset)
   const setMoney = useStore((s) => s.setMoney)
+  const story = useStore((s) => s.story)
+  const studio = useStore((s) => s.studio)
+  const setStory = useStore((s) => s.setStory)
+  const setStudio = useStore((s) => s.setStudio)
   const setTab = useStore((s) => s.setTab)
   const setBrush = useStore((s) => s.setBrush)
   const setFilm = useStore((s) => s.setFilm)
@@ -68,6 +81,12 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
           <YearSlider />
           <ChipGroup label="Film subset" value={subset} onChange={setSubset} options={[...SUBSET]} />
           <ChipGroup label="Money" value={money} onChange={setMoney} options={[...MONEY]} />
+          <select aria-label="Story source" value={story} onChange={(e) => setStory(e.target.value as typeof story)}>
+            {STORY.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+          <ChipGroup label="Studio" value={studio} onChange={setStudio} options={[...STUDIO]} />
           <button type="button" className="btn" onClick={reset}>
             Reset
           </button>
