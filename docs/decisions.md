@@ -436,7 +436,7 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   the note under the chart says how many values are outside.
 - **Why**: the real ratios run from 0.0001× to 1,638× (21 of 996 sequel
   values are outside the fixed range). A data-driven axis spent most of its
-  height on those few and squeezed the 98 % that sit between 0.1× and 10×.
+  height on those few and squeezed the rest into a narrow band around 1×.
 
 ### D28. The map's share scale tops out at the largest well-covered country (2026-11-16)
 
