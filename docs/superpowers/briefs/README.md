@@ -19,8 +19,8 @@ Rules for every brief:
 | 1 | `p2b-validate.md` | done (#26) |
 | 2 | `a1-data-layer.md` | done (#26) |
 | 2 | `a2-shell.md` | done (#26) |
-| 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` (shared context: `_views-common.md`) | done |
-| 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | written after wave 3 |
+| 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` (shared context: `_views-common.md`) | done (#27) |
+| 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | done |
 | 5 | `q-e2e-budgets-deploy.md` | written after wave 4 |
 
 Later briefs are written when the code they build on exists, so their
