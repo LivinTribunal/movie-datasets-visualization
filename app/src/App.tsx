@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { loadData } from './lib/data'
 import type { AppData } from './lib/types'
+import { startHashSync } from './state/hashSync'
+import { About } from './views/About/About'
 import { FilmCard } from './views/FilmCard/FilmCard'
 import { FilmScatter } from './views/FilmScatter/FilmScatter'
 import { FilterBar } from './views/FilterBar/FilterBar'
@@ -16,6 +18,8 @@ export default function App() {
   useEffect(() => {
     loadData().then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
+
+  useEffect(() => (data ? startHashSync(data) : undefined), [data])
 
   if (!data) {
     return (
@@ -37,6 +41,7 @@ export default function App() {
       <Franchise data={data} />
       <SelectionTable data={data} />
       <FilmCard data={data} />
+      <About data={data} />
     </div>
   )
 }

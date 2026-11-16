@@ -131,9 +131,16 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     } else if (mapMode === 'diff' && diffs) {
       for (const [iso2, v] of diffs) values.set(iso2, v)
     }
+    // The scale tops out at the largest value among countries with enough entries;
+    // a thin country (dotted outline) may exceed it and then takes the darkest colour.
     let max = 0
-    for (const v of values.values()) max = Math.max(max, Math.abs(v))
-    max = max || 0.01
+    let maxAll = 0
+    for (const [iso2, v] of values) {
+      maxAll = Math.max(maxAll, Math.abs(v))
+      if (mapMode !== 'share' || (stats.get(iso2)?.entries ?? 0) >= THIN) max = Math.max(max, Math.abs(v))
+    }
+    max = max || maxAll || 0.01
+    const clipped = maxAll > max
     const colour: (iso2: string) => string | null = (iso2) => {
       if (mapMode === 'top') {
         const s = stats.get(iso2)
@@ -147,7 +154,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
       const t = i / (RAMP_STEPS - 1)
       return mapMode === 'diff' ? diffScale(max)(-max + 2 * max * t) : scaleSequential(interpolateBlues).domain([0, max])(max * t)
     })
-    return { colour, ramp, max }
+    return { colour, ramp, max, clipped }
   }, [mapMode, stats, diffs, family, data.families])
 
   const shapes: MapShape[] = useMemo(
@@ -243,7 +250,7 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
 
   const rampLabels = mapMode === 'diff'
     ? { lo: `−${(colouring.max * 100).toFixed(0)} pp`, hi: `+${(colouring.max * 100).toFixed(0)} pp`, unit: 'cinema share − Netflix share (percentage points)' }
-    : { lo: '0%', hi: fmtPct(colouring.max), unit: `share of ${data.families[family].name} (% of genre score)` }
+    : { lo: '0%', hi: `${fmtPct(colouring.max)}${colouring.clipped ? ' or more' : ''}`, unit: `share of ${data.families[family].name} (% of genre score)` }
 
   return (
     <Panel

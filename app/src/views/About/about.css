@@ -1,0 +1,9 @@
+.about { max-width: 720px; width: calc(100% - 32px); max-height: 85vh; overflow-y: auto; border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px; color: var(--ink); background: var(--panel); }
+.about::backdrop { background: rgb(0 0 0 / 0.4); }
+.about h2 { margin: 0 0 8px; }
+.about h3 { margin: 16px 0 4px; font-size: 14px; }
+.about table { border-collapse: collapse; }
+.about th { text-align: left; font-weight: normal; padding: 1px 16px 1px 0; color: var(--muted); }
+.about td { text-align: right; font-variant-numeric: tabular-nums; }
+.about ul { margin: 0; padding-left: 18px; }
+.about button { margin-top: 16px; }

@@ -92,6 +92,8 @@ const initial = (): Values => ({
   about: false,
 })
 
+export const defaults = initial
+
 const clampYear = (y: number) => Math.min(YEAR_MAX, Math.max(YEAR_MIN, y))
 
 export const useStore = create<State>()((set) => ({
