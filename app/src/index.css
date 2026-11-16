@@ -100,7 +100,8 @@ button, input, select { font: inherit; color: inherit; }
 }
 .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .filter-row-groups { align-items: center; gap: 8px 10px; }
-.filter-bar h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.filter-bar h1 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.filter-bar h1 img { border-radius: 6px; }
 .filter-spacer { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .tabs { display: inline-flex; padding: 2px; background: var(--fill-2); border-radius: var(--radius-m); }
 .tabs button {

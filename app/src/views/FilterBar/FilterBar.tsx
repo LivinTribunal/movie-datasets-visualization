@@ -52,7 +52,10 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
   return (
     <header className="panel filter-bar area-f">
       <div className="filter-row">
-        <h1>Movie Explorer</h1>
+        <h1>
+          <img src="favicon.svg" alt="" width="24" height="24" />
+          Movie Explorer
+        </h1>
         <div className="tabs" role="tablist" aria-label="Workspace">
           {TABS.map((t) => (
             <button key={t.value} type="button" role="tab" aria-selected={tab === t.value} onClick={() => setTab(t.value)}>

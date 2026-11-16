@@ -27,7 +27,10 @@ export default function App() {
     return (
       <div className="app">
         <header className="panel filter-bar area-f">
-          <h1>Movie Explorer</h1>
+          <h1>
+          <img src="favicon.svg" alt="" width="24" height="24" />
+          Movie Explorer
+        </h1>
           <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
         </header>
       </div>
