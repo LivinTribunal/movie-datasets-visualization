@@ -65,17 +65,20 @@ SELECT ?imdb ?film ?prop ?amount ?unit ?time ?precision ?rank ?place WHERE {
 """
 
 # Oscar categories: the award is an instance (P31) or part (P361) of Academy Award (Q19020).
-# Check this class pattern on the real run against Titanic (tt0120338: 11 wins, 14 nominations),
-# The Shawshank Redemption (tt0111161: 0 / 7) and The Godfather (tt0068646: 3 / 11).
+# Checked on the 2026-11-17 run: Titanic (tt0120338) 11 wins / 14 nominations, The Shawshank
+# Redemption (tt0111161) 0 / 7, The Godfather (tt0068646) 3 / 11; more in D33.
+# The optimizer hint keeps the written join order (ids first). Without it WDQS starts from the
+# Oscar classes and a 200-id batch times out with 502, then 429.
 AWARDS_QUERY = """
-SELECT ?imdb ?film ?award ?kind WHERE {
+SELECT ?imdb ?film ?st ?award ?kind WHERE {
+  hint:Query hint:optimizer "None" .
   VALUES ?imdb { __IDS__ }
   ?film wdt:P345 ?imdb .
   {
-    ?film p:P166/ps:P166 ?award .
+    ?film p:P166 ?st . ?st ps:P166 ?award .
     BIND("win" AS ?kind)
   } UNION {
-    ?film p:P1411/ps:P1411 ?award .
+    ?film p:P1411 ?st . ?st ps:P1411 ?award .
     BIND("nom" AS ?kind)
   }
   ?award (wdt:P31|wdt:P361) wd:Q19020 .
@@ -234,10 +237,16 @@ def parse_money(payload: dict) -> list[tuple]:
     return rows
 
 
-def parse_awards(payload: dict) -> list[tuple[str | None, str | None, str | None, str | None]]:
-    """Tuples (imdb, film qid, award qid, kind) with kind `win` or `nom`."""
+def parse_awards(payload: dict) -> list[tuple[str | None, ...]]:
+    """Tuples (imdb, film qid, statement id, award qid, kind) with kind `win` or `nom`."""
     return [
-        (_val(b, "imdb"), _qid(_val(b, "film")), _qid(_val(b, "award")), _val(b, "kind"))
+        (
+            _val(b, "imdb"),
+            _qid(_val(b, "film")),
+            _val(b, "st"),
+            _qid(_val(b, "award")),
+            _val(b, "kind"),
+        )
         for b in payload["results"]["bindings"]
     ]
 
@@ -258,18 +267,22 @@ def aggregate_extra(
 ) -> pl.DataFrame:
     """One row per imdb_id with a QID: Oscar wins / nominations and the site ids.
 
-    Counts are distinct award QIDs; nominations include the wins. Several site ids -> the first
-    after sorting.
+    Counts are distinct statements, so three Best Supporting Actor nominations count three times.
+    Per category, nominations = max(nomination statements, win statements): Wikidata sometimes
+    lists a win without its nomination. Several site ids -> the first after sorting.
     """
     qids = {r["imdb_id"]: r["qid"] for r in id_rows if r["qid"] is not None}
-    wins: dict[str, set[str]] = {}
-    noms: dict[str, set[str]] = {}
-    for imdb, _film, award, kind in award_rows:
-        if imdb not in qids or award is None:
+    stmts: dict[tuple[str, str, str], set[str]] = {}
+    for imdb, _film, st, award, kind in award_rows:
+        if imdb not in qids or award is None or st is None:
             continue
-        noms.setdefault(imdb, set()).add(award)
-        if kind == "win":
-            wins.setdefault(imdb, set()).add(award)
+        stmts.setdefault((imdb, award, kind), set()).add(st)
+    wins: dict[str, int] = {}
+    noms: dict[str, int] = {}
+    for imdb, award in {(i, a) for i, a, _k in stmts}:
+        won = len(stmts.get((imdb, award, "win"), ()))
+        wins[imdb] = wins.get(imdb, 0) + won
+        noms[imdb] = noms.get(imdb, 0) + max(won, len(stmts.get((imdb, award, "nom"), ())))
     ext: dict[str, dict[str, set[str]]] = {}
     for r in extid_rows:
         if r["imdb_id"] not in qids:
@@ -282,8 +295,8 @@ def aggregate_extra(
     data: dict[str, list] = {
         "imdb_id": ids,
         "qid": [qids[i] for i in ids],
-        "oscar_wins": [len(wins.get(i, ())) for i in ids],
-        "oscar_noms": [len(noms.get(i, ())) for i in ids],
+        "oscar_wins": [wins.get(i, 0) for i in ids],
+        "oscar_noms": [noms.get(i, 0) for i in ids],
     }
     for c in EXTID_COLUMNS:
         data[c] = [min(ext[i][c]) if i in ext and ext[i][c] else None for i in ids]

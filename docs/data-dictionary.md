@@ -13,7 +13,7 @@ order listed here; the app relies on it. Missing is null, never `0`.
 | `legs` | f32 | domestic gross divided by opening weekend | The Numbers metrics |
 | `video_usd2025` | f32 | estimated US home-video sales, CPI to 2025 USD | The Numbers metrics (an estimate) |
 | `theaters` | u16 | widest US release, in theatres | The Numbers metrics |
-| `oscar_wins`, `oscar_noms` | u8 | distinct Academy Award categories won, and nominated or won; 0 for a film with a Wikidata item and no statements, null without an item | Wikidata |
+| `oscar_wins`, `oscar_noms` | u8 | Academy Award wins and nominations, counted per Wikidata statement (per category, nominations are at least the wins; D33); 0 for a film with a Wikidata item and no statements, null without an item | Wikidata |
 | flag bit 5 `numbers_fuzzy` | bit | the film's The Numbers metrics row is a fuzzy title match and gives at least one of the values above | |
 
 `films_detail_{k}.pack` holds `overview, cast, writers, companies (first 3), qid, csfd_id,

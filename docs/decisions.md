@@ -516,6 +516,17 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - **Rules kept**: a missing story source is null, never "original"; Oscar
   counts are null without a Wikidata item; home-video sales are labelled as
   estimates; opening weekend is US only and says so.
+- **Oscar counting** (found on the real run): counts are Wikidata
+  statements, not distinct award categories, so The Godfather's three Best
+  Supporting Actor nominations count three times (3 wins of 11, as the
+  Academy counts). Per category, nominations = max(nomination statements,
+  win statements), because Wikidata sometimes lists a win without the
+  nomination (The Return of the King has 11 wins but 10 nomination
+  statements). Checked on Titanic 11/14, Shawshank 0/7, The Godfather 3/11,
+  Godfather II 6/11, Ben-Hur 11/12, All About Eve 6/14, La La Land 6/14 and
+  The Return of the King 11/11. The awards query also needs the WDQS hint
+  `hint:optimizer "None"`: without it a 200-id batch times out (502, then
+  429).
 
 ### D34. Scraper contact comes from `MOVIES_CONTACT` (2026-11-16)
 

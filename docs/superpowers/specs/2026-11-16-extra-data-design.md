@@ -41,7 +41,8 @@ theatre count means unknown and becomes null.
   (`films.numbers_key` starting `metrics:`). `numbers_fuzzy` is true when that
   match is fuzzy and at least one of them is present.
 - `oscar_wins`, `oscar_noms`: from `wikidata_extra`. `oscar_noms` counts
-  distinct categories nominated or won, so it is ≥ `oscar_wins`. A film with a
+  nomination statements, per category at least the win statements, so it is
+  ≥ `oscar_wins` (D33). A film with a
   QID but no Academy Award statements gets 0; a film without a QID gets null.
 - Detail text: `overview`, `cast`, `writers`, `companies` (first 3), `qid`,
   `csfd_id`, `filmaffinity_id`, `allocine_id`, `douban_id`. Lists are joined

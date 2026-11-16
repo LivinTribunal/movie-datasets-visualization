@@ -25,6 +25,7 @@ Rules for every brief:
 | 6 | `s-visual-polish.md`, `s-interaction-fixes.md`, `s7-workspaces.md` | done (#30) |
 | 7 | `s8-identity-and-copy.md` | done (#31), reverted by D32 |
 | 8 | `s9-plain-ui.md` | done (#32), reverted by D32 |
+| 9 | `x1-acquire-clean.md`, `x2-derive-export.md`, `x3-app-extras.md` | done (extra data, D33) |
 
 Later briefs are written when the code they build on exists, so their
 anchors point at real files.
