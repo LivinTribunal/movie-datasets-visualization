@@ -84,9 +84,9 @@ rate and commit only derived numbers, never page contents.
                       │          ── P1712 ──> Metacritic
    TMDB+IMDb ── imdb_id          ── P4282 ──> LUMIERE (admissions per market)
    (main table)       │          ── enwiki ─> Wikipedia infobox
-        │             └── imdb_id ─────────> Box Office Mojo title pages, Letterboxd
+        │             └── imdb_id ─────────> Letterboxd
         ├── tmdb_id ──> TMDB API (collections)
-        └── title + year (fuzzy) ──> The Numbers, Netflix Top 10, BOM by country
+        └── title + year (fuzzy) ──> The Numbers, Netflix Top 10
    countries: ISO-2 via data/reference/countries.csv ──> world-atlas (ISO numeric)
 ```
 
@@ -97,9 +97,11 @@ rate and commit only derived numbers, never page contents.
   dataset; non-commercial use.
 - Wikidata (CC0), Wikipedia (CC BY-SA 4.0), World Bank (CC BY 4.0), Natural
   Earth (public domain), FRED / BLS (public domain), Netflix Top 10, Rotten
-  Tomatoes, Metacritic, Letterboxd, Box Office Mojo, The Numbers, LUMIERE
-  (European Audiovisual Observatory): named as sources in the app's "About
-  the data" panel.
+  Tomatoes, Metacritic, Letterboxd, The Numbers, LUMIERE (European
+  Audiovisual Observatory): named as sources in the app's "About the data"
+  dialog. Box Office Mojo is not used (D16).
+- Posters on the film card are loaded from TMDB's image server at run time
+  (D25); the repo holds only the path.
 
 ## Clean stage
 
@@ -108,7 +110,7 @@ rate and commit only derived numbers, never page contents.
 
 | File | Rows | What cleaning changed |
 |---|---|---|
-| `tmdb.parquet` | 1,252,005 (689,411 with an IMDb id) | 0 budget, revenue and runtime → null; 28,539 budgets under $1,000 → null and flagged in `budget_under_1000`; future dates → null; 2 duplicate IMDb ids dropped; production countries as ISO-2 |
+| `tmdb.parquet` | 1,252,005 (689,411 with an IMDb id) | `poster_path` kept for the film card (D25); 0 budget, revenue and runtime → null; 28,539 budgets under $1,000 → null and flagged in `budget_under_1000`; future dates → null; 2 duplicate IMDb ids dropped; production countries as ISO-2 |
 | `rt_clapper.parquet` | 142,052 | 1,206 duplicate RT ids dropped (the fullest row kept); box office strings like `$31.4M` → USD |
 | `numbers_budgets.parquet`, `numbers_metrics.parquet` | 6,518 and 6,569 | `$0` gross → null; dates parsed; ids like `1,000` parsed (they were null before); in the metrics file two-digit years after 2026-10-01 moved back a century (`15-Dec-39` is 1939, not 2039) |
 | `netflix.parquet` | 255,170 | films only, weeks up to 2026-09-27, `score = 11 − rank` |
@@ -142,4 +144,31 @@ them to `data/interim/` (D15). Counts from the run on 2026-10-11:
 | `film_genres.parquet` | 126,307 rows for 56,199 films | one row per film and genre, `family`, `genre_weight = 1/n` without TV Movie |
 | `country_genre_netflix.parquet` | 9,893 rows: 94 countries, 2021–2026 | Netflix chart score per country, year and genre, with `share`, `coverage` (min 0.73, median 0.99) and `fuzzy_share` |
 | `country_genre_lumiere.parquet` | 15,203 rows: 36 markets, 1996–2025 | cinema admissions × `genre_weight` per market, year and genre, with `share`, `coverage` (1.0 everywhere) and `estimated_share` (1.0 for GB and IE). AL, LI and UA drop out under the 20-film minimum; `GB_IE` counts as GB (D17) |
+| `country_genre_production.parquet` | 26,948 rows: 173 countries, 1900–2026 | what each country makes: `genre_weight` of every working-subset film per production country, year and genre; a co-production counts in each of its countries; `entries` is the number of films (D22) |
+| `country_genre_us.parquet` | 757 rows: US, 1980–2024 | US cinema: The Numbers domestic gross × `genre_weight` per release year and genre, with `coverage`, `fuzzy_share` (gross matched by a fuzzy title) and `entries`; years under 20 films are dropped (D22) |
 | `franchises.parquet` | 2,584 parts of 605 collections | TMDB collections with ≥ 3 released parts, `installment` by release date, IMDb change vs the previous and first part (median at installment 2: −6), revenue ratios (D17) |
+
+Every country table also has `entries`, the number of distinct films behind a
+country-year. The app draws a dotted outline under 30 entries.
+
+## Export stage
+
+`movies export` writes the app's files to `app/public/data/` (committed) and
+`movies validate` checks them, sizes included. Tables are `.pack` files: typed
+columns behind a JSON header, gzipped (format `MXP1`, D23; byte layout in
+`docs/superpowers/specs/2026-11-16-movie-explorer-app-design.md` §2). Sizes
+from the run on 2026-11-16:
+
+| File | Rows | Size | Holds |
+|---|---|---|---|
+| `films.pack` | 56,431 | 1.41 MB | every working-subset film, sorted by votes (the first 13,080 are the notable subset): ids, year, runtime, votes, genre and family bit masks, production countries, nominal and 2025 USD money with sources and flags, all scores, franchise link |
+| `films_text.pack` | 56,431 | 0.98 MB | title, director |
+| `films_poster.pack` | 56,431 | 1.31 MB | TMDB poster path |
+| `country_genre.pack` | 52,801 | 0.14 MB | score per source (`netflix`, `cinema`, `production`), country, year and genre |
+| `country_year.pack` | 5,387 | 0.01 MB | entries, coverage, fuzzy and estimated share, and the measure behind the score, per source, country and year |
+| `franchises.pack` | 2,584 | 0.08 MB | franchise parts with the row of the film in `films.pack` |
+| `countries.topo.json` | – | 0.76 MB | world-atlas 50m (the 110m file has no Malta, Singapore or Hong Kong) |
+| `countries.json`, `genre_families.json`, `meta.json` | – | small | reference tables, notes, attribution |
+
+The app downloads 1.6 MB before it draws (`films.pack`, the country packs,
+the franchises), then the titles and the map geometry.

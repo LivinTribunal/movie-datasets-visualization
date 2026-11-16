@@ -1,45 +1,99 @@
 """Schema and invariant checks for app/public/data/. `check()` returns error messages."""
 
 import json
-import re
+import struct
+import zlib
 from pathlib import Path
 
 from movies import paths
+from movies.export.pack import Pack, read_pack
 
 SCHEMA: dict[str, list[str]] = {
-    "films.json": [
-        "imdb_id", "tmdb_id", "title", "year", "notable", "genres", "families", "countries",
-        "imdb_votes", "budget_usd2025", "revenue_usd2025", "budget_src", "revenue_src",
-        "budget_converted", "revenue_converted", "budget_disagree", "revenue_disagree",
-        "money_fuzzy", "roi", "imdb_100", "tmdb_100", "tomatometer_100", "audience_100",
-        "metascore_100", "mc_critic_reviews", "mc_user_100", "letterboxd_100", "gap",
-    ],
-    "genre_year.json": [
-        "subset", "year", "genre", "family", "films", "votes", "revenue_usd2025", "revenue_films",
-    ],
-    "country_genre.json": [
-        "source", "country_iso2", "year", "genre", "family", "share", "score", "coverage",
-        "fuzzy_share", "estimated_share",
-    ],
     "countries.json": ["iso2", "iso_numeric", "name", "region", "subregion"],
     "genre_families.json": ["genre", "family", "family_order", "colour"],
-    "franchises.json": [
-        "collection_id", "collection_name", "installment", "n_released", "tmdb_id", "imdb_id",
-        "title", "year", "imdb_100", "imdb_100_vs_prev", "imdb_100_vs_first", "tomatometer_100",
-        "audience_100", "revenue_usd2025", "revenue_vs_prev", "revenue_vs_first",
-    ],
-}  # fmt: skip
+}
+_SHARES = {c: "f32" for c in ("coverage", "fuzzy_share", "estimated_share")}
+_RATINGS = (
+    "imdb_100",
+    "tmdb_100",
+    "tomatometer_100",
+    "audience_100",
+    "metascore_100",
+    "mc_user_100",
+    "letterboxd_100",
+)
+_MONEY = ("budget_usd", "budget_usd2025", "revenue_usd", "revenue_usd2025", "roi")
+_KEYS = {"source": "dict", "country": "dict", "year": "u16"}
+PACKS: dict[str, dict[str, str]] = {
+    "films.pack": {
+        "imdb": "u32",
+        "tmdb_id": "u32",
+        "year": "u16",
+        "runtime": "u16",
+        "imdb_votes": "u32",
+        "genre_mask": "u32",
+        "family_mask": "u8",
+        "countries": "list",
+        **dict.fromkeys(_MONEY, "f32"),
+        "budget_src": "dict",
+        "revenue_src": "dict",
+        "flags": "u8",
+        **dict.fromkeys(_RATINGS, "u16"),
+        "gap": "i16",
+        "mc_critic_reviews": "u16",
+        "collection_id": "u32",
+        "installment": "u8",
+    },
+    "films_text.pack": {"title": "str", "director": "str"},
+    "films_poster.pack": {"poster": "str"},
+    "country_genre.pack": {**_KEYS, "genre": "u8", "score": "f32"},
+    "country_year.pack": {**_KEYS, "entries": "u32", **_SHARES, "measure": "dict"},
+    "franchises.pack": {
+        "collection_id": "u32",
+        "installment": "u8",
+        "n_released": "u8",
+        "tmdb_id": "u32",
+        "film_row": "u32",
+        "year": "u16",
+        "family_mask": "u8",
+        "imdb_100": "u16",
+        "tomatometer_100": "u16",
+        "audience_100": "u16",
+        "imdb_100_vs_first": "i16",
+        "revenue_usd2025": "f32",
+        "revenue_vs_first": "f32",
+        "title": "str",
+    },
+}
+MB = 1_000_000
+LIMITS: dict[str, int] = {
+    "films.pack": 3_000_000,
+    "films_text.pack": 1_200_000,
+    "films_poster.pack": 2_000_000,
+    "country_genre.pack": 1_000_000,
+    "country_year.pack": 200_000,
+    "franchises.pack": 200_000,
+    "countries.topo.json": 900_000,
+}
+TOTAL_LIMIT = 8_000_000
+STALE = ("films.json", "genre_year.json", "country_genre.json", "franchises.json")
 OTHER_FILES = ("countries.topo.json", "meta.json")
 SRC_VALUES = {"numbers", "tmdb", "wikidata", "wikipedia", None}
-IMDB_ID = re.compile(r"^tt\d+$")
+COUNTRY_SOURCES = {"netflix", "cinema", "production"}
+MEASURES = {"chart_score", "admissions", "gross_usd", "films"}
+NOTABLE_VOTES = 10_000
 
 
-def _load(data_dir: Path, name: str, errors: list[str]) -> dict[str, list] | None:
+def _load_table(data_dir: Path, name: str, errors: list[str]) -> dict[str, list] | None:
     path = data_dir / name
     if not path.exists():
         errors.append(f"{name}: file missing")
         return None
-    cols = json.loads(path.read_text())["columns"]
+    try:
+        cols = json.loads(path.read_text())["columns"]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        errors.append(f"{name}: unreadable ({e})")
+        return None
     if list(cols) != SCHEMA[name]:
         errors.append(f"{name}: columns {list(cols)} != expected {SCHEMA[name]}")
         return None
@@ -49,8 +103,228 @@ def _load(data_dir: Path, name: str, errors: list[str]) -> dict[str, list] | Non
     return cols
 
 
+def _load_pack(data_dir: Path, name: str, errors: list[str]) -> Pack | None:
+    path = data_dir / name
+    if not path.exists():
+        errors.append(f"{name}: file missing")
+        return None
+    try:
+        pack = read_pack(path)
+    except (OSError, EOFError, ValueError, KeyError, TypeError, struct.error, zlib.error) as e:
+        errors.append(f"{name}: unreadable ({e})")
+        return None
+    got = {c["name"]: c["type"] for c in pack.header["columns"]}
+    if list(got.items()) != list(PACKS[name].items()):
+        errors.append(
+            f"{name}: columns {list(got.items())} != expected {list(PACKS[name].items())}"
+        )
+        return None
+    return pack
+
+
 def _outside(values: list, lo: float, hi: float) -> bool:
     return any(v is not None and not lo <= v <= hi for v in values)
+
+
+def _negative(values: list) -> bool:
+    return any(v is not None and v < 0 for v in values)
+
+
+def _family_names(fam: dict[str, list]) -> list[str]:
+    return [f for _, f in sorted(set(zip(fam["family_order"], fam["family"], strict=True)))]
+
+
+def _check_films(
+    p: Pack,
+    fam: dict[str, list] | None,
+    countries: set | None,
+    franchise_ids: set | None,
+    errors: list[str],
+) -> None:
+    c, n = p.columns, p.rows
+
+    def err(msg: str) -> None:
+        errors.append(f"films.pack: {msg}")
+
+    if len(set(c["imdb"])) != n:
+        err("duplicate imdb")
+    if any(v is None for v in c["year"]):
+        err("year has nulls")
+    if _outside(c["year"], 1900, 2026):
+        err("year outside 1900-2026")
+    votes = c["imdb_votes"]
+    if any(a < b for a, b in zip(votes, votes[1:], strict=False)):
+        err("imdb_votes increases down the rows")
+    notable = p.meta.get("notable")
+    if not isinstance(notable, int) or not 0 < notable <= n:
+        err(f"meta.notable {notable!r} outside 1..{n}")
+    else:
+        if votes[notable - 1] < NOTABLE_VOTES:
+            err(f"last notable row has fewer than {NOTABLE_VOTES} votes")
+        if notable < n and votes[notable] >= NOTABLE_VOTES:
+            err(f"row after the notable rows has {NOTABLE_VOTES} votes or more")
+    for col in _RATINGS:
+        if _outside(c[col], 0, 100):
+            err(f"{col} outside 0-100")
+    if _outside(c["gap"], -100, 100):
+        err("gap outside -100..100")
+    for col in _MONEY:
+        if _negative(c[col]):
+            err(f"negative {col}")
+    for col in ("budget_src", "revenue_src"):
+        bad = set(c[col]) - SRC_VALUES
+        if bad:
+            err(f"bad {col} {sorted(bad, key=str)}")
+    if countries is not None:
+        unknown = {x for v in c["countries"] for x in v} - countries
+        if unknown:
+            err(f"unknown country {sorted(unknown)}")
+    if fam is not None:
+        genres, families = fam["genre"], _family_names(fam)
+        if p.meta.get("genres") != genres:
+            err("meta.genres differs from the genre column of genre_families.json")
+        if p.meta.get("families") != families:
+            err("meta.families differs from the families of genre_families.json in family_order")
+        if any(m >> len(genres) for m in c["genre_mask"]):
+            err("genre_mask has a bit beyond the genre list")
+        bit = [1 << families.index(f) for f in fam["family"]]
+        for gm, fm in zip(c["genre_mask"], c["family_mask"], strict=True):
+            if fm != sum({bit[i] for i in range(len(genres)) if gm >> i & 1}):
+                err("family_mask differs from the families of genre_mask")
+                break
+    if any(
+        (a is None) != (b is None)
+        for a, b in zip(c["installment"], c["collection_id"], strict=True)
+    ):
+        err("installment is null for a different set of films than collection_id")
+    if franchise_ids is not None:
+        unknown = {v for v in c["collection_id"] if v is not None} - franchise_ids
+        if unknown:
+            err(f"collection_id not in franchises.pack {sorted(unknown)[:5]}")
+
+
+def _check_franchises(p: Pack, films: Pack | None, errors: list[str]) -> None:
+    c = p.columns
+
+    def err(msg: str) -> None:
+        errors.append(f"franchises.pack: {msg}")
+
+    pairs = list(zip(c["installment"], c["n_released"], strict=True))
+    if any(i < 1 or i > n for i, n in pairs):
+        err("installment outside 1..n_released")
+    if any(n < 3 for n in c["n_released"]):
+        err("n_released under 3")
+    for col in ("imdb_100", "tomatometer_100", "audience_100"):
+        if _outside(c[col], 0, 100):
+            err(f"{col} outside 0-100")
+    parts: dict[int, list[int]] = {}
+    for cid, i in zip(c["collection_id"], c["installment"], strict=True):
+        parts.setdefault(cid, []).append(i)
+    n_of = dict(zip(c["collection_id"], c["n_released"], strict=True))
+    if any(sorted(i) != list(range(1, n_of[cid] + 1)) for cid, i in parts.items()):
+        err("installments are not exactly 1..n_released")
+    if any(
+        i == 1 and v is not None and v != 0
+        for i, v in zip(c["installment"], c["imdb_100_vs_first"], strict=True)
+    ):
+        err("imdb_100_vs_first not 0 at installment 1")
+    if _negative(c["revenue_vs_first"]):
+        err("negative revenue_vs_first")
+    if films is not None:
+        for row, cid in zip(c["film_row"], c["collection_id"], strict=True):
+            if row is not None and (
+                row >= films.rows or films.columns["collection_id"][row] != cid
+            ):
+                err("film_row is not a row of films.pack in this collection")
+                break
+    named = {x[0] for x in p.meta.get("collections", []) if isinstance(x, list) and x}
+    if set(c["collection_id"]) - named:
+        err("collection_id without a name in meta.collections")
+
+
+def _check_countries(
+    cg: Pack | None,
+    cy: Pack | None,
+    fam: dict[str, list] | None,
+    countries: set | None,
+    errors: list[str],
+) -> None:
+    for name, p in (("country_genre.pack", cg), ("country_year.pack", cy)):
+        if p is None:
+            continue
+        c = p.columns
+        keys = list(zip(c["source"], c["country"], c["year"], strict=True))
+        if name == "country_genre.pack":
+            keys = list(zip(keys, c["genre"], strict=True))
+        if len(set(keys)) != len(keys):
+            errors.append(f"{name}: duplicate key")
+        if set(c["source"]) - COUNTRY_SOURCES:
+            errors.append(f"{name}: unknown source {sorted(set(c['source']) - COUNTRY_SOURCES)}")
+        if countries is not None and set(c["country"]) - countries:
+            errors.append(f"{name}: unknown country {sorted(set(c['country']) - countries)}")
+    if cg is not None:
+        c = cg.columns
+        if fam is not None and any(g >= len(fam["genre"]) for g in c["genre"]):
+            errors.append("country_genre.pack: genre beyond the genre list")
+        if _negative(c["score"]):
+            errors.append("country_genre.pack: negative score")
+    if cy is not None:
+        c = cy.columns
+        for col in _SHARES:
+            if _outside(c[col], 0, 1):
+                errors.append(f"country_year.pack: {col} outside 0-1")
+        if any(
+            f is not None and v is not None and f > v + 1e-6
+            for f, v in zip(c["fuzzy_share"], c["coverage"], strict=True)
+        ):
+            errors.append("country_year.pack: fuzzy_share exceeds coverage")
+        if any(e is None or e < 1 for e in c["entries"]):
+            errors.append("country_year.pack: entries under 1")
+        unknown = set(c["measure"]) - MEASURES
+        if unknown:
+            errors.append(f"country_year.pack: unknown measure {sorted(unknown, key=str)}")
+    if cg is not None and cy is not None:
+        gk = set(zip(cg.columns["source"], cg.columns["country"], cg.columns["year"], strict=True))
+        yk = set(zip(cy.columns["source"], cy.columns["country"], cy.columns["year"], strict=True))
+        if gk != yk:
+            errors.append("country_genre.pack / country_year.pack: different source-country-years")
+
+
+def _check_meta(data_dir: Path, errors: list[str]) -> None:
+    path = data_dir / "meta.json"
+    if not path.exists():
+        return
+    try:
+        meta = json.loads(path.read_text())
+    except (OSError, ValueError) as e:
+        errors.append(f"meta.json: unreadable ({e})")
+        return
+    if not isinstance(meta, dict):
+        errors.append("meta.json: not an object")
+        return
+    for key in ("snapshots", "base_year", "counts", "notes", "attribution", "sources"):
+        if key not in meta:
+            errors.append(f"meta.json: missing {key}")
+    if "attribution" in meta and not (
+        isinstance(meta["attribution"], list) and meta["attribution"]
+    ):
+        errors.append("meta.json: attribution is empty")
+    sources = meta.get("sources")
+    if "sources" in meta and not (isinstance(sources, dict) and set(sources) == COUNTRY_SOURCES):
+        errors.append(f"meta.json: sources keys are not {sorted(COUNTRY_SOURCES)}")
+
+
+def _sizes(data_dir: Path) -> tuple[list[str], float]:
+    errors = []
+    for name, limit in LIMITS.items():
+        path = data_dir / name
+        if path.exists() and path.stat().st_size > limit:
+            size = path.stat().st_size
+            errors.append(f"{name}: {size / MB:.2f} MB over the {limit / MB:.1f} MB limit")
+    total = sum(f.stat().st_size for f in data_dir.iterdir() if f.is_file())
+    if total > TOTAL_LIMIT:
+        errors.append(f"app data: {total / MB:.2f} MB over the {TOTAL_LIMIT / MB:.1f} MB limit")
+    return errors, total / MB
 
 
 def check(data_dir: Path) -> list[str]:
@@ -58,94 +332,31 @@ def check(data_dir: Path) -> list[str]:
     for name in OTHER_FILES:
         if not (data_dir / name).exists():
             errors.append(f"{name}: file missing")
-    t = {name: _load(data_dir, name, errors) for name in SCHEMA}
-    fam_t, ctry_t = t["genre_families.json"], t["countries.json"]
-    families = set(fam_t["family"]) if fam_t else None
-    countries = set(ctry_t["iso2"]) if ctry_t else None
-
-    def check_refs(name: str, col: str, known: set | None, what: str, nested: bool = False):
-        if known is None or t[name] is None:
-            return
-        vals = t[name][col]
-        used = {x for v in vals for x in (v or [])} if nested else set(vals)
-        if used - known:
-            errors.append(f"{name}: unknown {what} {sorted(used - known)}")
-
-    films = t["films.json"]
+    t = {name: _load_table(data_dir, name, errors) for name in SCHEMA}
+    p = {name: _load_pack(data_dir, name, errors) for name in PACKS}
+    fam, ctry = t["genre_families.json"], t["countries.json"]
+    countries = set(ctry["iso2"]) if ctry else None
+    films, franchises = p["films.pack"], p["franchises.pack"]
     if films:
-        ids = films["imdb_id"]
-        if len(set(ids)) != len(ids):
-            errors.append("films.json: duplicate imdb_id")
-        if any(not IMDB_ID.match(i or "") for i in ids):
-            errors.append("films.json: imdb_id does not match tt<digits>")
-        for col in ("genres", "families", "countries"):
-            if any(v is None for v in films[col]):
-                errors.append(f"films.json: {col} has nulls (use [] for none)")
-        if _outside(films["year"], 1900, 2026):
-            errors.append("films.json: year outside 1900-2026")
-        for col in SCHEMA["films.json"]:
-            if col.endswith("_100") and _outside(films[col], 0, 100):
-                errors.append(f"films.json: {col} outside 0-100")
-        if _outside(films["gap"], -100, 100):
-            errors.append("films.json: gap outside -100..100")
-        for col in ("budget_usd2025", "revenue_usd2025", "roi"):
-            if any(v is not None and v < 0 for v in films[col]):
-                errors.append(f"films.json: negative {col}")
-        for col in ("budget_src", "revenue_src"):
-            bad = set(films[col]) - SRC_VALUES
-            if bad:
-                errors.append(f"films.json: bad {col} {sorted(bad, key=str)}")
-    fr = t["franchises.json"]
-    if fr:
-        if any(
-            i is None or i < 1 or i > n
-            for i, n in zip(fr["installment"], fr["n_released"], strict=True)
-        ):
-            errors.append("franchises.json: installment outside 1..n_released")
-        if any(n is None or n < 3 for n in fr["n_released"]):
-            errors.append("franchises.json: n_released under 3")
-        for col in ("imdb_100", "tomatometer_100", "audience_100"):
-            if _outside(fr[col], 0, 100):
-                errors.append(f"franchises.json: {col} outside 0-100")
-        by_collection: dict[int, list[int]] = {}
-        for c, i in zip(fr["collection_id"], fr["installment"], strict=True):
-            by_collection.setdefault(c, []).append(i)
-        ns = dict(zip(fr["collection_id"], fr["n_released"], strict=True))
-        if any(sorted(i) != list(range(1, ns[c] + 1)) for c, i in by_collection.items()):
-            errors.append("franchises.json: installments are not exactly 1..n_released")
-        first = [i == 1 for i in fr["installment"]]
-        if any(
-            f and v is not None and v != 0
-            for f, v in zip(first, fr["imdb_100_vs_first"], strict=True)
-        ):
-            errors.append("franchises.json: imdb_100_vs_first not 0 at installment 1")
-        if any(f and v is not None for f, v in zip(first, fr["imdb_100_vs_prev"], strict=True)):
-            errors.append("franchises.json: imdb_100_vs_prev set at installment 1")
-        for col in ("revenue_vs_prev", "revenue_vs_first"):
-            if any(v is not None and v < 0 for v in fr[col]):
-                errors.append(f"franchises.json: negative {col}")
-        if any(i is not None and not IMDB_ID.match(i) for i in fr["imdb_id"]):
-            errors.append("franchises.json: imdb_id does not match tt<digits>")
-    check_refs("films.json", "families", families, "family", nested=True)
-    check_refs("films.json", "countries", countries, "country", nested=True)
-    check_refs("genre_year.json", "family", families, "family")
-    check_refs("country_genre.json", "family", families, "family")
-    check_refs("country_genre.json", "country_iso2", countries, "country")
-
-    cg = t["country_genre.json"]
-    if cg:
-        sums: dict[tuple, float] = {}
-        keys = list(zip(cg["source"], cg["country_iso2"], cg["year"], strict=True))
-        for k, s in zip(keys, cg["share"], strict=True):
-            sums[k] = sums.get(k, 0.0) + (s or 0.0)
-        bad_sums = [k for k, s in sums.items() if abs(s - 1) > 1e-3]
-        if bad_sums:
-            errors.append(f"country_genre.json: shares do not sum to 1 for {bad_sums[:5]}")
-        for col in ("coverage", "fuzzy_share", "estimated_share"):
-            if _outside(cg[col], 0, 1):
-                errors.append(f"country_genre.json: {col} outside 0-1")
-        if any(f > c + 1e-9 for f, c in zip(cg["fuzzy_share"], cg["coverage"], strict=True)):
-            errors.append("country_genre.json: fuzzy_share exceeds coverage")
+        franchise_ids = set(franchises.columns["collection_id"]) if franchises else None
+        _check_films(films, fam, countries, franchise_ids, errors)
+        for name in ("films_text.pack", "films_poster.pack"):
+            other = p[name]
+            if other and other.rows != films.rows:
+                errors.append(f"{name}: {other.rows} rows != {films.rows} rows of films.pack")
+    for name in ("films_text.pack", "films_poster.pack"):
+        other = p[name]
+        if other and "title" in other.columns and any(v is None for v in other.columns["title"]):
+            errors.append(f"{name}: title has nulls")
+    if franchises:
+        _check_franchises(franchises, films, errors)
+    _check_countries(p["country_genre.pack"], p["country_year.pack"], fam, countries, errors)
+    _check_meta(data_dir, errors)
+    size_errors, _ = _sizes(data_dir)
+    errors += size_errors
+    for name in STALE:
+        if (data_dir / name).exists():
+            errors.append(f"{name}: stale file, `movies export` removes it")
     return errors
 
 
@@ -154,4 +365,5 @@ def run() -> None:
     if errors:
         print("\n".join(errors))
         raise SystemExit(1)
-    print(f"app data valid: {len(SCHEMA) + len(OTHER_FILES)} files")
+    _, total = _sizes(paths.APP_DATA)
+    print(f"app data valid: {len(SCHEMA) + len(PACKS) + len(OTHER_FILES)} files, {total:.2f} MB")

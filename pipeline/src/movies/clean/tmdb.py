@@ -10,7 +10,15 @@ from movies.reference.countries import name_index
 SNAPSHOT = date(2026, 10, 1)
 MIN_BUDGET = 1000  # below this a budget is a unit error (thousands, not dollars)
 
-TEXT = ["title", "original_title", "original_language", "status", "director", "certification_us"]
+TEXT = [
+    "title",
+    "original_title",
+    "original_language",
+    "status",
+    "director",
+    "certification_us",
+    "poster_path",
+]
 NOT_A_NAME = ["", "N/A"]
 
 

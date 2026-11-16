@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { loadData } from './lib/data'
 import type { AppData } from './lib/types'
-import { DetailPanel } from './views/DetailPanel/DetailPanel'
+import { FilmCard } from './views/FilmCard/FilmCard'
 import { FilmScatter } from './views/FilmScatter/FilmScatter'
 import { FilterBar } from './views/FilterBar/FilterBar'
+import { SelectionTable } from './views/SelectionTable/SelectionTable'
 import { Franchise } from './views/Franchise/Franchise'
 import { GenreTimeline } from './views/GenreTimeline/GenreTimeline'
 import { WorldMap } from './views/WorldMap/WorldMap'
@@ -16,19 +17,26 @@ export default function App() {
     loadData().then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
 
-  if (error) return <p className="status">Error: {error}</p>
-  if (!data) return <p className="status">Loading data…</p>
+  if (!data) {
+    return (
+      <div className="app">
+        <header className="panel filter-bar area-f">
+          <h1>Movie Explorer</h1>
+          <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
+        </header>
+      </div>
+    )
+  }
 
   return (
     <div className="app">
       <FilterBar data={data} />
-      <main className="grid">
-        <WorldMap data={data} />
-        <GenreTimeline data={data} />
-        <FilmScatter data={data} />
-        <Franchise data={data} />
-      </main>
-      <DetailPanel data={data} />
+      <WorldMap data={data} />
+      <GenreTimeline data={data} />
+      <FilmScatter data={data} />
+      <Franchise data={data} />
+      <SelectionTable data={data} />
+      <FilmCard data={data} />
     </div>
   )
 }

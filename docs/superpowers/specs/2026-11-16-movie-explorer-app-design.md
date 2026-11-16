@@ -47,7 +47,8 @@ to `app/public/data/` and `movies validate` checks them in CI.
 | File | Rows | Loaded | Limit |
 |---|---|---|---|
 | `films.pack` | every film of the working subset (56,431) | first | 3.0 MB |
-| `films_text.pack` | same rows: title, director, poster path | after first paint | 2.5 MB |
+| `films_text.pack` | same rows: title, director | after first paint | 1.2 MB |
+| `films_poster.pack` | same rows: poster path | when the film card first shows a film | 2.0 MB |
 | `country_genre.pack` | source × country × year × genre | first | 1.0 MB |
 | `country_year.pack` | source × country × year | first | 0.2 MB |
 | `franchises.pack` | one row per released part of a franchise | first | 0.2 MB |
@@ -117,8 +118,10 @@ subset is therefore the first `meta.notable` rows, and "is notable" is
 | `collection_id` | u32, null | set when the film is a part of an exported franchise |
 | `installment` | u8, null | |
 
-`films_text.pack` has the same rows: `title` (str), `director` (str, null),
-`poster` (str, null; the TMDB `poster_path`).
+`films_text.pack` has the same rows: `title` (str), `director` (str, null).
+`films_poster.pack` has the same rows and one column, `poster` (str, null;
+the TMDB `poster_path`). Poster paths do not compress, so they stay out of
+the file the table and the search wait for.
 
 ### 2.3 Country tables
 
@@ -371,8 +374,9 @@ rests on.
 ### G. Film card
 
 - Shows the hovered film, else the pinned one, else a hint.
-- Poster from `https://image.tmdb.org/t/p/w185` + `poster`, lazy; a
-  placeholder when it is missing or fails. Nothing else in the app needs the
+- Poster from `https://image.tmdb.org/t/p/w185` + `poster`;
+  `films_poster.pack` is fetched the first time the card shows a film. A
+  placeholder when the path is missing, not loaded yet or the image fails. Nothing else in the app needs the
   network.
 - Title, year, runtime, director, genres, production countries (click to
   toggle the country filter), franchise and installment (click to select).

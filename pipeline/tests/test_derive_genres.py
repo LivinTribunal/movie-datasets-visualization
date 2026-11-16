@@ -8,6 +8,8 @@ from movies.derive.genres import (
     film_genres,
     lumiere_country_genre,
     netflix_country_genre,
+    production_country_genre,
+    us_cinema_country_genre,
 )
 
 FAMILIES = pl.DataFrame(
@@ -156,3 +158,126 @@ def test_lumiere_unknown_market_raises():
     genres = film_genres(_films([("tt1", ["Drama"])]), FAMILIES)
     with pytest.raises(ValueError, match="ZZ"):
         lumiere_country_genre(_lumiere([("tt1", "ZZ", 2024, 1, False)]), genres, {"CZ"})
+
+
+def test_netflix_entries_count_distinct_matched_films():
+    netflix = _chart(
+        [
+            ("CZ", date(2025, 3, 2), "Both", 10),
+            ("CZ", date(2025, 3, 9), "Both", 8),
+            ("CZ", date(2025, 3, 9), "Ghost", 5),
+            ("CZ", date(2025, 3, 9), "Other", 5),
+        ]
+    )
+    titles = pl.DataFrame(
+        {
+            "title": ["Both", "Ghost", "Other"],
+            "imdb_id": ["tt1", None, "tt2"],
+            "method": ["exact", None, "exact"],
+        }
+    )
+    genres = film_genres(_films([("tt1", ["Drama", "Comedy"]), ("tt2", ["Action"])]), FAMILIES)
+    out = netflix_country_genre(netflix, titles, genres)
+    assert out.columns[-1] == "entries"
+    assert out["entries"].to_list() == [2] * out.height
+
+
+def test_lumiere_entries_count_films_with_genres():
+    genres = film_genres(_films([("tt1", ["Drama", "Comedy"]), ("tt2", ["Action"])]), FAMILIES)
+    rows = [
+        ("tt1", "CZ", 2024, 10, False),
+        ("tt2", "CZ", 2024, 30, False),
+        *_filler("CZ", 2024, LUMIERE_MIN_FILMS),  # no genres, but they count towards the minimum
+    ]
+    out = lumiere_country_genre(_lumiere(rows), genres, {"CZ"})
+    assert out.columns[-1] == "entries"
+    assert out["entries"].to_list() == [2] * out.height
+
+
+def _wide_films(rows: list[tuple]) -> pl.DataFrame:
+    return pl.DataFrame(
+        rows,
+        schema={
+            "imdb_id": pl.String,
+            "year": pl.Int16,
+            "production_countries": pl.List(pl.String),
+            "numbers_domestic_gross": pl.Float64,
+            "numbers_match": pl.String,
+        },
+        orient="row",
+    )
+
+
+def test_production_counts_a_coproduction_in_each_country():
+    genres = film_genres(_films([("tt1", ["Drama", "Comedy"])]), FAMILIES)
+    films = _wide_films([("tt1", 2000, ["US", "GB"], None, None)])
+    out = production_country_genre(films, genres)
+    assert out["country_iso2"].to_list() == ["GB", "GB", "US", "US"]
+    assert out["genre"].to_list() == ["Comedy", "Drama"] * 2
+    assert out["score"].to_list() == [0.5] * 4
+    assert out.group_by("country_iso2").agg(pl.col("share").sum())["share"].to_list() == [1.0, 1.0]
+    assert out["entries"].to_list() == [1] * 4
+    assert out["coverage"].to_list() == [1.0] * 4
+    assert out.columns[-1] == "entries"
+
+
+def test_production_drops_null_year_and_null_country():
+    genres = film_genres(
+        _films([("tt1", ["Drama"]), ("tt2", ["Drama"]), ("tt3", ["Drama"])]), FAMILIES
+    )
+    films = _wide_films(
+        [
+            ("tt1", None, ["US"], None, None),
+            ("tt2", 2000, None, None, None),
+            ("tt3", 2000, ["US"], None, None),
+        ]
+    )
+    out = production_country_genre(films, genres)
+    assert out.select("country_iso2", "year", "entries").rows() == [("US", 2000, 1)]
+
+
+def test_us_cinema_shares_are_gross_weighted():
+    genres = film_genres(_films([("tt1", ["Drama", "Comedy"]), ("tt2", ["Action"])]), FAMILIES)
+    films = _wide_films(
+        [("tt1", 2000, ["US"], 100.0, "exact"), ("tt2", 2000, ["US"], 300.0, "exact")]
+    )
+    out = us_cinema_country_genre(films, genres, min_films=1)
+    assert out["country_iso2"].unique().to_list() == ["US"]
+    assert out["year"].dtype == pl.Int16
+    assert out["genre"].to_list() == ["Action", "Comedy", "Drama"]
+    assert out["score"].to_list() == [300.0, 50.0, 50.0]
+    assert out["share"].to_list() == [0.75, 0.125, 0.125]
+    assert out["entries"].to_list() == [2] * 3
+    assert out.columns[-1] == "entries"
+
+
+def test_us_cinema_drops_years_under_min_films():
+    genres = film_genres(
+        _films([("tt1", ["Drama"]), ("tt2", ["Drama"]), ("tt3", ["Drama"])]), FAMILIES
+    )
+    films = _wide_films(
+        [
+            ("tt1", 2000, ["US"], 10.0, "exact"),
+            ("tt2", 2000, ["US"], 10.0, "exact"),
+            ("tt3", 2001, ["US"], 10.0, "exact"),
+        ]
+    )
+    out = us_cinema_country_genre(films, genres, min_films=2)
+    assert out["year"].to_list() == [2000]
+
+
+def test_us_cinema_fuzzy_share_and_coverage():
+    genres = film_genres(_films([("tt1", ["Drama"]), ("tt2", ["Action"])]), FAMILIES)
+    films = _wide_films(
+        [
+            ("tt1", 2000, ["US"], 60.0, "exact"),
+            ("tt2", 2000, ["US"], 20.0, "fuzzy"),
+            ("tt3", 2000, ["US"], 20.0, "exact"),  # no genres
+            ("tt4", 2000, ["US"], None, None),  # no gross: ignored
+        ]
+    )
+    out = us_cinema_country_genre(films, genres, min_films=1)
+    assert out["coverage"].to_list() == [pytest.approx(0.8)] * 2
+    assert out["fuzzy_share"].to_list() == [pytest.approx(0.2)] * 2
+    assert out["estimated_share"].to_list() == [0.0] * 2
+    assert out["entries"].to_list() == [2] * 2

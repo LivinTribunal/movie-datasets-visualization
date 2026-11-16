@@ -1,8 +1,11 @@
 """Derive stage: genre memberships with 1/n weights, Netflix and LUMIERE genre shares.
 
 Pure functions from frames to frames; only `run()` reads data/interim and data/reference and
-writes data/interim/film_genres.parquet, country_genre_netflix.parquet and
-country_genre_lumiere.parquet (cinema admissions per market, when the scrape exists).
+writes data/interim/film_genres.parquet, country_genre_netflix.parquet,
+country_genre_lumiere.parquet (cinema admissions per market, when the scrape exists),
+country_genre_production.parquet (films produced per country) and country_genre_us.parquet
+(US cinema gross). Every country table ends with `entries`, the distinct films behind a row's
+country-year.
 Netflix shares carry `coverage` (chart score that reached a genre) and `fuzzy_share` (chart
 score matched fuzzily), because unmatched and fuzzy-matched data must be shown as such in the app.
 """
@@ -54,6 +57,7 @@ def netflix_country_genre(
         total=pl.col("score").sum(),
         matched=pl.col("score").filter(pl.col("matched")).sum(),
         fuzzy=pl.col("score").filter(pl.col("matched") & (pl.col("method") == "fuzzy")).sum(),
+        entries=pl.col("imdb_id").filter(pl.col("matched")).n_unique(),
     )
     shares = (
         chart.filter("matched")
@@ -73,6 +77,7 @@ def netflix_country_genre(
             coverage=pl.col("matched") / pl.col("total"),
             fuzzy_share=pl.col("fuzzy") / pl.col("total"),
             estimated_share=pl.lit(0.0),  # chart scores are never estimated
+            entries="entries",
         )
         .sort([*keys, "genre"])
     )
@@ -108,6 +113,7 @@ def lumiere_country_genre(
             matched=pl.col("admissions").filter(pl.col("has_genre")).sum(),
             estimated=pl.col("admissions").filter(pl.col("estimated")).sum(),
             films=pl.col("imdb_id").n_unique(),
+            entries=pl.col("imdb_id").filter(pl.col("has_genre")).n_unique(),
         )
         .filter(pl.col("films") >= LUMIERE_MIN_FILMS)
     )
@@ -129,6 +135,105 @@ def lumiere_country_genre(
             coverage=pl.col("matched") / pl.col("total"),
             fuzzy_share=pl.lit(0.0),
             estimated_share=pl.col("estimated") / pl.col("total"),
+            entries="entries",
+        )
+        .sort([*keys, "genre"])
+    )
+
+
+def production_country_genre(films: pl.DataFrame, film_genres_df: pl.DataFrame) -> pl.DataFrame:
+    """Genre shares of films produced per country and release year.
+
+    `score` is the summed genre weight, so a co-production counts fully in each of its countries.
+    Films without a year or a country are dropped. Nothing is estimated or fuzzy-matched, so
+    `coverage` is 1 and `fuzzy_share` and `estimated_share` are 0.
+    """
+    keys = ["country_iso2", "year"]
+    rows = (
+        films.select("imdb_id", "year", country_iso2="production_countries")
+        .explode("country_iso2")
+        .drop_nulls(["year", "country_iso2"])
+        .unique(["imdb_id", *keys])
+        .join(film_genres_df, on="imdb_id")
+    )
+    entries = rows.group_by(keys).agg(entries=pl.col("imdb_id").n_unique())
+    shares = (
+        rows.group_by([*keys, "genre", "family"])
+        .agg(score=pl.col("genre_weight").sum().cast(pl.Float64))
+        .with_columns(share=pl.col("score") / pl.col("score").sum().over(keys))
+    )
+    return (
+        shares.join(entries, on=keys)
+        .select(
+            pl.col("country_iso2"),
+            pl.col("year").cast(pl.Int16),
+            "genre",
+            "family",
+            "score",
+            "share",
+            coverage=pl.lit(1.0),
+            fuzzy_share=pl.lit(0.0),
+            estimated_share=pl.lit(0.0),
+            entries="entries",
+        )
+        .sort([*keys, "genre"])
+    )
+
+
+def us_cinema_country_genre(
+    films: pl.DataFrame, film_genres_df: pl.DataFrame, min_films: int = LUMIERE_MIN_FILMS
+) -> pl.DataFrame:
+    """Genre shares of US domestic gross per release year, as one country (`US`).
+
+    `score` is gross times genre weight. `coverage` is the gross of films with genres over all
+    gross of the year, `fuzzy_share` the part of it matched to The Numbers by title similarity.
+    Years with fewer than `min_films` films are dropped.
+    """
+    keys = ["country_iso2", "year"]
+    rows = (
+        films.filter(pl.col("year").is_not_null() & (pl.col("numbers_domestic_gross") > 0))
+        .select(
+            "imdb_id",
+            "year",
+            gross="numbers_domestic_gross",
+            fuzzy=pl.col("numbers_match") == "fuzzy",
+        )
+        .with_columns(
+            country_iso2=pl.lit("US"),
+            has_genre=pl.col("imdb_id").is_in(film_genres_df["imdb_id"].implode()),
+        )
+    )
+    totals = (
+        rows.group_by(keys)
+        .agg(
+            total=pl.col("gross").sum(),
+            matched=pl.col("gross").filter(pl.col("has_genre")).sum(),
+            fuzzy=pl.col("gross").filter(pl.col("has_genre") & pl.col("fuzzy")).sum(),
+            films=pl.col("imdb_id").n_unique(),
+            entries=pl.col("imdb_id").filter(pl.col("has_genre")).n_unique(),
+        )
+        .filter(pl.col("films") >= min_films)
+    )
+    shares = (
+        rows.filter("has_genre")
+        .join(film_genres_df, on="imdb_id")
+        .group_by([*keys, "genre", "family"])
+        .agg(score=(pl.col("gross") * pl.col("genre_weight")).sum().cast(pl.Float64))
+        .with_columns(share=pl.col("score") / pl.col("score").sum().over(keys))
+    )
+    return (
+        shares.join(totals, on=keys)
+        .select(
+            pl.col("country_iso2"),
+            pl.col("year").cast(pl.Int16),
+            "genre",
+            "family",
+            "score",
+            "share",
+            coverage=pl.col("matched") / pl.col("total"),
+            fuzzy_share=pl.col("fuzzy") / pl.col("total"),
+            estimated_share=pl.lit(0.0),
+            entries="entries",
         )
         .sort([*keys, "genre"])
     )
@@ -163,6 +268,17 @@ def run() -> None:
         )
     else:
         print("lumiere.parquet not found; no cinema genre shares")
+
+    for name, table in (
+        ("production", production_country_genre(films, genres)),
+        ("us", us_cinema_country_genre(films, genres)),
+    ):
+        table.write_parquet(paths.INTERIM / f"country_genre_{name}.parquet")
+        print(
+            f"country_genre_{name}: {table.height} rows, "
+            f"{table['country_iso2'].n_unique()} countries, "
+            f"years {table['year'].min()}-{table['year'].max()}"
+        )
 
     coverage = out.unique(["country_iso2", "year"])["coverage"]
     print(f"film_genres: {genres.height} rows, {genres['imdb_id'].n_unique()} films")

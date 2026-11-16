@@ -1,22 +1,42 @@
-import type { Columnar, FilmRow } from './types'
+import type { Films } from './types'
 
 export interface FilmFilter {
-  yearRange: [number, number]
-  families: string[]
-  subset: 'notable' | 'working'
-  selectedCountry: string | null
+  yearRange: [number, number] | null
+  subset: 'notable' | 'all'
+  countries: string[]
+  genreOnly: boolean
+  family: number
 }
 
-export function filmIndices(films: Columnar<FilmRow>, f: FilmFilter): number[] {
-  const { year, notable, families, countries } = films.columns
-  const out: number[] = []
-  for (let i = 0; i < year.length; i++) {
-    const y = year[i]
-    if (y === null || y < f.yearRange[0] || y > f.yearRange[1]) continue
-    if (f.subset === 'notable' && !notable[i]) continue
-    if (f.families.length > 0 && !families[i].some((x) => f.families.includes(x))) continue
-    if (f.selectedCountry !== null && !countries[i].includes(f.selectedCountry)) continue
-    out.push(i)
+/** 1 = the film passes. */
+export function filmMask(films: Films, f: FilmFilter): Uint8Array {
+  const { year, family_mask, countries } = films
+  const out = new Uint8Array(films.rows)
+  const end = f.subset === 'notable' ? Math.min(films.notable, films.rows) : films.rows
+  const wanted = new Uint8Array(countries.values.length)
+  for (const iso of f.countries) {
+    const code = countries.values.indexOf(iso)
+    if (code >= 0) wanted[code] = 1
+  }
+  const byCountry = f.countries.length > 0
+  const familyBit = 1 << f.family
+  for (let i = 0; i < end; i++) {
+    if (f.yearRange && (year[i] < f.yearRange[0] || year[i] > f.yearRange[1])) continue
+    if (f.genreOnly && (family_mask[i] & familyBit) === 0) continue
+    if (byCountry) {
+      let hit = false
+      for (let k = countries.offsets[i]; k < countries.offsets[i + 1]; k++) {
+        if (wanted[countries.codes[k]]) { hit = true; break }
+      }
+      if (!hit) continue
+    }
+    out[i] = 1
   }
   return out
+}
+
+export function countMask(mask: Uint8Array): number {
+  let n = 0
+  for (let i = 0; i < mask.length; i++) n += mask[i]
+  return n
 }

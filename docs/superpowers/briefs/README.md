@@ -16,9 +16,9 @@ Rules for every brief:
 |---|---|---|
 | 1 | `p1-country-sources.md` | ready |
 | 1 | `p2a-pack-export.md` | ready |
-| 1 | `p2b-validate.md` | written after P2a lands |
+| 1 | `p2b-validate.md` | ready |
 | 2 | `a1-data-layer.md` | ready |
-| 2 | `a2-shell.md` | written after A1 lands |
+| 2 | `a2-shell.md` | ready |
 | 3 | `va-map.md`, `vb-timeline.md`, `vc-scatter.md`, `vd-franchise.md` | written after A2 lands |
 | 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | written after wave 3 |
 | 5 | `q-e2e-budgets-deploy.md` | written after wave 4 |
