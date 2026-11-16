@@ -92,8 +92,12 @@
     "version": "1018"
   },
   "wikidata": {
-    "downloaded_at": "2026-10-10T22:15:07Z",
+    "downloaded_at": "2026-11-16T22:57:48Z",
     "files": {
+      "scraped/wikidata_extra.parquet": {
+        "bytes": 1248054,
+        "sha256": "f5c23ac7927bb35f2e2aaf10d8a95fdfd2c25a4d40b87a42e1c064bc499da971"
+      },
       "scraped/wikidata_ids.parquet": {
         "bytes": 1698703,
         "sha256": "4fee3e83a6c0705a3969f66319aeafd2dc728e9c6b56cf6293cb766d9ee49b2c"
