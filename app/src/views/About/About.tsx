@@ -34,7 +34,18 @@ export const About: FC<{ data: AppData }> = ({ data }) => {
   }, [open])
 
   return (
-    <dialog ref={ref} className="about" onClose={() => setAbout(false)}>
+    <dialog
+      ref={ref}
+      className="about"
+      onClose={() => setAbout(false)}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setAbout(false)
+      }}
+    >
+      <div className="about-body">
+      <button type="button" className="about-x" aria-label="Close" onClick={() => setAbout(false)}>
+        ×
+      </button>
       <h2>About the data</h2>
       <p>
         Snapshots:{' '}
@@ -71,9 +82,10 @@ export const About: FC<{ data: AppData }> = ({ data }) => {
           <li key={a}>{a}</li>
         ))}
       </ul>
-      <button type="button" onClick={() => setAbout(false)}>
+      <button type="button" className="btn" onClick={() => setAbout(false)}>
         Close
       </button>
+      </div>
     </dialog>
   )
 }

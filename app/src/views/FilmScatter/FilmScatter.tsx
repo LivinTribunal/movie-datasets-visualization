@@ -30,6 +30,7 @@ export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
   const franchise = useStore((s) => s.franchise)
   const setX = useStore((s) => s.setX)
   const setY = useStore((s) => s.setY)
+  const setBrush = useStore((s) => s.setBrush)
   const setSize = useStore((s) => s.setSize)
   const mask = useFilmMask(data)
   const titles = useLazy(loadText)?.title ?? null
@@ -90,17 +91,20 @@ export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
     >
       <div className="scatter">
         <div className="scatter-presets">
-          {PRESETS.map((p) => (
-            <button
-              key={p.label}
-              type="button"
-              className="chip"
-              aria-pressed={p.x === x && p.y === y}
-              onClick={() => applyPreset(p.x, p.y)}
-            >
-              {p.label}
-            </button>
-          ))}
+          <div className="chips segmented">
+            {PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                className="chip"
+                aria-pressed={p.x === x && p.y === y}
+                onClick={() => applyPreset(p.x, p.y)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {brush && <button type="button" className="btn" onClick={() => setBrush(null)}>clear brush</button>}
         </div>
         <div ref={ref} className="scatter-plot">
           {rows.length === 0 ? (

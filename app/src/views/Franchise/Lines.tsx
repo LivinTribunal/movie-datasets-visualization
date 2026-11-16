@@ -20,10 +20,10 @@ export const Lines = memo(function Lines({ lines, x, y, familyBit, colour }: Lin
       {lines
         .filter((l) => !inFamily(l))
         .map((l) => (
-          <path key={l.id} d={path(l.points) ?? ''} stroke="#8c959f" strokeOpacity={0.35} />
+          <path key={l.id} d={path(l.points) ?? ''} stroke="#b4b8c0" strokeOpacity={0.28} />
         ))}
       {lines.filter(inFamily).map((l) => (
-        <path key={l.id} d={path(l.points) ?? ''} stroke={colour} strokeOpacity={0.6} />
+        <path key={l.id} d={path(l.points) ?? ''} stroke={colour} strokeOpacity={0.45} />
       ))}
     </g>
   )

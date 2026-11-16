@@ -447,3 +447,18 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - **Why**: in the production source one country with a single film has a
   share of 100 %, which made every other country pale. The dotted outline
   already tells the reader that such a country rests on thin data.
+
+### D29. Three workspaces instead of one page (2026-11-16)
+
+- **What**: the app shows one of three workspaces, picked with tabs in the top
+  bar: *Taste by country* (map, genre timeline, film table), *Money & ratings*
+  (scatter, film table, film card) and *Franchises* (franchise lines, scatter,
+  film card). Each has three linked views and fills the window without page
+  scroll. Filters and selections live in the one store and carry across tabs;
+  chips in the filter row show the selected countries, franchise, pinned film
+  and scatter brush in every workspace. The tab is part of the URL hash.
+- **Why**: seven panels on one page needed scrolling on a laptop, so the views
+  that answer one question were never on screen together and each chart was
+  small. Grouping by question (T1/T4/X2, T2/T3/T5/X1, T6) keeps linked views
+  side by side and large. The map source control moved into the map panel
+  because it changes nothing else.

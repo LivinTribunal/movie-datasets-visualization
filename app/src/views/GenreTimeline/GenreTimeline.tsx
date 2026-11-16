@@ -101,9 +101,20 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
       [0, 0],
       [iw, ih],
     ])
+    let down: [number, number] | null = null
+    const client = (e: MouseEvent | TouchEvent): [number, number] => {
+      const t = 'changedTouches' in e ? e.changedTouches[0] : e
+      return [t.clientX, t.clientY]
+    }
+    brush.on('start', (event: D3BrushEvent<unknown>) => {
+      down = event.sourceEvent ? client(event.sourceEvent) : null
+    })
     brush.on('end', (event: D3BrushEvent<unknown>) => {
       if (!event.sourceEvent) return
-      if (event.selection) {
+      const [cx, cy] = client(event.sourceEvent)
+      // a move under 3 px is a click, even when d3 still reports a selection
+      const click = down !== null && Math.hypot(cx - down[0], cy - down[1]) < 3
+      if (event.selection && !click) {
         const [a, b] = event.selection as [number, number]
         setYearRange([Math.round(x.invert(a)), Math.round(x.invert(b))])
         return
@@ -190,6 +201,7 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
         <>
           Each film counts 1/n in each of its n genres.
           {measure === 'votes' && ' Votes show popularity, not rating.'}
+          {` Hatched: under ${THIN} films.`}
         </>
       }
     >
@@ -203,14 +215,25 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
           {ready && (
             <svg width={width} height={height} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
               <defs>
-                <pattern id="tl-thin" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <line x1="0" y1="0" x2="0" y2="6" stroke="#fff" strokeWidth="2.5" strokeOpacity="0.75" />
+                <pattern id="tl-thin" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <rect width="5" height="5" fill="#fff" opacity="0.5" />
+                  <line x1="0" y1="0" x2="0" y2="5" stroke="#fff" strokeWidth="1" opacity="0.6" />
                 </pattern>
               </defs>
               <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
-                {bands.map((d, f) => (
-                  <path key={f} d={d ?? undefined} fill={data.families[f].colour} />
-                ))}
+                <g className={hover && hover.family >= 0 ? 'tl-bands hovering' : 'tl-bands'} pointerEvents="none">
+                  {bands.map((d, f) => (
+                    <path
+                      key={f}
+                      d={d ?? undefined}
+                      className={hover?.family === f ? 'tl-band is-hover' : 'tl-band'}
+                      fill={data.families[f].colour}
+                      fillOpacity={0.9}
+                      stroke="#fff"
+                      strokeWidth={0.5}
+                    />
+                  ))}
+                </g>
                 {years.map((yr, i) =>
                   timeline.films[i] < THIN ? (
                     <rect
@@ -225,11 +248,12 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
                   ) : null,
                 )}
                 {bands[family] && (
-                  <path d={bands[family] ?? undefined} fill="none" stroke="var(--ink)" strokeWidth={2} pointerEvents="none" />
+                  <path d={bands[family] ?? undefined} fill="none" stroke="var(--ink)" strokeWidth={1.25} strokeLinejoin="round" pointerEvents="none" />
                 )}
                 <g className="tl-axis" pointerEvents="none">
                   {Y_TICKS.map((t) => (
                     <g key={t} transform={`translate(0,${y(t)})`}>
+                      {t > 0 && t < 1 && <line className="tl-grid" x2={iw} />}
                       <text x={-6} dy="0.32em" textAnchor="end">
                         {t * 100}%
                       </text>
@@ -257,7 +281,6 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
             </Tooltip>
           )}
         </div>
-        {ready && <p className="tl-legend">hatched: under {THIN} films</p>}
       </div>
     </Panel>
   )

@@ -31,8 +31,10 @@ export const HoverRing: FC<{ geometry: Geometry }> = ({ geometry }) => {
   const p = position(geometry, pinned)
   return (
     <g className="scatter-rings" pointerEvents="none">
-      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="var(--ink)" strokeWidth={2} />}
-      {h && <circle cx={h[0]} cy={h[1]} r={8} fill="none" stroke="var(--accent)" strokeWidth={2} />}
+      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="#fff" strokeWidth={4.5} />}
+      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="var(--ink)" strokeWidth={1.5} />}
+      {h && <circle cx={h[0]} cy={h[1]} r={8} fill="none" stroke="#fff" strokeWidth={4.5} />}
+      {h && <circle cx={h[0]} cy={h[1]} r={8} fill="none" stroke="var(--accent)" strokeWidth={1.5} />}
     </g>
   )
 }

@@ -11,6 +11,7 @@ export interface HashContext {
   collections: Set<number>
 }
 
+const TAB = ['taste', 'ratings', 'franchises']
 const SUBSET = ['notable', 'all']
 const MONEY = ['usd2025', 'nominal']
 const SOURCE = ['netflix', 'cinema', 'production']
@@ -25,6 +26,7 @@ export function encodeHash(values: Values, base: Values, imdb: Uint32Array): str
   const put = (key: string, differs: boolean, value: string) => {
     if (differs) p.set(key, value)
   }
+  put('tab', values.tab !== base.tab, values.tab)
   put('yr', !same(values.yearRange, base.yearRange), values.yearRange.join('-'))
   put('g', values.family !== base.family, String(values.family))
   put('go', values.genreOnly !== base.genreOnly, values.genreOnly ? '1' : '0')
@@ -57,6 +59,9 @@ function parseInt10(v: string | null): number | undefined {
 export function decodeHash(hash: string, ctx: HashContext): Partial<Values> {
   const p = new URLSearchParams(hash.replace(/^#/, ''))
   const out: Partial<Values> = {}
+
+  const tab = oneOf<Values['tab']>(TAB, p.get('tab'))
+  if (tab) out.tab = tab
 
   const yr = /^(\d+)-(\d+)$/.exec(p.get('yr') ?? '')
   if (yr) {

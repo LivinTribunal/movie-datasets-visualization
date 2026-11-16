@@ -5,7 +5,10 @@ import type { Films } from './types'
 describe('measures', () => {
   it('has an entry for every key', () => {
     expect(MEASURE_KEYS).toHaveLength(14)
-    for (const k of MEASURE_KEYS) expect(MEASURES[k].label).toBeTruthy()
+    for (const k of MEASURE_KEYS) {
+      expect(MEASURES[k].label).toBeTruthy()
+      expect(MEASURES[k].short).toBeTruthy()
+    }
   })
   it('switches the money columns', () => {
     const films = {

@@ -4,6 +4,7 @@ import type { MeasureKey, Money } from '../lib/measures'
 export type { Money }
 export type Subset = 'notable' | 'all'
 export type Source = 'netflix' | 'cinema' | 'production'
+export type Tab = 'taste' | 'ratings' | 'franchises'
 export type MapMode = 'share' | 'top' | 'diff'
 export type TimelineMeasure = 'films' | 'votes' | 'revenue' | 'netflix'
 export type FranchiseY = 'rating' | 'revenue'
@@ -15,6 +16,7 @@ export const YEAR_MAX = 2026
 export const MAX_COUNTRIES = 6
 
 interface Values {
+  tab: Tab
   yearRange: [number, number]
   /** Index into meta.families; always one. */
   family: number
@@ -44,6 +46,7 @@ interface Values {
 }
 
 interface Actions {
+  setTab: (tab: Tab) => void
   setYearRange: (r: [number, number]) => void
   setFamily: (family: number) => void
   setGenreOnly: (genreOnly: boolean) => void
@@ -70,6 +73,7 @@ interface Actions {
 export type State = Values & Actions
 
 const initial = (): Values => ({
+  tab: 'taste',
   yearRange: [1990, 2026],
   family: 0,
   genreOnly: false,
@@ -98,6 +102,7 @@ const clampYear = (y: number) => Math.min(YEAR_MAX, Math.max(YEAR_MIN, y))
 
 export const useStore = create<State>()((set) => ({
   ...initial(),
+  setTab: (tab) => set({ tab }),
   setYearRange: ([a, b]) => {
     const from = clampYear(a)
     const to = clampYear(b)
@@ -127,5 +132,5 @@ export const useStore = create<State>()((set) => ({
   setSort: (sort) => set({ sort }),
   setColumns: (columns) => set({ columns }),
   setAbout: (about) => set({ about }),
-  reset: () => set(initial()),
+  reset: () => set((s) => ({ ...initial(), tab: s.tab })),
 }))

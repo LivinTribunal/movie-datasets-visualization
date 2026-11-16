@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useStore } from './state/store'
 import { loadData } from './lib/data'
 import type { AppData } from './lib/types'
 import { startHashSync } from './state/hashSync'
@@ -13,6 +14,7 @@ import { WorldMap } from './views/WorldMap/WorldMap'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
+  const tab = useStore((s) => s.tab)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -35,12 +37,29 @@ export default function App() {
   return (
     <div className="app">
       <FilterBar data={data} />
-      <WorldMap data={data} />
-      <GenreTimeline data={data} />
-      <FilmScatter data={data} />
-      <Franchise data={data} />
-      <SelectionTable data={data} />
-      <FilmCard data={data} />
+      <main key={tab} className="workspace" data-tab={tab}>
+        {tab === 'taste' && (
+          <>
+            <WorldMap data={data} />
+            <GenreTimeline data={data} />
+            <SelectionTable data={data} />
+          </>
+        )}
+        {tab === 'ratings' && (
+          <>
+            <FilmScatter data={data} />
+            <SelectionTable data={data} />
+            <FilmCard data={data} />
+          </>
+        )}
+        {tab === 'franchises' && (
+          <>
+            <Franchise data={data} />
+            <FilmScatter data={data} />
+            <FilmCard data={data} />
+          </>
+        )}
+      </main>
       <About data={data} />
     </div>
   )

@@ -51,7 +51,7 @@ export const MapLegend: FC<MapLegendProps> = ({ mode, ramp, lo, hi, unit, famili
     <div className="legend-keys">
       <span className="key">
         <svg width="14" height="10" aria-hidden="true">
-          <rect width="14" height="10" fill="url(#map-hatch)" stroke="var(--grid)" />
+          <rect width="14" height="10" fill="url(#map-hatch)" stroke="var(--fill-2)" />
         </svg>
         no data
       </span>

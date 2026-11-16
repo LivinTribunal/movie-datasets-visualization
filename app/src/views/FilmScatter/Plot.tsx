@@ -13,9 +13,9 @@ import { HoverRing, HoverTip, type Geometry } from './HoverLayer'
 const MARGIN = { left: 48, right: 24, top: 8, bottom: 36 }
 const BUCKETS = 6
 const R_MIN = 1.5
-const R_MAX = 7
-const R_PLAIN = 2.5
-const GREY = '#6e7781'
+const R_MAX = 6
+const R_PLAIN = 2.25
+const GREY = '#b4b8c0'
 const PICK_RADIUS = 10
 
 interface PlotProps {
@@ -86,9 +86,9 @@ const PlotImpl: FC<PlotProps> = ({
     [xScale, yScale, xCol, yCol, right, bottom],
   )
 
-  const latest = useRef({ xScale, yScale, rows })
+  const latest = useRef({ xScale, yScale, rows, brush })
   useEffect(() => {
-    latest.current = { xScale, yScale, rows }
+    latest.current = { xScale, yScale, rows, brush }
   })
 
   const familyColour = data.families[family]?.colour ?? GREY
@@ -130,9 +130,9 @@ const PlotImpl: FC<PlotProps> = ({
     }
     const inFamily = (k: number) => ((familyMask[rows[k]] >> family) & 1) === 1
 
-    ctx.globalAlpha = 0.35
+    ctx.globalAlpha = 0.3
     for (let k = n - 1; k >= 0; k--) if (!inFamily(k)) stamp(GREY, k)
-    ctx.globalAlpha = 0.75
+    ctx.globalAlpha = 0.55
     for (let k = n - 1; k >= 0; k--) if (inFamily(k)) stamp(familyColour, k)
     ctx.globalAlpha = 1
 
@@ -150,14 +150,25 @@ const PlotImpl: FC<PlotProps> = ({
   useEffect(() => {
     const g = brushRef.current
     if (!g) return
+    let down: [number, number] | null = null
+    const client = (e: MouseEvent | TouchEvent): [number, number] => {
+      const t = 'changedTouches' in e ? e.changedTouches[0] : e
+      return [t.clientX, t.clientY]
+    }
     const b = d3brush<unknown>()
       .extent([[MARGIN.left, MARGIN.top], [right, bottom]])
+      .on('start', (event) => {
+        down = event.sourceEvent ? client(event.sourceEvent) : null
+      })
       .on('end', (event) => {
-        const src: Event | null = event.sourceEvent
+        const src: MouseEvent | TouchEvent | null = event.sourceEvent
         if (!src) return
-        const { xScale: xs, yScale: ys } = latest.current
+        const { xScale: xs, yScale: ys, brush: cur } = latest.current
         const sel: [[number, number], [number, number]] | null = event.selection
-        if (sel) {
+        const [cx, cy] = client(src)
+        // a move under 3 px is a click, even when d3 still reports a selection
+        const click = down !== null && Math.hypot(cx - down[0], cy - down[1]) < 3
+        if (sel && !click) {
           const xa = xs.invert(sel[0][0])
           const xb = xs.invert(sel[1][0])
           const ya = ys.invert(sel[0][1])
@@ -168,8 +179,18 @@ const PlotImpl: FC<PlotProps> = ({
         const svg = svgRef.current
         const [x, y] = svg ? pointer(src, svg) : [NaN, NaN]
         const row = nearest(x, y)
-        if (row === null) setBrush(null)
-        else setFilm(useStore.getState().film === row ? null : row)
+        if (row !== null) setFilm(useStore.getState().film === row ? null : row)
+        else if (cur) {
+          const [px, py] = [xs.invert(x), ys.invert(y)]
+          const inside = px >= cur[0] && px <= cur[1] && py >= cur[2] && py <= cur[3]
+          if (!inside) setBrush(null)
+        }
+        // redraw the store's brush: d3 may have erased or shrunk its rectangle
+        const now = useStore.getState().brush
+        select(g).call(
+          b.move,
+          now ? [[xs(now[0]), ys(now[3])], [xs(now[1]), ys(now[2])]] : null,
+        )
       })
     brushBehaviour.current = b
     select(g).call(b)
@@ -275,10 +296,11 @@ const PlotImpl: FC<PlotProps> = ({
         <g ref={brushRef} className="scatter-brush" />
         {franchisePoints.length > 0 && (
           <g className="scatter-franchise" pointerEvents="none">
-            <path d={path(franchisePoints) ?? undefined} fill="none" stroke="var(--ink)" strokeWidth={1.5} />
+            <path d={path(franchisePoints) ?? undefined} fill="none" stroke="#fff" strokeWidth={4.5} strokeLinejoin="round" />
+            <path d={path(franchisePoints) ?? undefined} fill="none" stroke="var(--ink)" strokeWidth={1.5} strokeLinejoin="round" />
             {franchisePoints.map((p) => (
               <g key={p.row}>
-                <circle cx={xScale(xCol[p.row])} cy={yScale(yCol[p.row])} r={3} fill="var(--ink)" />
+                <circle cx={xScale(xCol[p.row])} cy={yScale(yCol[p.row])} r={3} fill="var(--ink)" stroke="#fff" strokeWidth={1.5} />
                 <text x={xScale(xCol[p.row]) + 5} y={yScale(yCol[p.row]) - 5}>#{p.installment}</text>
               </g>
             ))}

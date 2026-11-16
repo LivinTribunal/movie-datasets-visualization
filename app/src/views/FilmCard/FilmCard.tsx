@@ -16,6 +16,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const hover = useStore((s) => s.hoverFilm)
   const money = useStore((s) => s.money)
   const countries = useStore((s) => s.countries)
+  const franchise = useStore((s) => s.franchise)
   const setFilm = useStore((s) => s.setFilm)
   const toggleCountry = useStore((s) => s.toggleCountry)
   const setFranchise = useStore((s) => s.setFranchise)
@@ -25,7 +26,13 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   if (row === null) {
     return (
       <Panel letter="G" title="Film card" className="area-g">
-        <p className="filmcard-hint">Hover a point or a table row to see a film. Click to pin it.</p>
+        <p className="filmcard-hint">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" />
+          </svg>
+          Hover a point or a table row to see a film. Click to pin it.
+        </p>
       </Panel>
     )
   }
@@ -96,6 +103,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
               key={c}
               type="button"
               className="fc-btn"
+              title={data.countryByIso2.get(c)?.name ?? c}
               aria-pressed={countries.includes(c)}
               onClick={() => toggleCountry(c)}
             >
@@ -103,14 +111,19 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
             </button>
           ))}
           {!Number.isNaN(collection) && (
-            <button type="button" className="fc-btn" onClick={() => setFranchise(collection)}>
+            <button
+              type="button"
+              className="fc-btn"
+              aria-pressed={franchise === collection}
+              onClick={() => setFranchise(franchise === collection ? null : collection)}
+            >
               {data.franchises.collections.get(collection) ?? 'Franchise'} · #{fmtInt(films.installment[row])}
             </button>
           )}
         </div>
 
         {SCORE_GROUPS.map((g) => (
-          <section key={g.title} className="fc-group">
+          <section key={g.title} className={`fc-group fc-${g.title}`}>
             <h4>{g.title} (0–100)</h4>
             {g.keys.map((k) => {
               const v = measureColumn(films, k, money)[row]
