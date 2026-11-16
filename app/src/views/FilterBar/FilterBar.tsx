@@ -7,6 +7,18 @@ import { useStore } from '../../state/store'
 import { Search } from './Search'
 import { YearSlider } from './YearSlider'
 
+const GENRE_MODE = [
+  { value: 'highlight', label: 'highlight', title: 'The genre only highlights films' },
+  { value: 'filter', label: 'filter', title: 'The genre also filters films' },
+]
+const SUBSET = [
+  { value: 'notable', label: 'notable', title: '≥ 10,000 IMDb votes' },
+  { value: 'all', label: 'all', title: '≥ 1,000 IMDb votes' },
+] as const
+const MONEY = [
+  { value: 'usd2025', label: '2025 USD', title: 'inflation-adjusted to 2025 USD' },
+  { value: 'nominal', label: 'nominal', title: 'as reported, not adjusted' },
+] as const
 const TABS = [
   { value: 'taste', label: 'Taste by country' },
   { value: 'ratings', label: 'Money & ratings' },
@@ -38,10 +50,10 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
   const hasSelection = countries.length > 0 || franchise !== null || film !== null || brush !== null
 
   return (
-    <header className="area-f">
-      <div className="app-head">
+    <header className="panel filter-bar area-f">
+      <div className="filter-row">
         <h1>
-          <img src="favicon.svg" alt="" width="16" height="16" />
+          <img src="favicon.svg" alt="" width="24" height="24" />
           Movie Explorer
         </h1>
         <div className="tabs" role="tablist" aria-label="Workspace">
@@ -51,51 +63,40 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
             </button>
           ))}
         </div>
-        <div className="head-tools">
-          <Search data={data} />
-          <button type="button" className="text-btn" onClick={reset}>
+        <Search data={data} />
+        <div className="filter-spacer">
+          <YearSlider />
+          <ChipGroup label="Film subset" value={subset} onChange={setSubset} options={[...SUBSET]} />
+          <ChipGroup label="Money" value={money} onChange={setMoney} options={[...MONEY]} />
+          <button type="button" className="btn" onClick={reset}>
             Reset
           </button>
-          <button type="button" className="text-btn" onClick={() => setAbout(true)}>
+          <button type="button" className="btn" onClick={() => setAbout(true)}>
             About
           </button>
         </div>
       </div>
-      <div className="filter-strip">
-        <div className="filter-row">
+      <div className="filter-row filter-row-groups">
           <ChipGroup
             label="Genre family"
             value={family}
             onChange={setFamily}
             options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
           />
-        </div>
-        <div className="filter-row filter-row-2">
-          <div className="filter-group">
-            <span className="group-label">Years</span>
-            <YearSlider />
-          </div>
-          <label className="check">
-            <input type="checkbox" checked={genreOnly} onChange={(e) => setGenreOnly(e.target.checked)} />
-            Only this genre
-          </label>
-          <label className="check">
-            <input type="checkbox" checked={subset === 'all'} onChange={(e) => setSubset(e.target.checked ? 'all' : 'notable')} />
-            Include films under 10,000 votes
-          </label>
-          <label className="filter-group">
-            <span className="group-label">Money</span>
-            <select value={money} onChange={(e) => setMoney(e.target.value as typeof money)}>
-              <option value="usd2025">2025 USD</option>
-              <option value="nominal">Nominal USD</option>
-            </select>
-          </label>
-          <div className="selection">
-            {hasSelection && <span>Selected:</span>}
+          <ChipGroup
+            label="Genre highlight or filter"
+            value={genreOnly ? 'filter' : 'highlight'}
+            onChange={(v) => setGenreOnly(v === 'filter')}
+            options={GENRE_MODE}
+          />
+        <div className="selection">
+          <span className="group-label">selection</span>
+          {!hasSelection && <span className="selection-hint">nothing yet: click a country, a point, a table row or a franchise line</span>}
+          <>
             {countries.map((iso2) => {
               const name = data.countryByIso2.get(iso2)?.name ?? iso2
               return (
-                <span key={iso2} className="sel-item">
+                <span key={iso2} className="country-chip">
                   <span title={name}>{name}</span>
                   <button type="button" aria-label={`Remove ${name}`} onClick={() => toggleCountry(iso2)}>
                     ×
@@ -104,7 +105,7 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
               )
             })}
             {franchise !== null && (
-              <span className="sel-item">
+              <span className="country-chip">
                 <button type="button" className="chip-name" onClick={() => setTab('franchises')}>
                   {data.franchises.collections.get(franchise) ?? 'franchise'}
                 </button>
@@ -114,7 +115,7 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
               </span>
             )}
             {film !== null && (
-              <span className="sel-item">
+              <span className="country-chip">
                 <button type="button" className="chip-name" onClick={() => setTab('ratings')}>
                   {text?.title[film] ?? fmtImdb(data.films.imdb[film])}
                 </button>
@@ -124,14 +125,14 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
               </span>
             )}
             {brush !== null && (
-              <span className="sel-item">
-                <span>Scatter brush</span>
-                <button type="button" aria-label="Remove scatter brush" onClick={() => setBrush(null)}>
+              <span className="country-chip">
+                <span>scatter brush</span>
+                <button type="button" aria-label="Clear brush" onClick={() => setBrush(null)}>
                   ×
                 </button>
               </span>
             )}
-          </div>
+          </>
         </div>
       </div>
     </header>

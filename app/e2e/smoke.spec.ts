@@ -25,10 +25,10 @@ test('the app loads, filters, brushes, pins and restores from the hash', async (
   await expect(page.locator('.area-c')).toHaveCount(0)
 
   await page.getByRole('radio', { name: 'Horror' }).click()
-  await expect(page.locator('.area-a')).toContainText(/share of horror/i)
+  await expect(page.locator('.area-a')).toContainText('share of Horror')
 
   await page.getByRole('button', { name: 'Zoom in' }).click()
-  await expect(page.getByRole('button', { name: 'Reset zoom' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'reset view' })).toBeVisible()
 
   // a click inside the brushed years picks the genre under it and keeps the years
   const years = page.locator('.area-b .tl-brush .overlay')
@@ -54,12 +54,12 @@ test('the app loads, filters, brushes, pins and restores from the hash', async (
   await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5, { steps: 10 })
   await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.7, { steps: 10 })
   await page.mouse.up()
-  await expect(page.locator('.area-e .panel-note')).toContainText('scatter brush')
+  await expect(page.locator('.area-e .panel-note')).toContainText('inside the scatter brush')
 
-  await expect(page.getByRole('button', { name: 'Remove scatter brush' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Clear brush', exact: true })).toBeVisible()
 
   await page.locator('.area-e [role="row"]').nth(1).click()
-  await expect(card).not.toContainText('No film selected.')
+  await expect(card).not.toContainText('Hover a point or a table row to see a film')
   const title = (await card.locator('h3').innerText()).trim()
   expect(title).not.toBe('')
   await expect(page).toHaveURL(/film=tt/)

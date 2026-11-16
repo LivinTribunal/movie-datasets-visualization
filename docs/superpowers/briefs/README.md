@@ -23,8 +23,8 @@ Rules for every brief:
 | 4 | `ve-table.md`, `vg-card-about.md`, `vf-search-hash.md` | done (#28) |
 | 5 | `q-e2e-budgets-deploy.md` | done (#29) |
 | 6 | `s-visual-polish.md`, `s-interaction-fixes.md`, `s7-workspaces.md` | done (#30) |
-| 7 | `s8-identity-and-copy.md` | done (#31), look replaced by D31 |
-| 8 | `s9-plain-ui.md` | done |
+| 7 | `s8-identity-and-copy.md` | done (#31), reverted by D32 |
+| 8 | `s9-plain-ui.md` | done (#32), reverted by D32 |
 
 Later briefs are written when the code they build on exists, so their
 anchors point at real files.

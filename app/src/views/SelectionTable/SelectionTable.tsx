@@ -93,12 +93,11 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
     if (next.length > 0) setColumns(next)
   }
 
-  const title = `Films${brush ? ' in brush' : ''} (${fmtInt(rows.length)})`
-  const note = brush ? 'Filtered by the scatter brush.' : undefined
+  const note = `${fmtInt(rows.length)} films ${brush ? 'inside the scatter brush' : 'pass the filters'} · bars share one scale per column`
 
   const tools = (
     <details ref={menu} className="columns-menu">
-      <summary>Columns</summary>
+      <summary>columns</summary>
       <div className="columns-list">
         {MEASURE_KEYS.map((k) => (
           <label key={k}>
@@ -120,7 +119,7 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   const arrow = (key: MeasureKey | 'title') => (sort.key === key ? (sort.desc ? '▼' : '▲') : '')
 
   return (
-    <Panel title={title} className="area-e" tools={tools} note={note}>
+    <Panel letter="E" title="Selection table" className="area-e" tools={tools} note={note}>
       <div ref={ref} className="table-wrap">
         {width > 0 && height > 0 && (
             <div ref={scroller} className="table-scroll" role="table" aria-label="Selected films" onScroll={onScroll}>
