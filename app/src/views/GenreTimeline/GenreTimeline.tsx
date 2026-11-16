@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type FC } from 'react'
 import { area, brushX, pointer, scaleLinear, select, type BrushBehavior, type D3BrushEvent } from 'd3'
 import { Panel } from '../../components/Panel'
 import { Tooltip } from '../../components/Tooltip'
@@ -166,24 +166,19 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
   const step = years.length > 1 ? iw / (years.length - 1) : iw
   const xTicks = measure === 'netflix' ? years : years.filter((v) => v % 10 === 0)
 
-  let tip: ReactNode = null
+  let tip: string | null = null
   if (hover) {
-    if (timeline.totals[hover.index] <= 0) tip = `${hover.year}: no data`
+    if (timeline.totals[hover.index] <= 0) tip = `${hover.year} · no data`
     else if (hover.family >= 0) {
       const share = timeline.shares[hover.family][hover.index]
-      tip = (
-        <>
-          <b>{data.families[hover.family].name}</b><br />
-          {fmtPct(share)} {option.of} in {hover.year}<br />
-          {fmtInt(timeline.films[hover.index])} {option.unit} that year
-        </>
-      )
+      tip = `${data.families[hover.family].name} · ${hover.year} · ${fmtPct(share)} ${option.of} · ${fmtInt(timeline.films[hover.index])} ${option.unit} that year`
     }
   }
 
   return (
     <Panel
-      title={`Genre share of ${option.label} by year`}
+      letter="B"
+      title="Genre timeline"
       className="area-b"
       tools={
         <select
@@ -204,8 +199,9 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
       }
       note={
         <>
-          Films with n genres count 1/n per genre. Hatched: under {THIN} films.
-          {measure === 'votes' && ' IMDb votes measure popularity.'}
+          Each film counts 1/n in each of its n genres.
+          {measure === 'votes' && ' Votes show popularity, not rating.'}
+          {` Hatched: under ${THIN} films.`}
         </>
       }
     >

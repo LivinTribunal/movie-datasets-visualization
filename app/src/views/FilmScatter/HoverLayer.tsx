@@ -31,10 +31,10 @@ export const HoverRing: FC<{ geometry: Geometry }> = ({ geometry }) => {
   const p = position(geometry, pinned)
   return (
     <g className="scatter-rings" pointerEvents="none">
-      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="#fff" strokeWidth={5.5} />}
-      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="var(--ink)" strokeWidth={2.5} />}
+      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="#fff" strokeWidth={4.5} />}
+      {p && <circle cx={p[0]} cy={p[1]} r={8} fill="none" stroke="var(--ink)" strokeWidth={1.5} />}
       {h && <circle cx={h[0]} cy={h[1]} r={8} fill="none" stroke="#fff" strokeWidth={4.5} />}
-      {h && <circle cx={h[0]} cy={h[1]} r={8} fill="none" stroke="var(--ink)" strokeWidth={1.5} />}
+      {h && <circle cx={h[0]} cy={h[1]} r={8} fill="none" stroke="var(--accent)" strokeWidth={1.5} />}
     </g>
   )
 }
@@ -56,9 +56,7 @@ export const HoverTip: FC<HoverTipProps> = ({ geometry, xKey, yKey, year, titles
   const title = titles ? (titles[hover] ?? 'untitled') : 'loading title…'
   return (
     <Tooltip x={pos[0]} y={pos[1]} width={width} height={height}>
-      <strong>{title}</strong>
-      <br />
-      {fmtValue('year', year[hover])}
+      <strong>{title}</strong> · {fmtValue('year', year[hover])}
       <br />
       {MEASURES[xKey].label}: {fmtValue(xKey, geometry.xCol[hover])}
       <br />

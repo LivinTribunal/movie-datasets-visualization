@@ -9,11 +9,10 @@
   padding: 4px;
   list-style: none;
   background: var(--panel);
-  border: 1px solid var(--line);
   border-radius: var(--radius-m);
   box-shadow: var(--shadow-pop);
 }
-.search-group { padding: 6px 8px 2px; color: var(--muted); font-size: 12px; }
+.search-group { padding: 6px 8px 2px; color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
 .search-option {
   display: flex;
   align-items: center;

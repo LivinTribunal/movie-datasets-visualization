@@ -9,7 +9,7 @@
 .scatter-title { fill: var(--muted); font-size: 11px; }
 .scatter-diagonal { stroke: var(--faint); stroke-dasharray: 3 3; }
 .scatter-franchise text { fill: var(--ink); font-size: 11px; font-weight: 600; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; }
-.scatter-brush .selection { fill: rgba(0, 0, 0, 0.06); fill-opacity: 1; stroke: var(--ink); stroke-width: 1px; rx: 0; }
+.scatter-brush .selection { fill: var(--accent); fill-opacity: 0.08; stroke: var(--accent); stroke-width: 1px; rx: 3px; }
 .area-c .panel-tools { flex: 1 1 260px; min-width: 0; justify-content: flex-end; }
 .area-c .panel-tools select { min-width: 0; flex: 0 1 auto; max-width: 100%; text-overflow: ellipsis; font-size: 12px; }
 .area-c .panel-head { flex-wrap: wrap; row-gap: 6px; }

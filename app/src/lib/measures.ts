@@ -68,8 +68,8 @@ export function isScore(key: MeasureKey): boolean {
 }
 
 export const PRESETS: { label: string; x: MeasureKey; y: MeasureKey }[] = [
-  { label: 'Critics vs audience', x: 'tomatometer', y: 'audience' },
-  { label: 'Box office vs critics', x: 'revenue', y: 'tomatometer' },
-  { label: 'Budget vs rating', x: 'budget', y: 'imdb' },
+  { label: 'critics vs audience', x: 'tomatometer', y: 'audience' },
+  { label: 'revenue vs critics', x: 'revenue', y: 'tomatometer' },
+  { label: 'budget vs rating', x: 'budget', y: 'imdb' },
   { label: 'ROI', x: 'budget', y: 'roi' },
 ]

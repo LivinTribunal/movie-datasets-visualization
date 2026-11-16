@@ -486,3 +486,14 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - **Why**: both earlier restyles added a visual identity and both read as
   machine-made to the team. A plain tool keeps attention on the charts, and
   each control looks like what it does.
+
+### D32. Back to the #30 look; D30 and D31 reverted (2026-11-16)
+
+- **What**: the app's files under `app/` are restored to the state after
+  PR #30 (visual polish and three workspaces): rounded panels, the blue accent,
+  segmented controls and that version's copy. D30's black band and poster type
+  and D31's plain controls are both gone.
+- **Why**: the team compared the three looks side by side and liked the #30
+  one best. Both later restyles were meant to look less generic, and to the
+  team both looked more generic. The controls work the same in all three, so
+  nothing functional is lost.
