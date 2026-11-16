@@ -1,34 +1,49 @@
 import { describe, expect, it } from 'vitest'
-import { filmIndices, type FilmFilter } from './filter'
-import type { Columnar, FilmRow } from './types'
+import { countMask, filmMask, type FilmFilter } from './filter'
+import type { Films } from './types'
 
+// Rows: 0 US 1990 drama; 1 FR 2000 comedy; 2 none 2005 action; 3 US+FR 2010 comedy+action.
 const films = {
-  columns: {
-    year: [1990, 2000, null, 2010],
-    notable: [true, false, true, true],
-    families: [['Drama'], ['Comedy'], ['Drama'], ['Comedy', 'Action']],
-    countries: [['US'], ['FR'], ['US'], ['US', 'FR']],
+  rows: 4,
+  notable: 2,
+  year: Float64Array.from([1990, 2000, 2005, 2010]),
+  family_mask: Uint8Array.from([0b001, 0b010, 0b100, 0b110]),
+  countries: {
+    offsets: Uint32Array.from([0, 1, 2, 2, 4]),
+    codes: Uint16Array.from([0, 1, 0, 1]),
+    values: ['US', 'FR'],
   },
-} as unknown as Columnar<FilmRow>
+} as unknown as Films
 
-const all: FilmFilter = {
-  yearRange: [1900, 2026], families: [], subset: 'working', selectedCountry: null,
-}
+const all: FilmFilter = { yearRange: null, subset: 'all', countries: [], genreOnly: false, family: 0 }
+const rows = (f: Partial<FilmFilter>) => Array.from(filmMask(films, { ...all, ...f }))
 
-describe('filmIndices', () => {
-  it('excludes null years', () => {
-    expect(filmIndices(films, all)).toEqual([0, 1, 3])
+describe('filmMask', () => {
+  it('passes every film with no constraint', () => {
+    expect(rows({})).toEqual([1, 1, 1, 1])
   })
-  it('keeps the year range inclusive', () => {
-    expect(filmIndices(films, { ...all, yearRange: [2000, 2010] })).toEqual([1, 3])
+  it('keeps the year range inclusive and null means any year', () => {
+    expect(rows({ yearRange: [2000, 2005] })).toEqual([0, 1, 1, 0])
+    expect(rows({ yearRange: null })).toEqual([1, 1, 1, 1])
   })
-  it('keeps only notable films in the notable subset', () => {
-    expect(filmIndices(films, { ...all, subset: 'notable' })).toEqual([0, 3])
+  it('keeps the notable prefix', () => {
+    expect(rows({ subset: 'notable' })).toEqual([1, 1, 0, 0])
   })
-  it('keeps films sharing a family', () => {
-    expect(filmIndices(films, { ...all, families: ['Action'] })).toEqual([3])
+  it('matches any of the chosen countries', () => {
+    expect(rows({ countries: ['FR'] })).toEqual([0, 1, 0, 1])
+    expect(rows({ countries: ['US', 'FR'] })).toEqual([1, 1, 0, 1])
   })
-  it('keeps films from the selected country', () => {
-    expect(filmIndices(films, { ...all, selectedCountry: 'FR' })).toEqual([1, 3])
+  it('matches nothing for a country unknown to the pack', () => {
+    expect(rows({ countries: ['ZZ'] })).toEqual([0, 0, 0, 0])
+  })
+  it('filters by family only when genreOnly is on', () => {
+    expect(rows({ family: 2, genreOnly: false })).toEqual([1, 1, 1, 1])
+    expect(rows({ family: 2, genreOnly: true })).toEqual([0, 0, 1, 1])
+  })
+})
+
+describe('countMask', () => {
+  it('counts passing films', () => {
+    expect(countMask(Uint8Array.from([1, 0, 1, 1]))).toBe(3)
   })
 })

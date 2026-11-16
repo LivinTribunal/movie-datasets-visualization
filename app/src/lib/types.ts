@@ -1,65 +1,98 @@
-// Mirrors SCHEMA in pipeline/src/movies/validate/app.py. Keep in sync.
+// Mirrors the packs written by `movies export` (app design spec §2). Property names are pack column names.
 
-export type Columnar<T> = { columns: { [K in keyof T]: T[K][] } }
+import type { DictColumn, ListColumn } from './pack'
 
 export type MoneySrc = 'numbers' | 'tmdb' | 'wikidata' | 'wikipedia'
 
-export interface FilmRow {
-  imdb_id: string
-  tmdb_id: number | null
-  title: string
-  year: number | null
-  notable: boolean
+/** films.pack. Row index = film handle; rows `< notable` are the notable subset. */
+export interface Films {
+  rows: number
+  notable: number
+  /** Genre names; bit i of genre_mask. */
   genres: string[]
+  /** Family names in family_order; bit i of family_mask. */
   families: string[]
-  countries: string[]
-  imdb_votes: number | null
-  budget_usd2025: number | null
-  revenue_usd2025: number | null
-  budget_src: MoneySrc | null
-  revenue_src: MoneySrc | null
-  budget_converted: boolean
-  revenue_converted: boolean
-  budget_disagree: boolean
-  revenue_disagree: boolean
-  money_fuzzy: boolean
-  roi: number | null
-  imdb_100: number | null
-  tmdb_100: number | null
-  tomatometer_100: number | null
-  audience_100: number | null
-  metascore_100: number | null
-  mc_critic_reviews: number | null
-  mc_user_100: number | null
-  letterboxd_100: number | null
-  gap: number | null
+  imdb: Uint32Array
+  tmdb_id: Float64Array
+  year: Float64Array
+  runtime: Float64Array
+  imdb_votes: Float64Array
+  genre_mask: Uint32Array
+  family_mask: Uint8Array
+  countries: ListColumn
+  budget_usd: Float64Array
+  budget_usd2025: Float64Array
+  revenue_usd: Float64Array
+  revenue_usd2025: Float64Array
+  roi: Float64Array
+  budget_src: DictColumn
+  revenue_src: DictColumn
+  /** Bits: 0 budget converted, 1 revenue converted, 2 budget sources disagree, 3 revenue sources disagree, 4 fuzzy money match. */
+  flags: Uint8Array
+  imdb_100: Float64Array
+  tmdb_100: Float64Array
+  tomatometer_100: Float64Array
+  audience_100: Float64Array
+  metascore_100: Float64Array
+  mc_user_100: Float64Array
+  letterboxd_100: Float64Array
+  gap: Float64Array
+  mc_critic_reviews: Float64Array
+  /** NaN when the film is not part of an exported franchise. */
+  collection_id: Float64Array
+  installment: Float64Array
 }
 
-export interface GenreYearRow {
-  subset: 'notable' | 'working'
-  year: number
-  genre: string
-  family: string
-  films: number
-  votes: number | null
-  revenue_usd2025: number | null
-  revenue_films: number | null
+/** films_text.pack, same rows as Films. */
+export interface FilmsText {
+  rows: number
+  title: (string | null)[]
+  director: (string | null)[]
 }
 
-export interface CountryGenreRow {
-  source: string
-  country_iso2: string
-  year: number | null
-  genre: string
-  family: string
-  share: number | null
-  score: number | null
-  coverage: number | null
-  fuzzy_share: number | null
-  estimated_share: number | null
+export interface CountryGenre {
+  rows: number
+  source: DictColumn
+  country: DictColumn
+  year: Uint16Array
+  /** Index into Films.genres. */
+  genre: Uint8Array
+  score: Float64Array
 }
 
-export interface CountryRow {
+export interface CountryYear {
+  rows: number
+  source: DictColumn
+  country: DictColumn
+  year: Uint16Array
+  entries: Float64Array
+  coverage: Float64Array
+  fuzzy_share: Float64Array
+  estimated_share: Float64Array
+  measure: DictColumn
+}
+
+export interface Franchises {
+  rows: number
+  collection_id: Float64Array
+  installment: Float64Array
+  n_released: Float64Array
+  tmdb_id: Float64Array
+  /** NaN when the part is not in films.pack. */
+  film_row: Float64Array
+  year: Float64Array
+  family_mask: Uint8Array
+  imdb_100: Float64Array
+  tomatometer_100: Float64Array
+  audience_100: Float64Array
+  imdb_100_vs_first: Float64Array
+  revenue_usd2025: Float64Array
+  revenue_vs_first: Float64Array
+  title: (string | null)[]
+  collections: Map<number, string>
+}
+
+export interface Country {
   iso2: string
   iso_numeric: string | null
   name: string
@@ -67,30 +100,11 @@ export interface CountryRow {
   subregion: string | null
 }
 
-export interface GenreFamilyRow {
-  genre: string
-  family: string
-  family_order: number
+/** Array index in AppData.families = bit in Films.family_mask. */
+export interface Family {
+  name: string
   colour: string
-}
-
-export interface FranchiseRow {
-  collection_id: number
-  collection_name: string
-  installment: number
-  n_released: number
-  tmdb_id: number
-  imdb_id: string | null
-  title: string
-  year: number
-  imdb_100: number | null
-  imdb_100_vs_prev: number | null
-  imdb_100_vs_first: number | null
-  tomatometer_100: number | null
-  audience_100: number | null
-  revenue_usd2025: number | null
-  revenue_vs_prev: number | null
-  revenue_vs_first: number | null
+  genres: string[]
 }
 
 export interface Meta {
@@ -98,15 +112,19 @@ export interface Meta {
   base_year: number
   counts: Record<string, number>
   notes: string[]
+  attribution: string[]
+  sources: Record<string, string>
 }
 
 export interface AppData {
-  films: Columnar<FilmRow>
-  genreYear: Columnar<GenreYearRow>
-  countryGenre: Columnar<CountryGenreRow>
-  countries: Columnar<CountryRow>
-  genreFamilies: Columnar<GenreFamilyRow>
-  franchises: Columnar<FranchiseRow>
-  topo: unknown
+  films: Films
+  countryGenre: CountryGenre
+  countryYear: CountryYear
+  franchises: Franchises
+  countries: Country[]
+  countryByIso2: Map<string, Country>
+  families: Family[]
+  /** For each genre index (Films.genres), the index of its family in `families`. */
+  genreFamily: Uint8Array
   meta: Meta
 }
