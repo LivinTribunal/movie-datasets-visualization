@@ -16,6 +16,7 @@ MONEY = {
     "worldwide_gross",
     "international_box_office",
     "opening_weekend",
+    "video_sales",
 }
 
 
@@ -30,6 +31,10 @@ def _text(col: str) -> pl.Expr:
     return pl.when(s == "").then(None).otherwise(s)
 
 
+def _num(col: str) -> pl.Expr:
+    return pl.col(col).str.strip_chars().cast(pl.Float64, strict=False)
+
+
 def _dates(col: str, fmt: str | None, *, fix_century: bool = False) -> list[pl.Expr]:
     """release_date and year; the year falls back to a 4-digit year in the raw string.
 
@@ -40,6 +45,17 @@ def _dates(col: str, fmt: str | None, *, fix_century: bool = False) -> list[pl.E
         day = pl.when(day > SNAPSHOT).then(day.dt.offset_by("-100y")).otherwise(day)
     year = day.dt.year().fill_null(pl.col(col).str.extract(r"\b(\d{4})\b", 1).cast(pl.Int32))
     return [day.alias("release_date"), year.cast(pl.Int16).alias("year")]
+
+
+def _theaters(group: int) -> pl.Expr:
+    """Opening (1) or max (2) count from '4,134 opening theaters/4,202 max. theaters, ...'."""
+    n = (
+        pl.col("Theater counts")
+        .str.extract(r"^\s*([\d,]+) opening theaters/([\d,]+) max\. theaters", group)
+        .str.replace_all(",", "")
+        .cast(pl.Int32, strict=False)
+    )
+    return pl.when(n > 0).then(n)
 
 
 def clean_budgets(raw: pl.DataFrame) -> pl.DataFrame:
@@ -63,6 +79,11 @@ def clean_metrics(raw: pl.DataFrame) -> pl.DataFrame:
         parse_usd(pl.col("Worldwide Gross (USD)")).alias("worldwide_gross"),
         parse_usd(pl.col("International Box Office (USD)")).alias("international_box_office"),
         parse_usd(pl.col("Opening Weekend (USD)")).alias("opening_weekend"),
+        parse_usd(pl.col("Total Est. Domestic Video Sales (USD)")).alias("video_sales"),
+        _theaters(1).alias("theaters_open"),
+        _theaters(2).alias("theaters_max"),
+        pl.when(_num("Legs") > 0).then(_num("Legs")).alias("legs"),
+        _num("Domestic Share Percentage").alias("domestic_share"),
         _text("MPAA Rating").alias("mpaa_rating"),
         _text("Running Time (minutes)").cast(pl.Int16, strict=False).alias("runtime"),
         _text("Franchise").alias("franchise"),

@@ -3,12 +3,14 @@ import datetime as dt
 import polars as pl
 import pytest
 
+from movies.derive.extras import DETAIL_COLUMNS
 from movies.export.app import (
     country_tables,
     films_table,
     franchises_table,
     to_columns,
     write_country_tables,
+    write_detail,
     write_films,
     write_franchises,
 )
@@ -49,6 +51,39 @@ MONEY = pl.DataFrame(
         "revenue_disagree": [False, True, False, False],
         "roi": [3.00049, None, None, None],
     }
+)
+EXTRAS = pl.DataFrame(
+    {
+        "imdb_id": ["tt1", "tt2", "tt3", "tt4"],
+        "story_source": ["book", None, "comic", None],
+        "story_source_src": ["numbers", None, "tmdb", None],
+        "age_rating": ["PG-13", "NR", None, None],
+        "studio": ["disney", "independent", None, None],
+        "opening_usd": [1000.0, None, None, None],
+        "opening_usd2025": [1500.5, None, None, None],
+        "theaters": pl.Series([3000, None, None, None], dtype=pl.Int32),
+        "legs": [3.5, None, None, None],
+        "video_usd2025": [None, None, None, None],
+        "numbers_fuzzy": [True, False, False, False],
+        "oscar_wins": pl.Series([1, 0, None, None], dtype=pl.Int16),
+        "oscar_noms": pl.Series([3, 0, None, None], dtype=pl.Int16),
+        "overview": ["Plot A", None, "Plot C", None],
+        "cast": ["X, Y", None, None, None],
+        "writers": [None, None, None, None],
+        "companies": ["Pixar", None, None, None],
+        "qid": ["Q1", None, None, None],
+        "csfd_id": ["12", None, None, None],
+        "filmaffinity_id": [None, None, None, None],
+        "allocine_id": [None, None, None, None],
+        "douban_id": [None, None, None, None],
+    },
+    schema_overrides={
+        "video_usd2025": pl.Float64,
+        "writers": pl.String,
+        "filmaffinity_id": pl.String,
+        "allocine_id": pl.String,
+        "douban_id": pl.String,
+    },
 )
 RATINGS = pl.DataFrame(
     {
@@ -100,7 +135,7 @@ FRANCHISES = pl.DataFrame(
 
 
 def _table():
-    return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES)
+    return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES, EXTRAS)
 
 
 def test_every_film_sorted_by_votes_and_notable_form_a_prefix():
@@ -131,7 +166,7 @@ def test_films_table_takes_genres_from_film_genres_not_the_raw_column():
 
 def test_money_fuzzy_needs_numbers_source():
     money = MONEY.with_columns(budget_src=pl.lit("tmdb"), revenue_src=pl.lit("tmdb"))
-    out = films_table(FILMS, money, RATINGS, FILM_GENRES, FRANCHISES)
+    out = films_table(FILMS, money, RATINGS, FILM_GENRES, FRANCHISES, EXTRAS)
     assert out["money_fuzzy"].to_list() == [False, False, False, False]
 
 
@@ -146,7 +181,7 @@ def test_unknown_production_countries_export_as_empty_list():
     films = FILMS.with_columns(
         production_countries=pl.Series([None, None, ["CZ"], ["US"]], dtype=pl.List(pl.String))
     )
-    out = films_table(films, MONEY, RATINGS, FILM_GENRES, FRANCHISES)
+    out = films_table(films, MONEY, RATINGS, FILM_GENRES, FRANCHISES, EXTRAS)
     assert out["countries"].to_list() == [[], ["CZ"], [], ["US"]]
 
 
@@ -169,8 +204,9 @@ def test_write_films_roundtrip_masks_and_flags(tmp_path):
     assert c["runtime"] == [120, None, 100, 90]
     assert c["genre_mask"] == [0b11, 0b01, 0b10, 0b10]
     assert c["family_mask"] == [0b11, 0b01, 0b10, 0b10]
-    # tt1: budget converted (bit 0) and fuzzy money (bit 4); tt2: revenue sources disagree (bit 3)
-    assert c["flags"] == [0b10001, 0b01000, 0, 0]
+    # tt1: budget converted (bit 0), fuzzy money (bit 4), fuzzy Numbers extras (bit 5);
+    # tt2: revenue sources disagree (bit 3)
+    assert c["flags"] == [0b110001, 0b01000, 0, 0]
     assert c["countries"] == [["US", "CZ"], ["CZ"], ["US"], ["US"]]
     assert c["budget_src"] == ["numbers", None, None, None]
     assert c["budget_usd2025"][0] == pytest.approx(1000.4, rel=1e-6)
@@ -180,6 +216,17 @@ def test_write_films_roundtrip_masks_and_flags(tmp_path):
     assert c["mc_critic_reviews"] == [38, None, None, None]
     assert c["collection_id"] == [7, 7, None, None]
     assert c["installment"] == [1, 2, None, None]
+    assert c["story_source"] == ["book", None, "comic", None]
+    assert c["story_source_src"] == ["numbers", None, "tmdb", None]
+    assert c["age_rating"] == ["PG-13", "NR", None, None]
+    assert c["studio"] == ["disney", "independent", None, None]
+    assert c["opening_usd"] == [1000.0, None, None, None]
+    assert c["opening_usd2025"][0] == pytest.approx(1500.5, rel=1e-6)
+    assert c["legs"][0] == 3.5
+    assert c["video_usd2025"] == [None] * 4
+    assert c["theaters"] == [3000, None, None, None]
+    assert c["oscar_wins"] == [1, 0, None, None]
+    assert c["oscar_noms"] == [3, 0, None, None]
     text_cols = read_pack(text).columns
     assert text_cols["title"] == ["A", "B", "C", "D"]
     assert text_cols["director"] == [None, "Db", "Dc", "Dd"]
@@ -281,3 +328,33 @@ def test_write_franchises_roundtrip(tmp_path):
     assert pack.columns["imdb_100"] == [80.0, 70.0, None]
     assert pack.columns["imdb_100_vs_first"] == [0.0, -10.0, None]
     assert pack.columns["title"] == ["One", "Two", "Nine"]
+
+
+def _detail(n: int) -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "imdb_id": [f"tt{i}" for i in range(n)],
+            **{c: [f"{c}{i}" for i in range(n)] for c in DETAIL_COLUMNS},
+        }
+    )
+
+
+def test_write_detail_shards_cover_the_notable_rows_only(tmp_path):
+    (tmp_path / "films_detail_9.pack").write_bytes(b"stale")
+    shards = write_detail(_detail(2500), 2100, tmp_path)
+    assert shards == 3
+    assert sorted(p.name for p in tmp_path.iterdir()) == [
+        f"films_detail_{k}.pack" for k in range(3)
+    ]
+    sizes = [read_pack(tmp_path / f"films_detail_{k}.pack").rows for k in range(3)]
+    assert sizes == [1000, 1000, 100]
+    last = read_pack(tmp_path / "films_detail_2.pack")
+    assert list(last.columns) == DETAIL_COLUMNS
+    assert last.columns["overview"][0] == "overview2000"
+
+
+def test_detail_text_comes_from_extras_and_null_becomes_empty():
+    detail = (
+        _table().select("imdb_id").join(EXTRAS.select("imdb_id", *DETAIL_COLUMNS), on="imdb_id")
+    )
+    assert detail["overview"].to_list() == ["Plot A", None, "Plot C", None]

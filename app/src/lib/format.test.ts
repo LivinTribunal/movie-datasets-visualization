@@ -19,6 +19,8 @@ describe('format', () => {
   })
   it('picks by measure', () => {
     expect(fmtValue('budget', 35e6)).toBe('$35M')
+    expect(fmtValue('opening', 35e6)).toBe('$35M')
+    expect(fmtValue('legs', 2.5)).toBe(fmtRatio(2.5))
     expect(fmtValue('tomatometer', 77.4)).toBe('77')
     expect(fmtValue('roi', 3.2)).toBe('3.2×')
     expect(fmtValue('votes', 1204)).toBe('1,204')

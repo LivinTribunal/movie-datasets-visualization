@@ -1,13 +1,35 @@
-import type { FC } from 'react'
+import { useCallback, useEffect, useState, type FC } from 'react'
 import { Panel } from '../../components/Panel'
-import { loadText, useLazy } from '../../lib/data'
-import { filmCountries, filmGenres, fuzzyMoney, moneyFacts, SCORE_GROUPS, SRC_LABEL, type MoneyFact } from '../../lib/film'
+import { loadDetail, loadText, useLazy } from '../../lib/data'
+import { filmCountries, filmGenres, fuzzyMoney, moneyFacts, releaseFacts, SCORE_GROUPS, SRC_LABEL, STORY_LABEL, STUDIO_LABEL, type MoneyFact } from '../../lib/film'
 import { fmtImdb, fmtInt, fmtMoney, fmtRatio, fmtScore } from '../../lib/format'
 import { measureColumn, MEASURES } from '../../lib/measures'
-import type { AppData } from '../../lib/types'
+import type { AppData, FilmsDetail } from '../../lib/types'
 import { useStore } from '../../state/store'
 import { Poster } from './Poster'
 import './filmcard.css'
+
+const present = (v: number) => !Number.isNaN(v)
+
+const LINKS: { key: 'qid' | 'csfd_id' | 'filmaffinity_id' | 'allocine_id' | 'douban_id'; name: string; url: (id: string) => string }[] = [
+  { key: 'qid', name: 'Wikidata', url: (id) => `https://www.wikidata.org/wiki/${id}` },
+  { key: 'csfd_id', name: 'ČSFD', url: (id) => `https://www.csfd.cz/film/${id}/` },
+  { key: 'filmaffinity_id', name: 'FilmAffinity', url: (id) => `https://www.filmaffinity.com/en/film${id}.html` },
+  { key: 'allocine_id', name: 'AlloCiné', url: (id) => `https://www.allocine.fr/film/fichefilm_gen_cfilm=${id}.html` },
+  { key: 'douban_id', name: 'Douban', url: (id) => `https://movie.douban.com/subject/${id}/` },
+]
+
+/** The detail shard entry for a row; null until it loads, and for rows outside the shards. */
+function useDetail(row: number, meta: AppData['meta']): { shard: FilmsDetail; index: number } | null {
+  const [state, setState] = useState<{ row: number; value: { shard: FilmsDetail; index: number } | null } | null>(null)
+  const load = useCallback(() => (row < 0 ? Promise.resolve(null) : loadDetail(row, meta)), [row, meta])
+  useEffect(() => {
+    let live = true
+    load().then((value) => { if (live) setState({ row, value }) }, () => { /* the card shows no about group */ })
+    return () => { live = false }
+  }, [load, row])
+  return state?.row === row ? state.value : null
+}
 
 const signed = (v: number) => (Number.isNaN(v) ? 'no data' : `${v < 0 ? '−' : '+'}${Math.abs(Math.round(v))} points`)
 
@@ -23,6 +45,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const text = useLazy(loadText)
 
   const row = hover ?? pinned
+  const detail = useDetail(row ?? -1, data.meta)
   if (row === null) {
     return (
       <Panel letter="G" title="Film card" className="area-g">
@@ -54,6 +77,29 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const m = moneyFacts(films, row, money)
   const fuzzy = fuzzyMoney(films, row)
   const gap = films.gap[row]
+  const rel = releaseFacts(films, row, money)
+  const hasRelease = !!(rel.age || rel.story || rel.studio) ||
+    [rel.opening, rel.theaters, rel.legs, rel.video, rel.noms].some(present)
+  const about = detail && {
+    overview: detail.shard.overview[detail.index],
+    cast: detail.shard.cast[detail.index],
+    writers: detail.shard.writers[detail.index],
+    companies: detail.shard.companies[detail.index],
+    links: LINKS.flatMap((l) => {
+      const id = detail.shard[l.key][detail.index]
+      return id ? [{ name: l.name, href: l.url(id) }] : []
+    }),
+  }
+  const hasAbout = !!about && !!(about.overview || about.cast || about.writers || about.companies || about.links.length)
+  const releaseRow = (label: string, value: string, badges: (string | false)[] = []) => (
+    <div className="fc-money" key={label}>
+      <span className="fc-label">{label}</span>
+      <span className="fc-value">{value}</span>
+      <span className="fc-badges">
+        {badges.map((b) => b && <span className="fc-badge" key={b}>{b}</span>)}
+      </span>
+    </div>
+  )
 
   const moneyRow = (label: string, f: MoneyFact) => (
     <div className="fc-money" key={label}>
@@ -160,6 +206,49 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
             <span className="fc-value">{fmtRatio(m.roi)}</span>
           </div>
         </section>
+
+        {hasRelease && (
+          <section className="fc-group">
+            <h4>release</h4>
+            {rel.age && releaseRow('age rating (US)', rel.age)}
+            {rel.story && releaseRow('story source', STORY_LABEL[rel.story] ?? rel.story, [rel.storySrc === 'tmdb' && 'from TMDB keywords'])}
+            {rel.studio && releaseRow('studio', STUDIO_LABEL[rel.studio] ?? rel.studio)}
+            {present(rel.opening) &&
+              releaseRow('opening weekend, US', `${fmtMoney(rel.opening)} ${unit}`, [
+                money === 'usd2025' && 'inflation-adjusted', 'US only', 'source: The Numbers', rel.fuzzy && 'fuzzy title match',
+              ])}
+            {present(rel.theaters) && releaseRow('widest release', `${fmtInt(rel.theaters)} theatres`)}
+            {present(rel.legs) && releaseRow('legs, US gross ÷ opening', fmtRatio(rel.legs))}
+            {present(rel.video) && releaseRow('home video', `${fmtMoney(rel.video)} 2025 USD`, ['estimate'])}
+            {present(rel.noms) &&
+              releaseRow(
+                'Oscars',
+                rel.noms === 0 ? 'none' : `${fmtInt(rel.wins)} wins of ${fmtInt(rel.noms)} nominations`,
+                ['Wikidata'],
+              )}
+          </section>
+        )}
+
+        {about && hasAbout && (
+          <section className="fc-group fc-about">
+            <h4>about</h4>
+            {about.overview && <p>{about.overview}</p>}
+            {about.cast && <p><span className="fc-label">cast</span> {about.cast}</p>}
+            {about.writers && <p><span className="fc-label">written by</span> {about.writers}</p>}
+            {about.companies && <p><span className="fc-label">companies</span> {about.companies}</p>}
+            {about.links.length > 0 && (
+              <p>
+                <span className="fc-label">links</span>{' '}
+                {about.links.map((l, i) => (
+                  <span key={l.name}>
+                    {i > 0 && ' · '}
+                    <a href={l.href} target="_blank" rel="noreferrer">{l.name}</a>
+                  </span>
+                ))}
+              </p>
+            )}
+          </section>
+        )}
       </div>
     </Panel>
   )

@@ -1,0 +1,14 @@
+{
+  "head": {"vars": ["imdb", "film", "st", "award", "kind"]},
+  "results": {
+    "bindings": [
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S1"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q102427"}, "kind": {"type": "literal", "value": "win"}},
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S2"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q102427"}, "kind": {"type": "literal", "value": "nom"}},
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S3"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q103360"}, "kind": {"type": "literal", "value": "nom"}},
+      {"imdb": {"type": "literal", "value": "tt0000001"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q100"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S4"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q103916"}, "kind": {"type": "literal", "value": "win"}},
+      {"imdb": {"type": "literal", "value": "tt0000002"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S5"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q106291"}, "kind": {"type": "literal", "value": "nom"}},
+      {"imdb": {"type": "literal", "value": "tt0000002"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S6"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q106291"}, "kind": {"type": "literal", "value": "nom"}},
+      {"imdb": {"type": "literal", "value": "tt0000002"}, "film": {"type": "uri", "value": "http://www.wikidata.org/entity/Q200"}, "st": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/S6"}, "award": {"type": "uri", "value": "http://www.wikidata.org/entity/Q106291"}, "kind": {"type": "literal", "value": "nom"}}
+    ]
+  }
+}

@@ -23,6 +23,39 @@ _RATINGS = (
     "letterboxd_100",
 )
 _MONEY = ("budget_usd", "budget_usd2025", "revenue_usd", "revenue_usd2025", "roi")
+_EXTRA_MONEY = ("opening_usd", "opening_usd2025", "legs", "video_usd2025")
+DETAIL_COLUMNS = {
+    c: "str"
+    for c in (
+        "overview",
+        "cast",
+        "writers",
+        "companies",
+        "qid",
+        "csfd_id",
+        "filmaffinity_id",
+        "allocine_id",
+        "douban_id",
+    )
+}
+DETAIL_LIMIT = 600_000
+DICT_VALUES = {
+    "story_source": {"original", "book", "comic", "true_story", "stage", "screen", "other", None},
+    "story_source_src": {"numbers", "tmdb", None},
+    "age_rating": {"G", "PG", "PG-13", "R", "NC-17", "NR", None},
+    "studio": {
+        "disney",
+        "warner",
+        "universal",
+        "sony",
+        "paramount",
+        "fox",
+        "lionsgate",
+        "mgm",
+        "independent",
+        None,
+    },
+}
 _KEYS = {"source": "dict", "country": "dict", "year": "u16"}
 PACKS: dict[str, dict[str, str]] = {
     "films.pack": {
@@ -43,6 +76,17 @@ PACKS: dict[str, dict[str, str]] = {
         "mc_critic_reviews": "u16",
         "collection_id": "u32",
         "installment": "u8",
+        "story_source": "dict",
+        "story_source_src": "dict",
+        "age_rating": "dict",
+        "studio": "dict",
+        "opening_usd": "f32",
+        "opening_usd2025": "f32",
+        "legs": "f32",
+        "video_usd2025": "f32",
+        "theaters": "u16",
+        "oscar_wins": "u8",
+        "oscar_noms": "u8",
     },
     "films_text.pack": {"title": "str", "director": "str"},
     "films_poster.pack": {"poster": "str"},
@@ -75,7 +119,7 @@ LIMITS: dict[str, int] = {
     "franchises.pack": 200_000,
     "countries.topo.json": 900_000,
 }
-TOTAL_LIMIT = 8_000_000
+TOTAL_LIMIT = 12_000_000
 STALE = ("films.json", "genre_year.json", "country_genre.json", "franchises.json")
 OTHER_FILES = ("countries.topo.json", "meta.json")
 SRC_VALUES = {"numbers", "tmdb", "wikidata", "wikipedia", None}
@@ -103,7 +147,9 @@ def _load_table(data_dir: Path, name: str, errors: list[str]) -> dict[str, list]
     return cols
 
 
-def _load_pack(data_dir: Path, name: str, errors: list[str]) -> Pack | None:
+def _load_pack(
+    data_dir: Path, name: str, errors: list[str], expected: dict[str, str] | None = None
+) -> Pack | None:
     path = data_dir / name
     if not path.exists():
         errors.append(f"{name}: file missing")
@@ -114,10 +160,9 @@ def _load_pack(data_dir: Path, name: str, errors: list[str]) -> Pack | None:
         errors.append(f"{name}: unreadable ({e})")
         return None
     got = {c["name"]: c["type"] for c in pack.header["columns"]}
-    if list(got.items()) != list(PACKS[name].items()):
-        errors.append(
-            f"{name}: columns {list(got.items())} != expected {list(PACKS[name].items())}"
-        )
+    expected = PACKS[name] if expected is None else expected
+    if list(got.items()) != list(expected.items()):
+        errors.append(f"{name}: columns {list(got.items())} != expected {list(expected.items())}")
         return None
     return pack
 
@@ -168,13 +213,26 @@ def _check_films(
             err(f"{col} outside 0-100")
     if _outside(c["gap"], -100, 100):
         err("gap outside -100..100")
-    for col in _MONEY:
+    for col in _MONEY + _EXTRA_MONEY + ("theaters",):
         if _negative(c[col]):
             err(f"negative {col}")
     for col in ("budget_src", "revenue_src"):
         bad = set(c[col]) - SRC_VALUES
         if bad:
             err(f"bad {col} {sorted(bad, key=str)}")
+    for col, allowed in DICT_VALUES.items():
+        bad = set(c[col]) - allowed
+        if bad:
+            err(f"bad {col} {sorted(bad, key=str)}")
+    if any(
+        w is not None and (m is None or m < w)
+        for w, m in zip(c["oscar_wins"], c["oscar_noms"], strict=True)
+    ):
+        err("oscar_noms under oscar_wins")
+    if any(
+        (a is None) != (b is None) for a, b in zip(c["oscar_wins"], c["oscar_noms"], strict=True)
+    ):
+        err("oscar_wins is null for a different set of films than oscar_noms")
     if countries is not None:
         unknown = {x for v in c["countries"] for x in v} - countries
         if unknown:
@@ -314,9 +372,38 @@ def _check_meta(data_dir: Path, errors: list[str]) -> None:
         errors.append(f"meta.json: sources keys are not {sorted(COUNTRY_SOURCES)}")
 
 
+def _check_detail(data_dir: Path, notable: int | None, errors: list[str]) -> None:
+    path = data_dir / "meta.json"
+    try:
+        detail = json.loads(path.read_text()).get("detail")
+    except (OSError, ValueError, AttributeError):
+        return  # _check_meta reports it
+    if not (
+        isinstance(detail, dict)
+        and isinstance(detail.get("shard_size"), int)
+        and isinstance(detail.get("shards"), int)
+        and detail["shard_size"] > 0
+    ):
+        errors.append("meta.json: detail is not {shard_size, shards}")
+        return
+    size, shards = detail["shard_size"], detail["shards"]
+    total = 0
+    for k in range(shards):
+        name = f"films_detail_{k}.pack"
+        pack = _load_pack(data_dir, name, errors, DETAIL_COLUMNS)
+        if pack is None:
+            continue
+        total += pack.rows
+        if pack.rows != size and not (k == shards - 1 and 0 < pack.rows < size):
+            errors.append(f"{name}: {pack.rows} rows, expected {size}")
+    if notable is not None and total != notable:
+        errors.append(f"films_detail_*.pack: {total} rows != {notable} notable films")
+
+
 def _sizes(data_dir: Path) -> tuple[list[str], float]:
     errors = []
-    for name, limit in LIMITS.items():
+    limits = LIMITS | {p.name: DETAIL_LIMIT for p in data_dir.glob("films_detail_*.pack")}
+    for name, limit in limits.items():
         path = data_dir / name
         if path.exists() and path.stat().st_size > limit:
             size = path.stat().st_size
@@ -348,6 +435,7 @@ def check(data_dir: Path) -> list[str]:
         other = p[name]
         if other and "title" in other.columns and any(v is None for v in other.columns["title"]):
             errors.append(f"{name}: title has nulls")
+    _check_detail(data_dir, films.meta.get("notable") if films else None, errors)
     if franchises:
         _check_franchises(franchises, films, errors)
     _check_countries(p["country_genre.pack"], p["country_year.pack"], fam, countries, errors)

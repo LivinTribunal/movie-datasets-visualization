@@ -53,3 +53,15 @@ def test_metrics_zero_is_null() -> None:
     assert gwtw["year"] == 1939
     undated = out.filter(pl.col("title") == "Undated Film").row(0, named=True)
     assert undated["year"] is None
+
+
+def test_metrics_extra_columns() -> None:
+    out = clean_metrics(_read("numbers_metrics_sample.csv"))
+    first = out.row(0, named=True)
+    assert (first["theaters_open"], first["theaters_max"]) == (4134, 4202)
+    assert first["legs"] == 3.78
+    assert first["video_sales"] == 191_160_811.0
+    assert first["domestic_share"] == 45.6
+    tiny = out.filter(pl.col("title") == "Tiny Film").row(0, named=True)
+    for col in ("theaters_open", "theaters_max", "legs", "video_sales", "domestic_share"):
+        assert tiny[col] is None

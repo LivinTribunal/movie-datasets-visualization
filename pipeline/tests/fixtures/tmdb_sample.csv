@@ -1,6 +1,6 @@
 "id","title","vote_average","vote_count","status","release_date","revenue","runtime","budget","imdb_id","original_language","original_title","overview","popularity","tagline","genres","production_companies","production_countries","spoken_languages","cast","director","director_of_photography","writers","producers","music_composer","imdb_rating","imdb_votes","poster_path","keywords","certification_us"
-"1","Full","7.5","100","Released","1999-05-04","1000000.0","120.0","5000000.0","tt0000001","en","Full","","3.5","","Drama, Romance, Crime","","United States of America, United Kingdom","","","A B","","","","","7.1","500.0","","","PG"
-"2","Zeros","0.0","0.0","Released","2001-01-01","0.0","0.0","0.0","tt0000002","","","","","","N/A","","N/A","","","","","","","","","","","",""
+"1","Full","7.5","100","Released","1999-05-04","1000000.0","120.0","5000000.0","tt0000001","en","Full","  A plot.  ","3.5","","Drama, Romance, Crime","Acme, Beta Films","United States of America, United Kingdom","","A, B, C, D, E, F","A B","","W1, W2, W3, W4","","","7.1","500.0","","Space Opera| Robot ||Heist","PG"
+"2","Zeros","0.0","0.0","Released","2001-01-01","0.0","0.0","0.0","tt0000002","","","   ","","","N/A","N/A","N/A","","N/A","","","","","","","","","",""
 "3","Tiny budget","6.0","10.0","","2005-03-03","","","500.0","tt0000003","","","","","","","","","","","","","","","","","","","",""
 "4","Future","5.0","5.0","In Production","2030-01-01","","","","tt0000004","","","","","","","","","","","","","","","","","","","",""
 "5","Bad date","","","","2001-13-45","","","","tt0000005","","","","","","","","","","","","","","","","","","","",""

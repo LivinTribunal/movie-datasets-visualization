@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import shutil
 import time
 import zipfile
@@ -13,7 +14,7 @@ import httpx
 from movies import paths
 from movies.acquire.sources import KAGGLE_API, REGISTRY, Source, get
 
-USER_AGENT = "PV251-movies-vis/0.1 (academic project; stevko.moravik@gmail.com)"
+REPO_URL = "https://github.com/LivinTribunal/movie-datasets-visualization"
 BROWSER_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/128.0 Safari/537.36"
@@ -28,10 +29,12 @@ _last_request: dict[str, float] = {}
 
 
 def make_client(browser: bool = False, timeout: float = 60.0) -> httpx.Client:
+    contact = os.environ.get("MOVIES_CONTACT") or REPO_URL
+    user_agent = f"PV251-movies-vis/0.1 (academic project; {contact})"
     return httpx.Client(
         follow_redirects=True,
         timeout=timeout,
-        headers={"User-Agent": BROWSER_UA if browser else USER_AGENT},
+        headers={"User-Agent": BROWSER_UA if browser else user_agent},
     )
 
 

@@ -22,6 +22,14 @@ describe('encodeHash', () => {
   })
 })
 
+describe('story and studio', () => {
+  it('writes st and stu only when they differ and ignores unknown values', () => {
+    expect(encodeHash({ ...defaults(), story: 'book', studio: 'major' }, defaults(), imdb)).toBe('st=book&stu=major')
+    expect(decode('st=comic&stu=independent')).toEqual({ story: 'comic', studio: 'independent' })
+    expect(decode('st=bogus&stu=bogus')).toEqual({})
+  })
+})
+
 describe('round trip', () => {
   it('restores a full non-default state', () => {
     const v: Values = {
@@ -32,6 +40,8 @@ describe('round trip', () => {
       genreOnly: true,
       subset: 'all',
       money: 'nominal',
+      story: 'true_story',
+      studio: 'independent',
       source: 'cinema',
       mapMode: 'diff',
       countries: ['US', 'FR'],

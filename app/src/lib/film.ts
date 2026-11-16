@@ -56,3 +56,42 @@ export function moneyFacts(films: Films, row: number, money: Money) {
 }
 
 export const fuzzyMoney = (films: Films, row: number): boolean => bit(films, row, 4)
+
+export const STORY_LABEL: Record<string, string> = {
+  original: 'original screenplay',
+  book: 'based on a book',
+  comic: 'based on a comic',
+  true_story: 'based on a true story',
+  stage: 'based on a stage work',
+  screen: 'based on a film or TV show',
+  other: 'other source',
+}
+
+export const STUDIO_LABEL: Record<string, string> = {
+  disney: 'Disney',
+  warner: 'Warner Bros.',
+  universal: 'Universal',
+  sony: 'Sony',
+  paramount: 'Paramount',
+  fox: '20th Century Fox',
+  lionsgate: 'Lionsgate',
+  mgm: 'MGM',
+  independent: 'independent',
+}
+
+/** The release facts that come from the extra sources; null / NaN when missing. */
+export function releaseFacts(films: Films, row: number, money: Money) {
+  return {
+    age: source(films.age_rating, row),
+    story: source(films.story_source, row),
+    storySrc: source(films.story_source_src, row),
+    studio: source(films.studio, row),
+    opening: (money === 'usd2025' ? films.opening_usd2025 : films.opening_usd)[row],
+    theaters: films.theaters[row],
+    legs: films.legs[row],
+    video: films.video_usd2025[row],
+    wins: films.oscar_wins[row],
+    noms: films.oscar_noms[row],
+    fuzzy: bit(films, row, 5),
+  }
+}

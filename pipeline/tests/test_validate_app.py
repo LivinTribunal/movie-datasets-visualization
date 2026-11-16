@@ -4,6 +4,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from movies.derive.extras import DETAIL_COLUMNS
 from movies.export.app import (
     ATTRIBUTION,
     SOURCES,
@@ -12,13 +13,14 @@ from movies.export.app import (
     franchises_table,
     to_columns,
     write_country_tables,
+    write_detail,
     write_films,
     write_franchises,
 )
 from movies.export.pack import str_col, write_pack
 from movies.validate import app as validate_app
 from movies.validate.app import check
-from test_export_app import FILM_GENRES, FILMS, FRANCHISES, MONEY, RATINGS, _shares
+from test_export_app import EXTRAS, FILM_GENRES, FILMS, FRANCHISES, MONEY, RATINGS, _shares
 
 GENRES = ["Comedy", "Drama"]
 FAMILIES = ["Comedy", "Drama"]
@@ -44,6 +46,7 @@ META = {
     "snapshots": {"tmdb_imdb": "2026-10-01", "netflix": "2026-09-27"},
     "base_year": 2025,
     "counts": {"films": 4},
+    "detail": {"shard_size": 1000, "shards": 1},
     "notes": ["note"],
     "attribution": ATTRIBUTION,
     "sources": SOURCES,
@@ -51,7 +54,7 @@ META = {
 
 
 def _films() -> pl.DataFrame:
-    return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES)
+    return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES, EXTRAS)
 
 
 def _franchises(df: pl.DataFrame = FRANCHISES) -> pl.DataFrame:
@@ -92,6 +95,10 @@ def _write(
         path / "films_text.pack",
         path / "films_poster.pack",
     )
+    detail = films.select("imdb_id").join(
+        EXTRAS.select("imdb_id", *DETAIL_COLUMNS), on="imdb_id", how="left"
+    )
+    write_detail(detail, int(films["notable"].sum()), path)
     cg, cy = _country_frames()
     write_country_tables(
         cg if country_genre is None else country_genre,
@@ -406,3 +413,48 @@ def test_stale_file(tmp_path, name):
     _write(tmp_path)
     (tmp_path / name).write_text("{}")
     assert _has(check(tmp_path), name, "stale file")
+
+
+def test_detail_shard_missing(tmp_path):
+    meta = META | {"detail": {"shard_size": 1000, "shards": 2}}
+    assert _has(_errors(tmp_path, meta=meta), "films_detail_1.pack", "file missing")
+
+
+def test_detail_shard_wrong_size(tmp_path):
+    meta = META | {"detail": {"shard_size": 1000, "shards": 2}}
+    assert _has(_errors(tmp_path, meta=meta), "films_detail_0.pack", "1 rows, expected 1000")
+
+
+def test_detail_rows_must_equal_notable(tmp_path):
+    films = _films().with_columns(notable=pl.Series([True, True, False, False]))
+    _write(tmp_path)
+    write_detail(films.select("imdb_id").join(EXTRAS, on="imdb_id"), 1, tmp_path)
+    errors = check(tmp_path)
+    assert errors == []
+    write_detail(films.select("imdb_id").join(EXTRAS, on="imdb_id"), 2, tmp_path)
+    assert _has(check(tmp_path), "films_detail_*.pack", "!= 1 notable")
+
+
+def test_detail_shard_over_limit(tmp_path, monkeypatch):
+    monkeypatch.setattr(validate_app, "DETAIL_LIMIT", 10)
+    assert _has(_errors(tmp_path), "films_detail_0.pack", "over the")
+
+
+def test_meta_without_detail(tmp_path):
+    meta = {k: v for k, v in META.items() if k != "detail"}
+    assert _has(_errors(tmp_path, meta=meta), "meta.json", "detail")
+
+
+def test_bad_dict_value(tmp_path, monkeypatch):
+    monkeypatch.setitem(validate_app.DICT_VALUES, "studio", {None})
+    assert _has(_errors(tmp_path), "films.pack", "bad studio")
+
+
+def test_oscar_noms_under_wins(tmp_path):
+    films = _films().with_columns(oscar_noms=pl.Series([0, 0, None, None], dtype=pl.Int16))
+    assert _has(_errors(tmp_path, films=films), "films.pack", "oscar_noms under oscar_wins")
+
+
+def test_negative_extra_money(tmp_path):
+    films = _films().with_columns(opening_usd=pl.lit(-1.0))
+    assert _has(_errors(tmp_path, films=films), "films.pack", "negative opening_usd")
