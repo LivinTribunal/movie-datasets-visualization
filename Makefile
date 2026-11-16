@@ -1,4 +1,4 @@
-.PHONY: setup data validate test lint dev preview
+.PHONY: setup data validate test lint dev preview budget e2e
 
 setup:
 	cd pipeline && uv sync
@@ -28,3 +28,9 @@ dev:
 
 preview:
 	cd app && npm run build && npm run preview
+
+budget:
+	cd app && npm run build && npm run budget
+
+e2e:
+	cd app && npm run build && npm run e2e

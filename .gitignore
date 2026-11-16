@@ -30,3 +30,7 @@ app/dist/
 .Rhistory
 .idea/
 .vscode/
+
+# playwright
+app/test-results/
+app/playwright-report/
