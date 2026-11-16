@@ -355,3 +355,76 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   sources differ by more than 1.25×. Netflix originals such as *Red
   Notice* keep their tiny theatrical gross: it is right, but their ROI
   means nothing, and the app should say so where ROI is shown.
+
+### D21. Final design: sheet 5 variant A, one dashboard (2026-11-16)
+
+- **What**: the app is one screen with seven panels (filter bar, world map,
+  genre timeline, film scatter, franchise lines, selection table, film card)
+  on one store. Emma drew it by hand as sheet 5 for HW4; the board is
+  `docs/design-sheets/sheet-5-canvas/sheet-5a.png`. The build spec is
+  `docs/superpowers/specs/2026-11-16-movie-explorer-app-design.md`.
+- **Why**: every view filters every other view and nothing hides behind a
+  tab, which is the plainest way to show linked views.
+- **Rejected**: variant B, three tabs (more charts, but the linking is split
+  across screens); variant C, three views (no franchise view of its own).
+- **Watch**: the hand-drawn sheet carries our UČOs, so its photo stays out
+  of the public repo.
+
+### D22. Map sources: Netflix, Cinema, Made here (2026-11-16)
+
+- **What**: the sheet's source switch reads "Netflix, box office,
+  admissions". The app has `Netflix`, `Cinema` and `Made here`. Cinema is
+  LUMIERE admissions for 36 European markets plus the United States from
+  The Numbers domestic gross by release year. Made here is the genre mix of
+  the working-subset films each country produced, from TMDB.
+- **Why**: Box Office Mojo is closed to crawlers (D16), so there is no
+  box-office source per country. Admissions and gross are both cinema
+  demand, and a tooltip names which one a country has. Production covers
+  the whole map and all years with data we already hold.
+- **Watch**: the US cinema rows hold only films The Numbers lists (about
+  150 to 230 a year from 1996 to 2019, fewer after). Production is what a
+  country makes, not what it watches, and the legend says so.
+
+### D23. App data as gzip column packs, all working-subset films (2026-11-16)
+
+- **What**: tables go to the app as `.pack` files (format `MXP1` in the
+  spec, §2.1): typed columns behind a JSON header, gzipped by the exporter
+  and inflated in the browser. `films.pack` holds all 56,431 working-subset
+  films, sorted by votes so the notable subset is a prefix. `genre_year.json`
+  is gone: the timeline is computed in the browser.
+- **Why**: the "all" subset and the country filter on the timeline need
+  every film, and 56k rows of columnar JSON would be about 13 MB to parse.
+  Typed arrays need no parsing and make each filter pass a tight loop.
+  Compressing the file ourselves keeps the size the same on any static
+  host; GitHub Pages compresses text types only.
+- **Rejected**: Arrow or Parquet in the browser (a wasm or 200 KB reader
+  for five small tables); pre-aggregated JSON per country (cannot serve a
+  union of six countries without counting co-productions twice).
+
+### D24. One selected genre that highlights, with an optional filter (2026-11-16)
+
+- **What**: exactly one genre family is selected at any time. It colours the
+  map, outlines its band in the timeline, colours its films in the scatter
+  and tints its franchises. It filters films only when the user switches
+  the chip toggle from "highlight" to "filter".
+- **Why**: T5 asks whether a relation differs by genre, and that is read
+  best against the grey cloud of all films. A filter alone would hide the
+  comparison.
+
+### D25. Posters are loaded from TMDB at run time (2026-11-16)
+
+- **What**: the film card shows `image.tmdb.org/t/p/w185/<poster_path>`. The
+  path comes from the TMDB snapshot. A missing or failed image shows a
+  placeholder.
+- **Why**: the sheet has a poster on the card, and 56k images cannot live
+  in the repo. This is the only network request outside the app's own files
+  and the app works without it.
+
+### D26. No web worker; size budgets in CI (2026-11-16)
+
+- **What**: filtering and aggregation run on the main thread over typed
+  arrays, cached by their arguments. CI fails when the JavaScript passes
+  200 KB gzipped or a data file passes its limit (spec §7).
+- **Why**: one pass over 56k rows takes well under a millisecond, so a
+  worker would only add message passing. The costs that matter are download
+  size and needless re-renders, and a budget keeps both from creeping.

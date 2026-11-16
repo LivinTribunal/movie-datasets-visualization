@@ -238,8 +238,10 @@ Rough targets: under ~15 MB in total, under 5 MB gzipped for the first load.
 
 ## 5. Visualization (starting point for the design sheets)
 
-This is a **draft for brainstorming**, not the final design. The FDS sheets
-decide the final one.
+This was the **draft for brainstorming**. The final design is sheet 5
+variant A (D21), and the build spec is
+`docs/superpowers/specs/2026-11-16-movie-explorer-app-design.md`. Where the
+two differ, the spec wins.
 
 One-page dashboard. At the top, a global filter bar: year range, genre
 families, notable or working subset, nominal or real USD. Below it four
