@@ -1,23 +1,33 @@
 import datetime as dt
 
 import polars as pl
+import pytest
 
 from movies.export.app import (
-    country_genre_table,
+    country_tables,
     films_table,
     franchises_table,
-    genre_year,
     to_columns,
+    write_country_tables,
+    write_films,
+    write_franchises,
 )
-from movies.validate.app import SCHEMA
+from movies.export.pack import read_pack
+
+GENRES = ["Comedy", "Drama"]
+FAMILIES = ["Comedy", "Drama"]
+COUNTRIES = ["CZ", "US"]
 
 FILMS = pl.DataFrame(
     {
         "imdb_id": ["tt3", "tt1", "tt2", "tt4"],
-        "tmdb_id": [3, 1, 2, 4],
+        "tmdb_id": [3, 1, 2, None],
         "title": ["C", "A", "B", "D"],
+        "genres": [["TV Movie", "Drama"], ["Horror", "TV Movie"], ["Comedy"], ["Drama"]],
+        "director": ["Dc", None, "Db", "Dd"],
+        "poster_path": ["/c.jpg", "/a.jpg", None, "/d.jpg"],
         "year": pl.Series([2001, 2000, 2000, 2001], dtype=pl.Int16),
-        "genres": [["Drama"], ["Drama", "Comedy"], ["Comedy"], ["Drama"]],
+        "runtime": [100, 120, None, 90],
         "production_countries": [["US"], ["US", "CZ"], ["CZ"], ["US"]],
         "imdb_votes": [2000, 50000, 3000, 1500],
         "notable": [False, True, False, False],
@@ -27,14 +37,16 @@ FILMS = pl.DataFrame(
 MONEY = pl.DataFrame(
     {
         "imdb_id": ["tt1", "tt2", "tt3", "tt4"],
+        "budget_usd": [900.0, None, None, None],
         "budget_usd2025": [1000.4, None, None, None],
+        "revenue_usd": [3500.0, 500.0, None, None],
         "revenue_usd2025": [4000.6, 500.0, None, None],
         "budget_src": ["numbers", None, None, None],
         "revenue_src": ["numbers", "tmdb", None, None],
         "budget_currency": ["EUR", None, None, None],
         "revenue_currency": ["USD", "USD", None, None],
         "budget_disagree": [False, False, False, False],
-        "revenue_disagree": [False, False, False, False],
+        "revenue_disagree": [False, True, False, False],
         "roi": [3.00049, None, None, None],
     }
 )
@@ -65,68 +77,6 @@ FILM_GENRES = pl.DataFrame(
         "genre_weight": [0.5, 0.5, 1.0, 1.0, 1.0],
     }
 )
-
-
-def test_row_selection_notable_or_both_rt_scores():
-    out = films_table(FILMS, MONEY, RATINGS, FILM_GENRES)
-    # tt3 has only a tomatometer and is not notable; tt4 has nothing
-    assert out["imdb_id"].to_list() == ["tt1", "tt2"]
-
-
-def test_flags_rounding_and_lists():
-    row = films_table(FILMS, MONEY, RATINGS, FILM_GENRES).row(0, named=True)
-    assert row["money_fuzzy"] is True
-    assert row["budget_converted"] is True
-    assert row["revenue_converted"] is False
-    assert row["budget_usd2025"] == 1000
-    assert row["roi"] == 3.0
-    assert row["imdb_100"] == 70.0
-    assert row["genres"] == ["Drama", "Comedy"]
-    assert row["families"] == ["Drama", "Comedy"]
-    assert row["countries"] == ["US", "CZ"]
-
-
-def test_money_fuzzy_needs_numbers_source():
-    money = MONEY.with_columns(budget_src=pl.lit("tmdb"), revenue_src=pl.lit("tmdb"))
-    out = films_table(FILMS, money, RATINGS, FILM_GENRES)
-    assert out["money_fuzzy"].to_list() == [False, False]
-    assert films_table(FILMS, MONEY, RATINGS, FILM_GENRES)["budget_converted"][1] is False
-
-
-def test_genre_year_weights_and_notable_subset():
-    out = genre_year(FILMS, MONEY, FILM_GENRES)
-    for subset, total in (("working", 4.0), ("notable", 1.0)):
-        assert abs(out.filter(pl.col("subset") == subset)["films"].sum() - total) < 1e-9
-    row = out.filter(
-        (pl.col("subset") == "working") & (pl.col("year") == 2000) & (pl.col("genre") == "Comedy")
-    ).row(0, named=True)
-    assert row["films"] == 1.5
-    assert row["votes"] == 0.5 * 50000 + 3000
-    assert row["revenue_usd2025"] == round(0.5 * 4000.6 + 500)
-    assert row["revenue_films"] == 2
-    no_rev = out.filter((pl.col("year") == 2001) & (pl.col("subset") == "working"))
-    assert no_rev["revenue_usd2025"].to_list() == [None]
-    assert out.select("subset", "year", "genre").rows() == sorted(
-        out.select("subset", "year", "genre").rows()
-    )
-
-
-def test_to_columns_equal_lengths_and_nulls():
-    cols = to_columns(films_table(FILMS, MONEY, RATINGS, FILM_GENRES))
-    assert len({len(v) for v in cols.values()}) == 1
-    assert cols["budget_usd2025"] == [1000, None]
-    assert cols["tmdb_100"] == [None, None]
-
-
-def test_unknown_production_countries_export_as_empty_list():
-    # the app iterates every film's countries; a null list crashed it
-    films = FILMS.with_columns(
-        production_countries=pl.Series([None, None, ["CZ"], ["US"]], dtype=pl.List(pl.String))
-    )
-    out = films_table(films, MONEY, RATINGS, FILM_GENRES)
-    assert out["countries"].to_list() == [[], ["CZ"]]
-
-
 FRANCHISES = pl.DataFrame(
     {
         "collection_id": [7, 7, 7],
@@ -149,43 +99,185 @@ FRANCHISES = pl.DataFrame(
 )
 
 
-def test_films_table_includes_scraped_scores_in_schema_order():
-    out = films_table(FILMS, MONEY, RATINGS, FILM_GENRES)
-    assert out.columns == SCHEMA["films.json"]
-    assert out["metascore_100"].to_list()[0] == 82.0
-    assert out["mc_critic_reviews"].to_list() == [38, None]
-    assert out["letterboxd_100"].to_list()[0] == 92.0
+def _table():
+    return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES)
 
 
-def test_franchises_table_year_rounding_and_order():
-    out = franchises_table(FRANCHISES)
-    assert out["collection_id"].to_list() == [7, 7, 7]
-    assert out["installment"].to_list() == [1, 2, 3]
-    assert out["year"].to_list() == [2001, 2003, 1999]
-    assert out["imdb_100"].to_list() == [80.0, 70.0, None]
-    assert out["revenue_usd2025"].to_list() == [100, 50, None]
-    assert out["revenue_vs_prev"].to_list() == [None, 0.5, None]
+def test_every_film_sorted_by_votes_and_notable_form_a_prefix():
+    out = _table()
+    assert out["imdb_id"].to_list() == ["tt1", "tt2", "tt3", "tt4"]
+    assert out["imdb_votes"].to_list() == [50000, 3000, 2000, 1500]
+    assert out["notable"].to_list() == [True, False, False, False]
 
 
-def _shares(year_dtype, year):
+def test_flags_lists_and_both_money_kinds_are_kept():
+    row = _table().row(0, named=True)
+    assert row["money_fuzzy"] is True
+    assert row["budget_converted"] is True
+    assert row["revenue_converted"] is False
+    assert row["budget_usd"] == 900.0
+    assert row["budget_usd2025"] == 1000.4
+    assert row["genres"] == ["Drama", "Comedy"]
+    assert row["families"] == ["Drama", "Comedy"]
+    assert row["countries"] == ["US", "CZ"]
+    assert row["poster"] == "/a.jpg"
+
+
+def test_films_table_takes_genres_from_film_genres_not_the_raw_column():
+    out = _table()
+    assert out["genres"].to_list() == [["Drama", "Comedy"], ["Comedy"], ["Drama"], ["Drama"]]
+    assert out["families"].to_list() == [["Drama", "Comedy"], ["Comedy"], ["Drama"], ["Drama"]]
+
+
+def test_money_fuzzy_needs_numbers_source():
+    money = MONEY.with_columns(budget_src=pl.lit("tmdb"), revenue_src=pl.lit("tmdb"))
+    out = films_table(FILMS, money, RATINGS, FILM_GENRES, FRANCHISES)
+    assert out["money_fuzzy"].to_list() == [False, False, False, False]
+
+
+def test_film_outside_every_franchise_has_null_collection_id():
+    out = _table()
+    assert out["collection_id"].to_list() == [7, 7, None, None]
+    assert out["installment"].to_list() == [1, 2, None, None]
+
+
+def test_unknown_production_countries_export_as_empty_list():
+    # the app iterates every film's countries; a null list crashed it
+    films = FILMS.with_columns(
+        production_countries=pl.Series([None, None, ["CZ"], ["US"]], dtype=pl.List(pl.String))
+    )
+    out = films_table(films, MONEY, RATINGS, FILM_GENRES, FRANCHISES)
+    assert out["countries"].to_list() == [[], ["CZ"], [], ["US"]]
+
+
+def test_to_columns_equal_lengths_and_nulls():
+    cols = to_columns(_table())
+    assert len({len(v) for v in cols.values()}) == 1
+    assert cols["budget_usd2025"] == [1000.4, None, None, None]
+
+
+def test_write_films_roundtrip_masks_and_flags(tmp_path):
+    core, text = tmp_path / "films.pack", tmp_path / "films_text.pack"
+    poster = tmp_path / "films_poster.pack"
+    write_films(_table(), GENRES, FAMILIES, COUNTRIES, core, text, poster)
+    pack = read_pack(core)
+    assert pack.rows == 4
+    assert pack.meta == {"notable": 1, "genres": GENRES, "families": FAMILIES}
+    c = pack.columns
+    assert c["imdb"] == [1, 2, 3, 4]
+    assert c["tmdb_id"] == [1, 2, 3, None]
+    assert c["runtime"] == [120, None, 100, 90]
+    assert c["genre_mask"] == [0b11, 0b01, 0b10, 0b10]
+    assert c["family_mask"] == [0b11, 0b01, 0b10, 0b10]
+    # tt1: budget converted (bit 0) and fuzzy money (bit 4); tt2: revenue sources disagree (bit 3)
+    assert c["flags"] == [0b10001, 0b01000, 0, 0]
+    assert c["countries"] == [["US", "CZ"], ["CZ"], ["US"], ["US"]]
+    assert c["budget_src"] == ["numbers", None, None, None]
+    assert c["budget_usd2025"][0] == pytest.approx(1000.4, rel=1e-6)
+    assert c["budget_usd2025"][1] is None
+    assert c["imdb_100"] == [70.0, 60.0, None, None]
+    assert c["gap"] == [-5.0, 5.0, None, None]
+    assert c["mc_critic_reviews"] == [38, None, None, None]
+    assert c["collection_id"] == [7, 7, None, None]
+    assert c["installment"] == [1, 2, None, None]
+    text_cols = read_pack(text).columns
+    assert text_cols["title"] == ["A", "B", "C", "D"]
+    assert text_cols["director"] == [None, "Db", "Dc", "Dd"]
+    assert "poster" not in text_cols
+    assert read_pack(poster).columns["poster"] == ["/a.jpg", None, "/c.jpg", "/d.jpg"]
+
+
+def _shares(country, year, genre, entries=30):
     return pl.DataFrame(
         {
-            "country_iso2": ["CZ"],
-            "year": pl.Series([year], dtype=year_dtype),
-            "genre": ["Drama"],
-            "family": ["Drama"],
-            "score": pl.Series([1], dtype=pl.Int64),
+            "country_iso2": [country],
+            "year": pl.Series([year], dtype=pl.Int32),
+            "genre": [genre],
+            "family": [genre],
+            "score": [2.5],
             "share": [1.0],
             "coverage": [0.5],
             "fuzzy_share": [0.0],
             "estimated_share": [0.0],
+            "entries": [entries],
         }
     )
 
 
-def test_country_genre_table_concats_netflix_int32_and_lumiere_int16_years():
-    out = country_genre_table(_shares(pl.Int32, 2025), _shares(pl.Int16, 2024))
-    assert out.columns == SCHEMA["country_genre.json"]
-    assert out["source"].to_list() == ["netflix", "lumiere"]
-    assert out["year"].to_list() == [2025, 2024]
-    assert country_genre_table(_shares(pl.Int32, 2025), None).height == 1
+def test_country_tables_one_year_row_per_source_country_year():
+    sources = [
+        (
+            "netflix",
+            "chart_score",
+            pl.concat([_shares("CZ", 2025, "Drama"), _shares("CZ", 2025, "Comedy")]),
+        ),
+        ("cinema", "admissions", _shares("CZ", 2024, "Drama")),
+        ("cinema", "gross_usd", _shares("US", 2024, "Comedy")),
+    ]
+    genre, year = country_tables(sources, GENRES)
+    assert genre.select("source", "country", "year", "genre").rows() == [
+        ("cinema", "CZ", 2024, 1),
+        ("cinema", "US", 2024, 0),
+        ("netflix", "CZ", 2025, 0),
+        ("netflix", "CZ", 2025, 1),
+    ]
+    assert year.select("source", "country", "year", "measure").rows() == [
+        ("cinema", "CZ", 2024, "admissions"),
+        ("cinema", "US", 2024, "gross_usd"),
+        ("netflix", "CZ", 2025, "chart_score"),
+    ]
+    assert year["entries"].to_list() == [30, 30, 30]
+
+
+def test_country_tables_concat_mixed_dtypes():
+    a = _shares("CZ", 2025, "Drama").with_columns(entries=pl.Series([30], dtype=pl.UInt32))
+    b = _shares("US", 2024, "Comedy").with_columns(
+        year=pl.Series([2024], dtype=pl.Int16),
+        entries=pl.Series([40], dtype=pl.Int64),
+        score=pl.Series([3], dtype=pl.Int64),
+    )
+    genre, year = country_tables(
+        [("netflix", "chart_score", a), ("cinema", "gross_usd", b)], GENRES
+    )
+    assert genre["year"].to_list() == [2024, 2025]
+    assert year["entries"].to_list() == [40, 30]
+
+
+def test_write_country_tables_roundtrip(tmp_path):
+    genre, year = country_tables([("cinema", "gross_usd", _shares("US", 2024, "Comedy"))], GENRES)
+    gpath, ypath = tmp_path / "g.pack", tmp_path / "y.pack"
+    write_country_tables(genre, year, GENRES, COUNTRIES, gpath, ypath)
+    g, y = read_pack(gpath).columns, read_pack(ypath).columns
+    assert (g["source"], g["country"], g["year"], g["genre"], g["score"]) == (
+        ["cinema"],
+        ["US"],
+        [2024],
+        [0],
+        [2.5],
+    )
+    assert (y["entries"], y["measure"], y["coverage"]) == ([30], ["gross_usd"], [0.5])
+
+
+def test_franchises_table_film_row_year_and_family_mask():
+    films_out = _table()
+    out = franchises_table(FRANCHISES, films_out, FILM_GENRES, FAMILIES)
+    assert out["installment"].to_list() == [1, 2, 3]
+    assert out["film_row"].to_list() == [0, 1, None]
+    assert out["year"].to_list() == [2001, 2003, 1999]
+    # the first part, tt1, is Drama and Comedy
+    assert out["family_mask"].to_list() == [0b11, 0b11, 0b11]
+    assert "imdb_100_vs_prev" not in out.columns
+    no_genres = franchises_table(FRANCHISES, films_out, FILM_GENRES.head(0), FAMILIES)
+    assert no_genres["family_mask"].to_list() == [0, 0, 0]
+
+
+def test_write_franchises_roundtrip(tmp_path):
+    out = franchises_table(FRANCHISES, _table(), FILM_GENRES, FAMILIES)
+    path = tmp_path / "f.pack"
+    write_franchises(out, path)
+    pack = read_pack(path)
+    assert pack.meta == {"collections": [[7, "S"]]}
+    assert pack.columns["film_row"] == [0, 1, None]
+    assert pack.columns["imdb_100"] == [80.0, 70.0, None]
+    assert pack.columns["imdb_100_vs_first"] == [0.0, -10.0, None]
+    assert pack.columns["title"] == ["One", "Two", "Nine"]

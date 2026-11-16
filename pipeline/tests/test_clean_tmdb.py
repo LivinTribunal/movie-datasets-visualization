@@ -76,3 +76,12 @@ def test_production_countries(films: pl.DataFrame) -> None:
     assert _row(films, 1)["production_countries"] == ["US", "GB"]
     assert _row(films, 9)["production_countries"] == ["RU"]
     assert _row(films, 2)["production_countries"] is None
+
+
+def test_poster_path_kept_and_blank_is_null() -> None:
+    raw = pl.scan_csv(FIXTURES / "tmdb_sample.csv", infer_schema=False).with_columns(
+        poster_path=pl.when(pl.col("id") == "1").then(pl.lit("/abc.jpg")).otherwise(pl.lit(""))
+    )
+    out = clean(raw, NAMES)
+    assert _row(out, 1)["poster_path"] == "/abc.jpg"
+    assert _row(out, 2)["poster_path"] is None
