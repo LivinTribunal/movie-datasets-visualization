@@ -14,10 +14,9 @@ import './scatter.css'
 const isLog = (key: MeasureKey) => MEASURES[key].scale === 'log'
 
 function hiddenNote(rows: number, missingX: number, missingY: number, xKey: MeasureKey, yKey: MeasureKey): string {
-  const parts = [`${fmtInt(rows)} films`]
-  if (missingX > 0) parts.push(`${fmtInt(missingX)} hidden: no ${MEASURES[xKey].label}`)
-  if (missingY > 0) parts.push(`${fmtInt(missingY)} hidden: no ${MEASURES[yKey].label}`)
-  return parts.join(' · ')
+  const gaps: [number, string][] = [[missingX, MEASURES[xKey].short], [missingY, MEASURES[yKey].short]]
+  const parts = gaps.filter(([n]) => n > 0).map(([n, k]) => `${fmtInt(n)} no ${k}`)
+  return `${fmtInt(rows)} films.${parts.length ? ` ${parts.join(' and ').replace(' no ', ' more have no ')}.` : ''}`
 }
 
 export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
@@ -83,8 +82,7 @@ export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      letter="C"
-      title="Film scatter"
+      title="Every film as a dot"
       className="area-c"
       tools={tools}
       note={hiddenNote(rows.length, missingX, missingY, x, y)}
@@ -104,7 +102,7 @@ export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
               </button>
             ))}
           </div>
-          {brush && <button type="button" className="btn" onClick={() => setBrush(null)}>clear brush</button>}
+          {brush && <button type="button" className="btn" onClick={() => setBrush(null)}>Clear brush</button>}
         </div>
         <div ref={ref} className="scatter-plot">
           {rows.length === 0 ? (

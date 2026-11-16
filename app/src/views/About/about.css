@@ -1,5 +1,5 @@
 .about {
-  max-width: 720px; width: calc(100% - 32px); max-height: 85vh; overflow-y: auto; border: 0; border-radius: 16px;
+  max-width: 720px; width: calc(100% - 32px); max-height: 85vh; overflow-y: auto; border: 0; border-radius: var(--radius-l);
   padding: 0; color: var(--ink); background: var(--panel); box-shadow: var(--shadow-pop);
   font-size: 13px; line-height: 1.5;
   opacity: 0; transform: scale(0.98);
@@ -8,13 +8,13 @@
 .about[open] { opacity: 1; transform: scale(1); }
 @starting-style { .about[open] { opacity: 0; transform: scale(0.98); } }
 .about::backdrop {
-  background: rgba(0, 0, 0, 0.28); backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.45);
   opacity: 0; transition: opacity 180ms var(--ease), overlay 180ms allow-discrete, display 180ms allow-discrete;
 }
 .about[open]::backdrop { opacity: 1; }
 @starting-style { .about[open]::backdrop { opacity: 0; } }
 .about-body { padding: 22px 24px; }
-.about h2 { margin: 0 0 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.about h2 { margin: 0 0 8px; font-size: 26px; }
 .about h3 { margin: 18px 0 4px; font-size: 13px; font-weight: 600; }
 .about p { margin: 0 0 8px; }
 .about table { border-collapse: collapse; width: 100%; }
@@ -25,7 +25,7 @@
 .about > .about-body > .btn { margin-top: 16px; }
 .about-x {
   position: sticky; top: 0; float: right; width: 28px; height: 28px; margin: -6px -8px 0 0; padding: 0; border: 0;
-  border-radius: 50%; background: var(--fill); color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer;
+  border-radius: var(--radius-m); background: var(--fill); color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer;
   transition: background-color 120ms var(--ease);
 }
 .about-x:hover { background: var(--fill-2); }
@@ -33,7 +33,4 @@
   .about { transform: none; }
   .about[open] { transform: none; }
   @starting-style { .about[open] { transform: none; } }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .about::backdrop { backdrop-filter: none; background: rgba(0, 0, 0, 0.4); }
 }

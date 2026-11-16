@@ -25,13 +25,13 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const row = hover ?? pinned
   if (row === null) {
     return (
-      <Panel letter="G" title="Film card" className="area-g">
+      <Panel title="Film" className="area-g">
         <p className="filmcard-hint">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="16" rx="2" />
             <path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" />
           </svg>
-          Hover a point or a table row to see a film. Click to pin it.
+          Hover a dot or a row to see a film. Click to pin it.
         </p>
       </Panel>
     )
@@ -45,7 +45,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const facts = [
     Number.isNaN(year) ? 'year: no data' : String(year),
     Number.isNaN(runtime) ? 'runtime: no data' : `${fmtInt(runtime)} min`,
-    ...(director ? [director] : []),
+    ...(director ? [`directed by ${director}`] : []),
   ]
   const genres = filmGenres(films, row)
   const iso = filmCountries(films, row)
@@ -72,16 +72,18 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   )
 
   return (
-    <Panel letter="G" title="Film card" className="area-g">
+    <Panel title="Film" className="area-g">
       <div className="filmcard">
         <div className="fc-head">
           <Poster row={row} />
           <div className="fc-info">
             <h3>{title}</h3>
-            <p>{facts.join(' · ')}</p>
+            <p>{facts.join(', ')}</p>
             <p>{genres.length ? genres.join(', ') : 'genres: no data'}</p>
             <p>
-              {fmtInt(films.imdb_votes[row])} IMDb votes ·{' '}
+              {fmtInt(films.imdb_votes[row])} IMDb votes
+            </p>
+            <p>
               <a href={`https://www.imdb.com/title/${fmtImdb(films.imdb[row])}/`} target="_blank" rel="noreferrer">
                 IMDb page
               </a>
@@ -90,7 +92,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
               <p>
                 <span className="fc-badge">pinned</span>{' '}
                 <button type="button" className="fc-btn" onClick={() => setFilm(null)}>
-                  unpin
+                  Unpin
                 </button>
               </p>
             )}
@@ -117,7 +119,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
               aria-pressed={franchise === collection}
               onClick={() => setFranchise(franchise === collection ? null : collection)}
             >
-              {data.franchises.collections.get(collection) ?? 'Franchise'} · #{fmtInt(films.installment[row])}
+              {data.franchises.collections.get(collection) ?? 'Franchise'} (#{fmtInt(films.installment[row])})
             </button>
           )}
         </div>

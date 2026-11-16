@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useStore } from './state/store'
 import { loadData } from './lib/data'
 import type { AppData } from './lib/types'
@@ -15,6 +15,7 @@ import { WorldMap } from './views/WorldMap/WorldMap'
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
   const tab = useStore((s) => s.tab)
+  const family = useStore((s) => s.family)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -26,19 +27,21 @@ export default function App() {
   if (!data) {
     return (
       <div className="app">
-        <header className="panel filter-bar area-f">
-          <h1>
-          <img src="favicon.svg" alt="" width="24" height="24" />
-          Movie Explorer
-        </h1>
-          <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
+        <header className="area-f">
+          <div className="marquee">
+            <h1>
+              <img src="favicon.svg" alt="" width="24" height="24" />
+              Movie Explorer
+            </h1>
+            <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
+          </div>
         </header>
       </div>
     )
   }
 
   return (
-    <div className="app">
+    <div className="app" style={{ '--family': data.families[family]?.colour } as CSSProperties}>
       <FilterBar data={data} />
       <main key={tab} className="workspace" data-tab={tab}>
         {tab === 'taste' && (

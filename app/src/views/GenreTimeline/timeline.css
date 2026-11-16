@@ -8,8 +8,8 @@
 .tl-band { transition: opacity 120ms var(--ease); }
 .tl-bands.hovering .tl-band { opacity: 0.55; }
 .tl-bands.hovering .tl-band.is-hover { opacity: 1; }
-.tl-brush .selection { fill: var(--accent); fill-opacity: 0.08; stroke: var(--accent); stroke-width: 1; rx: 3; shape-rendering: auto; }
-.tl-brush .handle { fill: var(--accent); fill-opacity: 1; width: 4px; rx: 2; }
+.tl-brush .selection { fill: rgba(0, 0, 0, 0.06); fill-opacity: 1; stroke: var(--ink); stroke-width: 1; rx: 0; shape-rendering: auto; }
+.tl-brush .handle { fill: var(--ink); fill-opacity: 1; width: 4px; rx: 1; }
 .tl-brush .handle--w { transform: translateX(1px); }
 .tl-brush .handle--e { transform: translateX(1px); }
 .tl-measure { font: inherit; font-size: 12px; }
