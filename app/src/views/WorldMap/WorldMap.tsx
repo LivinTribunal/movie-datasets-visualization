@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type MouseEvent } from 'react'
 import {
-  geoEqualEarth, geoPath, interpolateBlues, interpolatePuOr, scaleDiverging, scaleSequential, select, zoom,
+  color, geoEqualEarth, geoPath, interpolateLab, interpolatePuOr, scaleDiverging, scaleSequential, select, zoom,
   zoomIdentity, type ZoomBehavior,
 } from 'd3'
 import { feature } from 'topojson-client'
@@ -10,6 +10,7 @@ import { ChipGroup } from '../../components/ChipGroup'
 import { Panel } from '../../components/Panel'
 import { Tooltip } from '../../components/Tooltip'
 import { THIN, countryStats, share, shareDiff, topFamily, worldShares, type CountryStat } from '../../lib/countryShares'
+import { domesticShares } from '../../lib/domestic'
 import { loadTopo, useLazy } from '../../lib/data'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { useSize } from '../../lib/hooks'
@@ -28,6 +29,7 @@ const MODES: { value: MapMode; label: string }[] = [
   { value: 'share', label: 'share of genre' },
   { value: 'top', label: 'top genre' },
   { value: 'diff', label: 'cinema − streaming' },
+  { value: 'domestic', label: 'domestic films' },
 ]
 
 type CountryFeature = Feature<Geometry, { name: string }> & { id?: string }
@@ -36,6 +38,10 @@ interface Hover { iso2: string; x: number; y: number }
 
 const ZOOM_STEP = 1.6
 const RAMP_STEPS = 7
+
+const shareScale = (colour: string, max: number) =>
+  scaleSequential(interpolateLab('#f4f4f6', color(colour)?.darker(0.8).formatHex() ?? colour)).domain([0, max])
+const domesticScale = scaleSequential(interpolateLab('#d4d4da', '#3a3a3a')).domain([0, 1])
 const ANTARCTICA = '010'
 
 function sourceLabel(stat: CountryStat, source: string): string {
@@ -90,6 +96,10 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     [data, nFamilies, mapMode, yearRange],
   )
   const diffs = useMemo(() => (cinema && netflix ? shareDiff(cinema, netflix, family) : null), [cinema, netflix, family])
+  const domestic = useMemo(
+    () => (mapMode === 'domestic' ? domesticShares(data.countryDomestic, yearRange) : null),
+    [data, mapMode, yearRange],
+  )
   const world = useMemo(() => worldShares(stats, nFamilies), [stats, nFamilies])
 
   const features = useMemo(() => {
@@ -136,6 +146,8 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
       }
     } else if (mapMode === 'diff' && diffs) {
       for (const [iso2, v] of diffs) values.set(iso2, v)
+    } else if (mapMode === 'domestic' && domestic) {
+      for (const [iso2, d] of domestic) values.set(iso2, d.share)
     }
     // The scale tops out at the largest value among countries with enough entries;
     // a thin country (dotted outline) may exceed it and then takes the darkest colour.
@@ -154,19 +166,21 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
       }
       const v = values.get(iso2)
       if (v === undefined) return null
-      return mapMode === 'share' ? scaleSequential(interpolateBlues).domain([0, max])(v) : diffScale(max)(v)
+      if (mapMode === 'domestic') return domesticScale(v)
+      return mapMode === 'share' ? shareScale(data.families[family].colour, max)(v) : diffScale(max)(v)
     }
     const ramp = Array.from({ length: RAMP_STEPS }, (_, i) => {
       const t = i / (RAMP_STEPS - 1)
-      return mapMode === 'diff' ? diffScale(max)(-max + 2 * max * t) : scaleSequential(interpolateBlues).domain([0, max])(max * t)
+      if (mapMode === 'domestic') return domesticScale(t)
+      return mapMode === 'diff' ? diffScale(max)(-max + 2 * max * t) : shareScale(data.families[family].colour, max)(max * t)
     })
     return { colour, ramp, max, clipped }
-  }, [mapMode, stats, diffs, family, data.families])
+  }, [mapMode, stats, diffs, domestic, family, data.families])
 
   const shapes: MapShape[] = useMemo(
     () => geometry.map((g) => {
       const fill = g.iso2 ? colouring.colour(g.iso2) : null
-      const thin = g.iso2 !== null && (mapMode === 'diff'
+      const thin = g.iso2 !== null && mapMode !== 'domestic' && (mapMode === 'diff'
         ? Math.min(cinema?.get(g.iso2)?.entries ?? Infinity, netflix?.get(g.iso2)?.entries ?? Infinity) < THIN
         : (stats.get(g.iso2)?.entries ?? Infinity) < THIN)
       return { key: g.key, iso2: g.iso2, d: g.d, fill: fill ?? 'url(#map-hatch)', thin }
@@ -226,6 +240,16 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
     const country = data.countryByIso2.get(hover.iso2)
     const name = country?.name ?? hover.iso2
     const familyName = data.families[family].name
+    if (mapMode === 'domestic') {
+      const d = domestic?.get(hover.iso2)
+      if (!d) return <><b>{name}</b><br />no UNESCO data in this window</>
+      return (
+        <>
+          <b>{name}</b> · {fmtPct(d.share)} of admissions to domestic films<br />
+          {d.years} {d.years === 1 ? 'year' : 'years'} of UNESCO data in {yearsLabel(yearRange)}
+        </>
+      )
+    }
     if (mapMode === 'diff') {
       const c = cinema?.get(hover.iso2)
       const n = netflix?.get(hover.iso2)
@@ -251,19 +275,27 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
         {s.fuzzy > 0 && <><br />fuzzy title matches: {Math.round(s.fuzzy * 100)}%</>}
       </>
     )
-  }, [hover, data, family, mapMode, stats, cinema, netflix, world, source])
+  }, [hover, data, family, mapMode, stats, cinema, netflix, domestic, yearRange, world, source])
 
-  const nWithData = mapMode === 'diff' ? (diffs?.size ?? 0) : stats.size
-  const note = nWithData === 0 ? emptyNote(mapMode === 'diff' ? 'cinema' : source, yearRange) : `${nWithData} countries with data`
+  const nWithData = mapMode === 'domestic' ? (domestic?.size ?? 0) : mapMode === 'diff' ? (diffs?.size ?? 0) : stats.size
+  const note = mapMode === 'domestic'
+    ? (nWithData === 0 ? 'No UNESCO data for these years (it covers 2005–2017).' : `${nWithData} countries with data · UNESCO UIS, 2005–2017`)
+    : nWithData === 0 ? emptyNote(mapMode === 'diff' ? 'cinema' : source, yearRange) : `${nWithData} countries with data`
 
-  const rampLabels = mapMode === 'diff'
+  const rampLabels = mapMode === 'domestic'
+    ? { lo: '0%', hi: '100%', unit: 'share of admissions to domestic films' }
+    : mapMode === 'diff'
     ? { lo: `−${(colouring.max * 100).toFixed(0)} pp`, hi: `+${(colouring.max * 100).toFixed(0)} pp`, unit: 'cinema share − Netflix share (percentage points)' }
     : { lo: '0%', hi: `${fmtPct(colouring.max)}${colouring.clipped ? ' or more' : ''}`, unit: `share of ${data.families[family].name} (% of genre score)` }
 
   return (
     <Panel
-      letter="A"
-      title="World map"
+      title={
+        mapMode === 'share' ? `Share of ${data.families[family].name}`
+          : mapMode === 'top' ? 'Top genre'
+            : mapMode === 'diff' ? 'Cinema − Netflix share'
+              : "Domestic films' share of admissions"
+      }
       className="area-a"
       note={note}
       tools={

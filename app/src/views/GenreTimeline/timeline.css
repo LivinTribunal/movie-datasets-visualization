@@ -13,3 +13,5 @@
 .tl-brush .handle--w { transform: translateX(1px); }
 .tl-brush .handle--e { transform: translateX(1px); }
 .tl-measure { font: inherit; font-size: 12px; }
+.tl-break { stroke: var(--ink); stroke-dasharray: 3 3; opacity: 0.6; }
+.tl-break-label { font-size: 10px; fill: var(--ink); }

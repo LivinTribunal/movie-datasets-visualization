@@ -6,6 +6,8 @@ import pytest
 from movies.derive.genres import (
     LUMIERE_MIN_FILMS,
     film_genres,
+    imdb_genre_year,
+    kobis_as_lumiere,
     lumiere_country_genre,
     netflix_country_genre,
     production_country_genre,
@@ -281,3 +283,98 @@ def test_us_cinema_fuzzy_share_and_coverage():
     assert out["fuzzy_share"].to_list() == [pytest.approx(0.2)] * 2
     assert out["estimated_share"].to_list() == [0.0] * 2
     assert out["entries"].to_list() == [2] * 2
+
+
+MAPPING = pl.DataFrame(
+    {
+        "imdb_genre": ["Drama", "Crime", "Film-Noir", "Sport", "Short", "News"],
+        "genre": ["Drama", "Crime", "Crime", None, None, None],
+    },
+    schema={"imdb_genre": pl.String, "genre": pl.String},
+)
+IMDB_FAMILIES = pl.DataFrame({"genre": ["Drama", "Crime"], "family": ["Drama", "Crime"]})
+
+
+def _titles(rows: list[tuple]) -> pl.DataFrame:
+    return pl.DataFrame(
+        rows,
+        schema={
+            "imdb_id": pl.String,
+            "title_type": pl.String,
+            "year": pl.Int16,
+            "genres": pl.List(pl.String),
+        },
+        orient="row",
+    )
+
+
+def test_imdb_shorts_count_only_before_1920():
+    titles = _titles(
+        [
+            ("tt1", "short", 1915, ["Drama"]),
+            ("tt2", "short", 1925, ["Drama"]),
+            ("tt3", "movie", 1915, ["Drama"]),
+        ]
+    )
+    out = imdb_genre_year(titles, MAPPING, IMDB_FAMILIES)
+    assert out.select("year", "entries", "shorts").rows() == [(1915, 2, 1)]
+
+
+def test_imdb_mapped_duplicates_and_dropped_genres_weigh_one():
+    titles = _titles(
+        [
+            ("tt1", "movie", 2000, ["Film-Noir", "Crime"]),
+            ("tt2", "movie", 2000, ["Sport", "Drama"]),
+            ("tt3", "movie", 2000, ["Short", "News"]),
+        ]
+    )
+    out = imdb_genre_year(titles, MAPPING, IMDB_FAMILIES)
+    assert dict(out.select("genre", "score").iter_rows()) == {"Crime": 1.0, "Drama": 1.0}
+    assert out["entries"].to_list() == [2, 2]
+    assert out["share"].sum() == pytest.approx(1.0)
+
+
+def test_imdb_shares_sum_to_one_per_year():
+    titles = _titles(
+        [("tt1", "movie", 2000, ["Drama", "Crime"]), ("tt2", "movie", 2001, ["Drama"])]
+    )
+    out = imdb_genre_year(titles, MAPPING, IMDB_FAMILIES)
+    assert out.group_by("year").agg(pl.col("share").sum()).sort("year")["share"].to_list() == [
+        1.0,
+        1.0,
+    ]
+
+
+def test_imdb_unknown_genre_raises():
+    with pytest.raises(ValueError, match="Mime"):
+        imdb_genre_year(_titles([("tt1", "movie", 2000, ["Mime"])]), MAPPING, IMDB_FAMILIES)
+
+
+def test_kobis_as_lumiere_matches_the_lumiere_schema():
+    kobis = pl.DataFrame(
+        [("tt1", 2020, 5)],
+        schema={"imdb_id": pl.String, "year": pl.Int16, "admissions": pl.Int64},
+        orient="row",
+    ).with_columns(kobis_code=pl.lit("1"), title_ko=pl.lit("x"))
+    out = kobis_as_lumiere(kobis)
+    expected = _lumiere([]).with_columns(lumiere_id=pl.lit(None, dtype=pl.String)).columns
+    assert set(out.columns) == set(expected)
+    assert out.schema["lumiere_id"] == pl.String
+    assert out.schema["year"] == pl.Int16 and out.schema["admissions"] == pl.Int64
+    assert out["market"].to_list() == ["KR"] and out["estimated"].to_list() == [False]
+
+
+def test_kr_coverage_counts_unmatched_and_other_films_admissions():
+    genres = film_genres(_films([("tt1", ["Drama"])]), FAMILIES)
+    # 20 distinct films without genres (matched but ungenred), the remainder row (null id)
+    rows = [("tt1", 2020, 30), (None, 2020, 10)]
+    rows += [(f"tt9{i}", 2020, 10) for i in range(19)] + [("tt1", 2021, 5)]
+    kobis = pl.DataFrame(
+        rows,
+        schema={"imdb_id": pl.String, "year": pl.Int16, "admissions": pl.Int64},
+        orient="row",
+    )
+    out = lumiere_country_genre(kobis_as_lumiere(kobis), genres, {"KR"})
+    assert out["year"].unique().to_list() == [2020]  # 2021 has too few films
+    assert out["coverage"].to_list() == [pytest.approx(30 / 230)]
+    assert out["share"].to_list() == [1.0]

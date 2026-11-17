@@ -4,7 +4,8 @@ Pure functions from frames to frames; only `run()` reads data/interim and data/r
 writes data/interim/film_genres.parquet, country_genre_netflix.parquet,
 country_genre_lumiere.parquet (cinema admissions per market, when the scrape exists),
 country_genre_production.parquet (films produced per country) and country_genre_us.parquet
-(US cinema gross). Every country table ends with `entries`, the distinct films behind a row's
+(US cinema gross), and imdb_genre_year.parquet (IMDb genre shares per year, when imdb.parquet
+exists). Every country table ends with `entries`, the distinct films behind a row's
 country-year.
 Netflix shares carry `coverage` (chart score that reached a genre) and `fuzzy_share` (chart
 score matched fuzzily), because unmatched and fuzzy-matched data must be shown as such in the app.
@@ -17,6 +18,7 @@ from movies import paths
 DROPPED_GENRES = ["TV Movie"]  # deliberately has no family colour
 # A market-year with fewer distinct films gives noisy shares, so it is dropped.
 LUMIERE_MIN_FILMS = 20
+SHORTS_UNTIL = 1920  # before 1920 most films were shorts, so they count; later only features
 
 
 def film_genres(films: pl.DataFrame, families: pl.DataFrame) -> pl.DataFrame:
@@ -80,6 +82,18 @@ def netflix_country_genre(
             entries="entries",
         )
         .sort([*keys, "genre"])
+    )
+
+
+def kobis_as_lumiere(kobis: pl.DataFrame) -> pl.DataFrame:
+    """KOBIS rows in the LUMIERE long shape: market KR, no lumiere_id, never estimated."""
+    return kobis.select(
+        "imdb_id",
+        lumiere_id=pl.lit(None, dtype=pl.String),
+        market=pl.lit("KR"),
+        year=pl.col("year").cast(pl.Int16),
+        admissions=pl.col("admissions").cast(pl.Int64),
+        estimated=pl.lit(False),
     )
 
 
@@ -239,6 +253,48 @@ def us_cinema_country_genre(
     )
 
 
+def imdb_genre_year(
+    titles: pl.DataFrame, mapping: pl.DataFrame, families: pl.DataFrame
+) -> pl.DataFrame:
+    """Genre shares of every IMDb film per year; shorts count only before `SHORTS_UNTIL`.
+
+    IMDb genres are mapped to TMDB genres through `mapping` (`imdb_genre`, `genre`; a null
+    `genre` drops the IMDb genre). A film counts 1/n in each of its n kept genres, and films left
+    without a genre drop out. `entries` is the distinct films of a year, `shorts` the short ones.
+    """
+    films = titles.filter(
+        (pl.col("title_type") == "movie")
+        | ((pl.col("title_type") == "short") & (pl.col("year") < SHORTS_UNTIL))
+    )
+    exploded = films.select("imdb_id", "title_type", "year", imdb_genre="genres").explode(
+        "imdb_genre"
+    )
+    unknown = sorted(set(exploded["imdb_genre"].drop_nulls()) - set(mapping["imdb_genre"]))
+    if unknown:
+        raise ValueError(f"IMDb genres missing from imdb_genres.csv: {unknown}")
+    rows = (
+        exploded.join(mapping, on="imdb_genre", how="inner")
+        .drop_nulls("genre")
+        .unique(["imdb_id", "genre"], maintain_order=True)
+        .with_columns(weight=1 / pl.len().over("imdb_id"))
+    )
+    years = rows.group_by("year").agg(
+        entries=pl.col("imdb_id").n_unique(),
+        shorts=pl.col("imdb_id").filter(pl.col("title_type") == "short").n_unique(),
+    )
+    return (
+        rows.group_by("year", "genre")
+        .agg(score=pl.col("weight").sum().cast(pl.Float64))
+        .join(families.select("genre", "family"), on="genre", how="left")
+        .with_columns(share=pl.col("score") / pl.col("score").sum().over("year"))
+        .join(years, on="year")
+        .select(
+            pl.col("year").cast(pl.Int16), "genre", "family", "score", "share", "entries", "shorts"
+        )
+        .sort("year", "genre")
+    )
+
+
 def run() -> None:
     films = pl.read_parquet(paths.INTERIM / "films.parquet")
     tmdb = pl.read_parquet(paths.INTERIM / "tmdb.parquet")
@@ -255,11 +311,17 @@ def run() -> None:
     out.write_parquet(paths.INTERIM / "country_genre_netflix.parquet")
 
     lumiere_path = paths.SCRAPED / "lumiere.parquet"
-    if lumiere_path.exists():
+    kobis_path = paths.SCRAPED / "kobis.parquet"
+    if lumiere_path.exists() or kobis_path.exists():
         countries = pl.read_csv(
             paths.REFERENCE / "countries.csv", schema_overrides={"iso_numeric": pl.String}
         )
-        cinema = lumiere_country_genre(pl.read_parquet(lumiere_path), genres, countries["iso2"])
+        parts = []
+        if lumiere_path.exists():
+            parts.append(pl.read_parquet(lumiere_path))
+        if kobis_path.exists():
+            parts.append(kobis_as_lumiere(pl.read_parquet(kobis_path)))
+        cinema = lumiere_country_genre(pl.concat(parts), genres, countries["iso2"])
         cinema.write_parquet(paths.INTERIM / "country_genre_lumiere.parquet")
         print(
             f"country_genre_lumiere: {cinema.height} rows, "
@@ -267,7 +329,7 @@ def run() -> None:
             f"years {cinema['year'].min()}-{cinema['year'].max()}"
         )
     else:
-        print("lumiere.parquet not found; no cinema genre shares")
+        print("lumiere.parquet and kobis.parquet not found; no cinema genre shares")
 
     for name, table in (
         ("production", production_country_genre(films, genres)),
@@ -279,6 +341,19 @@ def run() -> None:
             f"{table['country_iso2'].n_unique()} countries, "
             f"years {table['year'].min()}-{table['year'].max()}"
         )
+
+    imdb_path = paths.INTERIM / "imdb.parquet"
+    if imdb_path.exists():
+        mapping = pl.read_csv(
+            paths.REFERENCE / "imdb_genres.csv", schema_overrides={"genre": pl.String}
+        )
+        imdb = imdb_genre_year(pl.read_parquet(imdb_path), mapping, families)
+        imdb.write_parquet(paths.INTERIM / "imdb_genre_year.parquet")
+        print(
+            f"imdb_genre_year: {imdb.height} rows, years {imdb['year'].min()}-{imdb['year'].max()}"
+        )
+    else:
+        print("imdb.parquet not found; no IMDb genre shares")
 
     coverage = out.unique(["country_iso2", "year"])["coverage"]
     print(f"film_genres: {genres.height} rows, {genres['imdb_id'].n_unique()} films")

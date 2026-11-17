@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchPack, type Pack } from './pack'
 import type {
-  AppData, Country, CountryGenre, CountryYear, Family, Films, FilmsDetail, FilmsText, Franchises, Meta,
+  AppData, Country, CountryDomestic, CountryGenre, CountryYear, Family, Films, FilmsDetail, FilmsText, Franchises, ImdbGenreYear, Meta,
 } from './types'
 
 async function fetchJson<T>(file: string): Promise<T> {
@@ -91,6 +91,27 @@ function buildCountryGenre(p: Pack): CountryGenre {
   }
 }
 
+function buildCountryDomestic(p: Pack): CountryDomestic {
+  return {
+    rows: p.rows,
+    country: p.dict('country'),
+    year: p.raw('year') as Uint16Array,
+    admissions: p.num('admissions'),
+    national: p.num('national'),
+  }
+}
+
+function buildImdbGenreYear(p: Pack): ImdbGenreYear {
+  return {
+    rows: p.rows,
+    year: p.raw('year') as Uint16Array,
+    genre: p.raw('genre') as Uint8Array,
+    score: p.num('score'),
+    entries: p.num('entries'),
+    shorts: p.num('shorts'),
+  }
+}
+
 function buildCountryYear(p: Pack): CountryYear {
   return {
     rows: p.rows,
@@ -149,10 +170,12 @@ function buildFamilies(gf: Columnar<GenreFamilyRow>): Family[] {
 }
 
 export async function loadData(): Promise<AppData> {
-  const [films, countryGenre, countryYear, franchises, countries, genreFamilies, meta] = await Promise.all([
+  const [films, countryGenre, countryYear, countryDomestic, imdbGenreYear, franchises, countries, genreFamilies, meta] = await Promise.all([
     fetchPack('data/films.pack'),
     fetchPack('data/country_genre.pack'),
     fetchPack('data/country_year.pack'),
+    fetchPack('data/country_domestic.pack'),
+    fetchPack('data/imdb_genre_year.pack'),
     fetchPack('data/franchises.pack'),
     fetchJson<Columnar<Country>>('countries.json'),
     fetchJson<Columnar<GenreFamilyRow>>('genre_families.json'),
@@ -165,6 +188,8 @@ export async function loadData(): Promise<AppData> {
     films: filmTable,
     countryGenre: buildCountryGenre(countryGenre),
     countryYear: buildCountryYear(countryYear),
+    countryDomestic: buildCountryDomestic(countryDomestic),
+    imdbGenreYear: buildImdbGenreYear(imdbGenreYear),
     franchises: buildFranchises(franchises),
     countries: countryList,
     countryByIso2: new Map(countryList.map((c) => [c.iso2, c])),

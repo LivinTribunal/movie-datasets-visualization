@@ -14,10 +14,11 @@ from movies.export.app import (
     to_columns,
     write_country_tables,
     write_detail,
+    write_domestic,
     write_films,
     write_franchises,
 )
-from movies.export.pack import str_col, write_pack
+from movies.export.pack import num, str_col, write_pack
 from movies.validate import app as validate_app
 from movies.validate.app import check
 from test_export_app import EXTRAS, FILM_GENRES, FILMS, FRANCHISES, MONEY, RATINGS, _shares
@@ -53,6 +54,26 @@ META = {
 }
 
 
+IMDB = pl.DataFrame(
+    {
+        "year": [1915, 1915, 2000],
+        "genre": [0, 1, 1],
+        "score": [1.0, 1.5, 2.0],
+        "entries": [2, 2, 2],
+        "shorts": [1, 1, 0],
+    }
+)
+
+DOMESTIC = pl.DataFrame(
+    {
+        "country_iso2": ["CZ", "CZ"],
+        "year": [2010, 2011],
+        "admissions": [1000.0, 2000.0],
+        "admissions_national": [100.0, 500.0],
+    }
+)
+
+
 def _films() -> pl.DataFrame:
     return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES, EXTRAS)
 
@@ -84,6 +105,8 @@ def _write(
     countries: pl.DataFrame = COUNTRIES,
     families: pl.DataFrame = FAMILY_TABLE,
     meta: dict | None = None,
+    imdb: pl.DataFrame | None = None,
+    domestic: pl.DataFrame | None = None,
 ) -> None:
     films = _films() if films is None else films
     write_films(
@@ -109,6 +132,11 @@ def _write(
         path / "country_year.pack",
     )
     write_franchises(_franchises() if franchises is None else franchises, path / "franchises.pack")
+    imdb = IMDB if imdb is None else imdb
+    cols = [num(c, imdb[c], t) for c, t in validate_app.PACKS["imdb_genre_year.pack"].items()]
+    write_pack(path / "imdb_genre_year.pack", imdb.height, {"genres": GENRES}, cols)
+    domestic = DOMESTIC if domestic is None else domestic
+    write_domestic(domestic, COUNTRY_CODES, path / "country_domestic.pack")
     (path / "countries.json").write_text(json.dumps({"columns": to_columns(countries)}))
     (path / "genre_families.json").write_text(json.dumps({"columns": to_columns(families)}))
     (path / "countries.topo.json").write_text("{}")
@@ -458,3 +486,28 @@ def test_oscar_noms_under_wins(tmp_path):
 def test_negative_extra_money(tmp_path):
     films = _films().with_columns(opening_usd=pl.lit(-1.0))
     assert _has(_errors(tmp_path, films=films), "films.pack", "negative opening_usd")
+
+
+def test_imdb_short_after_1919(tmp_path):
+    bad = IMDB.with_columns(shorts=pl.Series([1, 1, 1]))
+    assert _has(_errors(tmp_path, imdb=bad), "imdb_genre_year.pack", "shorts from 1920")
+
+
+def test_imdb_shorts_exceed_entries(tmp_path):
+    bad = IMDB.with_columns(shorts=pl.Series([3, 1, 0]))
+    assert _has(_errors(tmp_path, imdb=bad), "imdb_genre_year.pack", "shorts exceed entries")
+
+
+def test_imdb_genre_beyond_list(tmp_path):
+    bad = IMDB.with_columns(genre=pl.Series([0, 1, 5]))
+    assert _has(_errors(tmp_path, imdb=bad), "imdb_genre_year.pack", "genre beyond")
+
+
+def test_domestic_national_above_admissions(tmp_path):
+    bad = DOMESTIC.with_columns(admissions_national=pl.Series([100.0, 2500.0]))
+    assert _has(_errors(tmp_path, domestic=bad), "country_domestic.pack", "national outside")
+
+
+def test_domestic_duplicate_country_year(tmp_path):
+    bad = DOMESTIC.with_columns(year=pl.Series([2010, 2010]))
+    assert _has(_errors(tmp_path, domestic=bad), "country_domestic.pack", "duplicate key")

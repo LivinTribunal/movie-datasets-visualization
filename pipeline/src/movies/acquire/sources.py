@@ -75,11 +75,32 @@ REGISTRY: tuple[Source, ...] = (
         browser_ua=True,
     ),
     Source(
+        name="imdb",
+        description="IMDb non-commercial datasets: every title's type, year and genres",
+        kind="http",
+        urls=(("title.basics.tsv.gz", "https://datasets.imdbws.com/title.basics.tsv.gz"),),
+        version="live",
+    ),
+    Source(
         name="cpi",
         description="FRED CPIAUCNS (US CPI-U, not seasonally adjusted, from 1913)",
         kind="http",
         urls=(("CPIAUCNS.csv", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCNS"),),
         version="live",
+    ),
+    Source(
+        name="unesco",
+        description="UNESCO UIS Feature Films via DBnomics: cinema admissions, total and"
+        " national films",
+        kind="http",
+        urls=(
+            (
+                "film.json",
+                "https://api.db.nomics.world/v22/series/UNESCO/FILM?dimensions="
+                "%7B%22indicator%22%3A%5B%22220063%22%2C%22220223%22%5D%7D&observations=1&limit=1000",
+            ),
+        ),
+        version="dbnomics-2022-04-04",
     ),
     Source(
         name="fx",

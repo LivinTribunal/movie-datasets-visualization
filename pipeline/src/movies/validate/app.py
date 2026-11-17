@@ -92,6 +92,19 @@ PACKS: dict[str, dict[str, str]] = {
     "films_poster.pack": {"poster": "str"},
     "country_genre.pack": {**_KEYS, "genre": "u8", "score": "f32"},
     "country_year.pack": {**_KEYS, "entries": "u32", **_SHARES, "measure": "dict"},
+    "imdb_genre_year.pack": {
+        "year": "u16",
+        "genre": "u8",
+        "score": "f32",
+        "entries": "u32",
+        "shorts": "u32",
+    },
+    "country_domestic.pack": {
+        "country": "dict",
+        "year": "u16",
+        "admissions": "f32",
+        "national": "f32",
+    },
     "franchises.pack": {
         "collection_id": "u32",
         "installment": "u8",
@@ -117,6 +130,8 @@ LIMITS: dict[str, int] = {
     "country_genre.pack": 1_000_000,
     "country_year.pack": 200_000,
     "franchises.pack": 200_000,
+    "imdb_genre_year.pack": 100_000,
+    "country_domestic.pack": 50_000,
     "countries.topo.json": 900_000,
 }
 TOTAL_LIMIT = 12_000_000
@@ -348,6 +363,48 @@ def _check_countries(
             errors.append("country_genre.pack / country_year.pack: different source-country-years")
 
 
+def _check_imdb(p: Pack | None, fam: dict[str, list] | None, errors: list[str]) -> None:
+    if p is None:
+        return
+    c = p.columns
+    name = "imdb_genre_year.pack"
+    if _outside(c["year"], 1900, 2026):
+        errors.append(f"{name}: year outside 1900-2026")
+    if fam is not None and any(g >= len(fam["genre"]) for g in c["genre"]):
+        errors.append(f"{name}: genre beyond the genre list")
+    if any(s is None or s <= 0 for s in c["score"]):
+        errors.append(f"{name}: score not above 0")
+    if any(e is None or e < 1 for e in c["entries"]):
+        errors.append(f"{name}: entries under 1")
+    rows = list(zip(c["year"], c["entries"], c["shorts"], strict=True))
+    if any(s > e for _, e, s in rows):
+        errors.append(f"{name}: shorts exceed entries")
+    if any(y >= 1920 and s > 0 for y, _, s in rows):
+        errors.append(f"{name}: shorts from 1920 on")
+    keys = list(zip(c["year"], c["genre"], strict=True))
+    if len(set(keys)) != len(keys):
+        errors.append(f"{name}: duplicate key")
+
+
+def _check_domestic(p: Pack | None, countries: set | None, errors: list[str]) -> None:
+    if p is None:
+        return
+    c = p.columns
+    name = "country_domestic.pack"
+    if _outside(c["year"], 1970, 2026):
+        errors.append(f"{name}: year outside 1970-2026")
+    if any(a is None or a <= 0 for a in c["admissions"]):
+        errors.append(f"{name}: admissions not above 0")
+    pairs = list(zip(c["national"], c["admissions"], strict=True))
+    if any(n is None or a is None or not 0 <= n <= a for n, a in pairs):
+        errors.append(f"{name}: national outside 0-admissions")
+    if countries is not None and set(c["country"]) - countries:
+        errors.append(f"{name}: unknown country {sorted(set(c['country']) - countries)}")
+    keys = list(zip(c["country"], c["year"], strict=True))
+    if len(set(keys)) != len(keys):
+        errors.append(f"{name}: duplicate key")
+
+
 def _check_meta(data_dir: Path, errors: list[str]) -> None:
     path = data_dir / "meta.json"
     if not path.exists():
@@ -439,6 +496,8 @@ def check(data_dir: Path) -> list[str]:
     if franchises:
         _check_franchises(franchises, films, errors)
     _check_countries(p["country_genre.pack"], p["country_year.pack"], fam, countries, errors)
+    _check_imdb(p["imdb_genre_year.pack"], fam, errors)
+    _check_domestic(p["country_domestic.pack"], countries, errors)
     _check_meta(data_dir, errors)
     size_errors, _ = _sizes(data_dir)
     errors += size_errors

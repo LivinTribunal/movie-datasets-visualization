@@ -17,8 +17,8 @@ const MONEY = ['usd2025', 'nominal']
 const STORY = ['any', 'original', 'book', 'comic', 'true_story', 'stage', 'screen', 'other']
 const STUDIO = ['any', 'major', 'independent']
 const SOURCE = ['netflix', 'cinema', 'production']
-const MAP_MODE = ['share', 'top', 'diff']
-const TIMELINE = ['films', 'votes', 'revenue', 'netflix']
+const MAP_MODE = ['share', 'top', 'diff', 'domestic']
+const TIMELINE = ['films', 'votes', 'revenue', 'netflix', 'imdb']
 const FRANCHISE_Y = ['rating', 'revenue']
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)

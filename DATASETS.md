@@ -23,6 +23,8 @@ using it (keys, units, missing values) are in `AGENTS.md`. Decisions are in
 | `numbers_budgets` | [The Numbers budgets](https://www.kaggle.com/datasets/dahvid/movie-budgets-and-revenues) | Kaggle v1 | MIT | `data/raw/numbers_budgets/` | budget, domestic + worldwide gross: T2, T5, X1 | ✅ 0.5 MB, 6,518 rows |
 | `numbers_metrics` | [The Numbers + metrics](https://www.kaggle.com/datasets/michaelmatta0/movies-ultimate-metrics-features-and-metadata) | Kaggle v1 | MIT | `data/raw/numbers_metrics/` | gross split, franchise, source, creative type: T5, T6 | ✅ 10.4 MB, 6,569 rows (cleaned and raw files) |
 | `netflix` | [Netflix Top 10, all weeks by country](https://www.netflix.com/tudum/top10) (`all-weeks-countries.tsv`) | live file; **we use weeks up to 2026-09-27** (later weeks are dropped when cleaning); fetched with a browser User-Agent because Netflix serves an HTML page to the descriptive one | Netflix public data | `data/raw/netflix/` | streaming genre taste: T1, T4, X2 | ✅ 32.6 MB, 512,200 rows (films + TV), weeks 2021-07-04 to 2026-10-04, 94 countries |
+| `imdb` | [IMDb non-commercial datasets](https://developer.imdb.com/non-commercial-datasets/), `title.basics.tsv.gz` only | live file, **downloaded 2026-11-17** (IMDb replaces it daily and keeps no old versions, D36) | IMDb non-commercial licence ("Information courtesy of IMDb … Used with permission.") | `data/raw/imdb/` | the "all IMDb films" series of the genre timeline, which fills 1900–1919: T4 | ✅ 230.5 MB gz; 1,753,080 movies and shorts 1900–2026 |
+| `unesco` | [UNESCO UIS Feature Films](https://uis.unesco.org/en/topic/feature-films-and-cinema-data) via the [DBnomics mirror](https://db.nomics.world/UNESCO/FILM) (indicators 220063 total admissions, 220223 admissions of national films) | DBnomics dataset indexed 2022-04-04 | UIS terms of use (free, with attribution) | `data/raw/unesco/` | the "domestic films" map mode: T1 (D37) | ✅ 344 KB; 189 countries 1970–2017, both values for 612 country-years in 81 countries (2005–2017) |
 | `cpi` | [FRED CPIAUCNS](https://fred.stlouisfed.org/series/CPIAUCNS) | live (monthly, from 1913, not seasonally adjusted) | public domain (BLS) | `data/raw/cpi/` | inflation adjustment to 2025 USD | ✅ 1,364 monthly rows |
 | `fx` | [World Bank PA.NUS.FCRF](https://data.worldbank.org/indicator/PA.NUS.FCRF) | live (yearly) | CC BY 4.0 | `data/raw/fx/` | converting non-USD money | ✅ 4.6 MB, 17,490 country-years (12,630 with a value) |
 | `world_atlas` | [world-atlas@2](https://github.com/topojson/world-atlas) (Natural Earth), 50m + 110m | npm v2 | ISC / public domain | `data/raw/world_atlas/` | map geometry: T1, X2 | ✅ 0.9 MB |
@@ -67,6 +69,9 @@ rate and commit only derived numbers, never page contents.
 | `bom_country` | `boxofficemojo.com/year/{year}/?area={ISO2}` | title + year (fuzzy) | ~97 markets × years | yearly gross per film per market, theatres, distributor | T1, T4, X2 | – | ❌ robots.txt disallows all crawlers (D16) |
 | `lumiere` | [LUMIERE](https://lumiere.obs.coe.int) `/movie/{id}` (admissions table) | Wikidata P4282 | notable films with an id (11,920) | admissions per European market per year, with LUMIERE's `estimated` flag; `GB_IE` is a combined market | T1, T4, X2 | crosswalk | ✅ scraped 2026-10-11: 11,917 pages, 3 missing (404); 9,976 films with admissions, 271,268 rows, 40 markets, 1996–2025 |
 | `tmdb_collections` | TMDB API `/movie/{id}` | TMDB id | notable subset (13,080 calls) | `belongs_to_collection` (franchises), then `/collection/{id}` for every part | T6 | `TMDB_API_KEY` in `.env` | ✅ scraped 2026-10-11: 2,846 notable films in 1,486 collections; `tmdb_collection_parts.parquet` lists their 4,498 parts |
+| `kobis` | [KOBIS](https://www.kobis.or.kr) yearly box office (`findYearlyBoxOfficeList.do`: top 50 page and the full-year export) | KOBIS film code → Wikidata P8921, else exact Korean label + year | 2004–2025, 44 POSTs | admissions per film and year in South Korea, and each year's total | T1, X2 (D38) | – | ✅ scraped 2026-11-17: 1,122 film-years; 599 matched by P8921, 364 by title, 159 not; KR coverage median 0.68 |
+| `cnc` | CNC open data (`cnc.fr/documents/…xlsx`: films over 1 million admissions, best results since 1945) | title + year | France 1945– | admissions per film | T1, T4 | manual download | ❌ robots.txt disallows `/documents/` (D38); only if downloaded by hand into `data/raw/cnc/` |
+| `bfi` | BFI weekend box office reports (`core-cms.bfi.org.uk/media/…/download`, .ods) | title | UK, one file per weekend | weekend and to-date gross per film | T1 | manual download | ❌ robots.txt disallows everything on core-cms (D38) |
 | `pageviews` | Wikimedia Pageviews API | Wikipedia titles per language | – | monthly views per language edition | – | – | ➖ |
 
 ## 4. Reference tables (hand-made, committed)
@@ -75,6 +80,7 @@ rate and commit only derived numbers, never page contents.
 |---|---|---|
 | `data/reference/countries.csv` | ISO-2, ISO-3, ISO numeric (to join world-atlas), English name, UN M49 region and subregion, and the other names sources use (`country_aliases.csv`; historical states map to their main successor, D13). Built by `movies reference`. Every Netflix code and every TMDB production country resolves. | ✅ 250 rows |
 | `data/reference/genre_families.csv` | each of TMDB's 18 film genres → one of 8 colour families with an Okabe–Ito colour (D11) | ✅ proposal, the team may regroup |
+| `data/reference/imdb_genres.csv` | each IMDb genre → the TMDB genre name it counts as (Sci-Fi → Science Fiction, Musical → Music, Film-Noir → Crime, Biography → History); Adult, Game-Show, News, Reality-TV, Short, Sport and Talk-Show map to nothing and are dropped (D36) | ✅ 28 rows |
 | `data/overrides/*.csv` | hand fixes: title matches, one file per source (D14), and wrong money values to skip (D20) | ✅ numbers 334, netflix 105, money 11 |
 
 ## 5. How the sources join
@@ -94,7 +100,9 @@ rate and commit only derived numbers, never page contents.
 
 - "This product uses the TMDB API but is not endorsed or certified by TMDB."
 - IMDb ratings and votes come from IMDb data via the TMDB+IMDb Kaggle
-  dataset; non-commercial use.
+  dataset; non-commercial use. The genre timeline's IMDb series uses IMDb's
+  own dataset: "Information courtesy of IMDb (https://www.imdb.com). Used
+  with permission."
 - Wikidata (CC0), Wikipedia (CC BY-SA 4.0), World Bank (CC BY 4.0), Natural
   Earth (public domain), FRED / BLS (public domain), Netflix Top 10, Rotten
   Tomatoes, Metacritic, Letterboxd, The Numbers, LUMIERE (European
@@ -114,6 +122,8 @@ rate and commit only derived numbers, never page contents.
 | `rt_clapper.parquet` | 142,052 | 1,206 duplicate RT ids dropped (the fullest row kept); box office strings like `$31.4M` → USD |
 | `numbers_budgets.parquet`, `numbers_metrics.parquet` | 6,518 and 6,569 | `$0` gross → null; dates parsed; ids like `1,000` parsed (they were null before); in the metrics file two-digit years after 2026-10-01 moved back a century (`15-Dec-39` is 1939, not 2039) |
 | `netflix.parquet` | 255,170 | films only, weeks up to 2026-09-27, `score = 11 − rank` |
+| `imdb.parquet` | 1,753,080 (637,626 movies, 1,115,454 shorts) | movies and shorts only, adult titles dropped, start year 1900–2026, genres split into a list |
+| `unesco.parquet` | 2,714 (189 countries, 1970–2017) | ISO-3 → ISO-2 through countries.csv (`XDN` dropped), "NA" → null, a total of 0 → null, national > total → null |
 | `cpi.parquet` | 114 years (1913–2026) | yearly mean of the monthly index, `months` shows a partial year |
 | `fx.parquet` | 12,537 (213 countries) | World Bank aggregates and empty values dropped, ISO-3 → ISO-2 |
 
@@ -141,9 +151,10 @@ them to `data/interim/` (D15). Counts from the run on 2026-10-11:
 |---|---|---|
 | `money.parquet` | 56,431 (one per film) | budget and revenue with `*_src`, currency, nominal USD, `*_usd2025`, `*_disagree`, profit and ROI. Budgets: 17,904 films (numbers 6,033, tmdb 10,092, wikidata 1,028, wikipedia 751); 9,940 of 13,080 notable. Revenues: 18,543 (numbers 5,779, tmdb 11,173, wikidata 683, wikipedia 908); 10,657 notable. 468 Numbers and TMDB revenues under $10,000 dropped as unit errors or re-release grosses; 11 hand-checked wrong values skipped (`data/overrides/money.csv`, D20). ROI for 12,991 films. |
 | `ratings.parquet` | 56,431 | `imdb_100`, `tmdb_100` (null under 50 TMDB votes: 33,043 left), `tomatometer_100` (24,875; RT pages win over Clapper for films from 2023 on), `metascore_100` (9,154), `audience_100` (35,900), `mc_user_100` (8,790, null under 10 user ratings), `letterboxd_100` (13,027), `gap` (24,285; median −3) |
+| `imdb_genre_year.parquet` | 2,262 rows, 1900–2026 | genre shares of every IMDb feature film per year, plus shorts before 1920; `entries` (films with a mapped genre) and `shorts` per year; 1,650 films in 1900, 5,223 in 1910 (5,170 of them shorts), 1,501 in 1920 (D36) |
 | `film_genres.parquet` | 126,307 rows for 56,199 films | one row per film and genre, `family`, `genre_weight = 1/n` without TV Movie |
 | `country_genre_netflix.parquet` | 9,893 rows: 94 countries, 2021–2026 | Netflix chart score per country, year and genre, with `share`, `coverage` (min 0.73, median 0.99) and `fuzzy_share` |
-| `country_genre_lumiere.parquet` | 15,203 rows: 36 markets, 1996–2025 | cinema admissions × `genre_weight` per market, year and genre, with `share`, `coverage` (1.0 everywhere) and `estimated_share` (1.0 for GB and IE). AL, LI and UA drop out under the 20-film minimum; `GB_IE` counts as GB (D17) |
+| `country_genre_lumiere.parquet` | 15,536 rows: 37 markets (36 LUMIERE + KR from KOBIS), 1996–2025 | cinema admissions × `genre_weight` per market, year and genre, with `share`, `coverage` (1.0 for LUMIERE; KR 0.37–0.80, median 0.68, D38) and `estimated_share` (1.0 for GB and IE). AL, LI and UA drop out under the 20-film minimum; `GB_IE` counts as GB (D17) |
 | `country_genre_production.parquet` | 26,948 rows: 173 countries, 1900–2026 | what each country makes: `genre_weight` of every working-subset film per production country, year and genre; a co-production counts in each of its countries; `entries` is the number of films (D22) |
 | `country_genre_us.parquet` | 757 rows: US, 1980–2024 | US cinema: The Numbers domestic gross × `genre_weight` per release year and genre, with `coverage`, `fuzzy_share` (gross matched by a fuzzy title) and `entries`; years under 20 films are dropped (D22) |
 | `franchises.parquet` | 2,584 parts of 605 collections | TMDB collections with ≥ 3 released parts, `installment` by release date, IMDb change vs the previous and first part (median at installment 2: −6), revenue ratios (D17) |
@@ -166,6 +177,8 @@ from the run on 2026-11-16:
 | `films_poster.pack` | 56,431 | 1.31 MB | TMDB poster path |
 | `country_genre.pack` | 52,801 | 0.14 MB | score per source (`netflix`, `cinema`, `production`), country, year and genre |
 | `country_year.pack` | 5,387 | 0.01 MB | entries, coverage, fuzzy and estimated share, and the measure behind the score, per source, country and year |
+| `imdb_genre_year.pack` | 2,262 | 0.01 MB | IMDb genre score per year and genre, with `entries` and `shorts` per year (D36) |
+| `country_domestic.pack` | 612 | 0.01 MB | total and national-film admissions per country and year (D37) |
 | `franchises.pack` | 2,584 | 0.08 MB | franchise parts with the row of the film in `films.pack` |
 | `countries.topo.json` | – | 0.76 MB | world-atlas 50m (the 110m file has no Malta, Singapore or Hong Kong) |
 | `countries.json`, `genre_families.json`, `meta.json` | – | small | reference tables, notes, attribution |

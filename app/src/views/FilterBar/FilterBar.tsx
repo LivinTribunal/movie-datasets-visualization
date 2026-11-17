@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { FC } from 'react'
 import { ChipGroup } from '../../components/ChipGroup'
 import { loadText, useLazy } from '../../lib/data'
@@ -34,24 +35,84 @@ const TABS = [
   { value: 'franchises', label: 'Franchises' },
 ] as const
 
-export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
-  const family = useStore((s) => s.family)
-  const genreOnly = useStore((s) => s.genreOnly)
+const FiltersMenu: FC = () => {
   const subset = useStore((s) => s.subset)
   const money = useStore((s) => s.money)
+  const story = useStore((s) => s.story)
+  const studio = useStore((s) => s.studio)
+  const genreOnly = useStore((s) => s.genreOnly)
+  const setSubset = useStore((s) => s.setSubset)
+  const setMoney = useStore((s) => s.setMoney)
+  const setStory = useStore((s) => s.setStory)
+  const setStudio = useStore((s) => s.setStudio)
+  const setGenreOnly = useStore((s) => s.setGenreOnly)
+  const menu = useRef<HTMLDetailsElement | null>(null)
+  const n = [subset !== 'notable', money !== 'usd2025', story !== 'any', studio !== 'any', genreOnly].filter(Boolean).length
+
+  useEffect(() => {
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (!menu.current) return
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !menu.current.contains(e.target as Node)) {
+        menu.current.open = false
+      }
+    }
+    document.addEventListener('pointerdown', close, true)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close, true)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
+
+  return (
+    <details ref={menu} className="filters-menu">
+      <summary className="btn">
+        Filters
+        {n > 0 && <span className="badge">{n}</span>}
+      </summary>
+      <div className="filters-list">
+        <div className="filters-row">
+          <span className="group-label">Films</span>
+          <ChipGroup label="Film subset" value={subset} onChange={setSubset} options={[...SUBSET]} />
+        </div>
+        <div className="filters-row">
+          <span className="group-label">Money</span>
+          <ChipGroup label="Money" value={money} onChange={setMoney} options={[...MONEY]} />
+        </div>
+        <div className="filters-row">
+          <span className="group-label">Story</span>
+          <select aria-label="Story source" value={story} onChange={(e) => setStory(e.target.value as typeof story)}>
+            {STORY.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="filters-row">
+          <span className="group-label">Studio</span>
+          <ChipGroup label="Studio" value={studio} onChange={setStudio} options={[...STUDIO]} />
+        </div>
+        <div className="filters-row">
+          <span className="group-label">Genre</span>
+          <ChipGroup
+            label="Genre highlight or filter"
+            value={genreOnly ? 'filter' : 'highlight'}
+            onChange={(v) => setGenreOnly(v === 'filter')}
+            options={GENRE_MODE}
+          />
+        </div>
+      </div>
+    </details>
+  )
+}
+
+export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
+  const family = useStore((s) => s.family)
   const tab = useStore((s) => s.tab)
   const brush = useStore((s) => s.brush)
   const film = useStore((s) => s.film)
   const countries = useStore((s) => s.countries)
   const franchise = useStore((s) => s.franchise)
   const setFamily = useStore((s) => s.setFamily)
-  const setGenreOnly = useStore((s) => s.setGenreOnly)
-  const setSubset = useStore((s) => s.setSubset)
-  const setMoney = useStore((s) => s.setMoney)
-  const story = useStore((s) => s.story)
-  const studio = useStore((s) => s.studio)
-  const setStory = useStore((s) => s.setStory)
-  const setStudio = useStore((s) => s.setStudio)
   const setTab = useStore((s) => s.setTab)
   const setBrush = useStore((s) => s.setBrush)
   const setFilm = useStore((s) => s.setFilm)
@@ -63,8 +124,8 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
   const hasSelection = countries.length > 0 || franchise !== null || film !== null || brush !== null
 
   return (
-    <header className="panel filter-bar area-f">
-      <div className="filter-row">
+    <header className="filter-bar area-f">
+      <div className="toolbar">
         <h1>
           <img src="favicon.svg" alt="" width="24" height="24" />
           Movie Explorer
@@ -76,42 +137,26 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
             </button>
           ))}
         </div>
+        <div className="toolbar-spacer" />
+        <YearSlider />
+        <FiltersMenu />
         <Search data={data} />
-        <div className="filter-spacer">
-          <YearSlider />
-          <ChipGroup label="Film subset" value={subset} onChange={setSubset} options={[...SUBSET]} />
-          <ChipGroup label="Money" value={money} onChange={setMoney} options={[...MONEY]} />
-          <select aria-label="Story source" value={story} onChange={(e) => setStory(e.target.value as typeof story)}>
-            {STORY.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <ChipGroup label="Studio" value={studio} onChange={setStudio} options={[...STUDIO]} />
-          <button type="button" className="btn" onClick={reset}>
-            Reset
-          </button>
-          <button type="button" className="btn" onClick={() => setAbout(true)}>
-            About
-          </button>
-        </div>
+        <button type="button" className="btn" onClick={reset}>
+          Reset
+        </button>
+        <button type="button" className="btn" onClick={() => setAbout(true)}>
+          About
+        </button>
       </div>
-      <div className="filter-row filter-row-groups">
-          <ChipGroup
-            label="Genre family"
-            value={family}
-            onChange={setFamily}
-            options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
-          />
-          <ChipGroup
-            label="Genre highlight or filter"
-            value={genreOnly ? 'filter' : 'highlight'}
-            onChange={(v) => setGenreOnly(v === 'filter')}
-            options={GENRE_MODE}
-          />
-        <div className="selection">
-          <span className="group-label">selection</span>
-          {!hasSelection && <span className="selection-hint">nothing yet: click a country, a point, a table row or a franchise line</span>}
-          <>
+      <div className="legend-strip">
+        <ChipGroup
+          label="Genre family"
+          value={family}
+          onChange={setFamily}
+          options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
+        />
+        {hasSelection && (
+          <div className="selection">
             {countries.map((iso2) => {
               const name = data.countryByIso2.get(iso2)?.name ?? iso2
               return (
@@ -151,8 +196,8 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
                 </button>
               </span>
             )}
-          </>
-        </div>
+          </div>
+        )}
       </div>
     </header>
   )

@@ -1,4 +1,5 @@
 import { memoLast } from './memo'
+import { fold } from './search'
 import { isScore, type MeasureKey } from './measures'
 
 /** Rows where the mask is 1, in row order. */
@@ -38,6 +39,13 @@ export const sortRowsByTitle = memoLast(
     })
   },
 )
+
+/** Rows whose folded title contains the folded query, in input order; same array when the query is blank. */
+export const filterByTitle = memoLast((rows: Uint32Array, folded: string[], query: string): Uint32Array => {
+  const q = fold(query.trim())
+  if (q === '') return rows
+  return rows.filter((r) => folded[r].includes(q))
+})
 
 /** Largest finite value of col over rows; 0 when there is none. */
 export function columnMax(col: Float64Array, rows: Uint32Array): number {
