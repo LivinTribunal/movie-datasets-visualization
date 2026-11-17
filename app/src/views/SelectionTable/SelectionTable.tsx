@@ -65,10 +65,10 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
         menu.current.open = false
       }
     }
-    document.addEventListener('mousedown', close)
+    document.addEventListener('pointerdown', close, true)
     document.addEventListener('keydown', close)
     return () => {
-      document.removeEventListener('mousedown', close)
+      document.removeEventListener('pointerdown', close, true)
       document.removeEventListener('keydown', close)
     }
   }, [])
@@ -119,7 +119,7 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   const arrow = (key: MeasureKey | 'title') => (sort.key === key ? (sort.desc ? '▼' : '▲') : '')
 
   return (
-    <Panel letter="E" title="Selection table" className="area-e" tools={tools} note={note}>
+    <Panel title="Films" className="area-e" tools={tools} note={note}>
       <div ref={ref} className="table-wrap">
         {width > 0 && height > 0 && (
             <div ref={scroller} className="table-scroll" role="table" aria-label="Selected films" onScroll={onScroll}>

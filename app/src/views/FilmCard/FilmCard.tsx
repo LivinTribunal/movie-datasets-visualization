@@ -48,7 +48,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   const detail = useDetail(row ?? -1, data.meta)
   if (row === null) {
     return (
-      <Panel letter="G" title="Film card" className="area-g">
+      <Panel title="Film" className="area-g">
         <p className="filmcard-hint">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -118,7 +118,7 @@ export const FilmCard: FC<{ data: AppData }> = ({ data }) => {
   )
 
   return (
-    <Panel letter="G" title="Film card" className="area-g">
+    <Panel title="Film" className="area-g">
       <div className="filmcard">
         <div className="fc-head">
           <Poster row={row} />

@@ -537,6 +537,21 @@ robots.txt checked on 2026-10-11 with our User-Agent:
   every request whoever runs the code. The repository URL still lets a site
   owner reach us, which is what the scraping rules ask for.
 
+### D35. One toolbar row and a genre strip (proposal A, 2026-11-17)
+
+- **What**: the three-row filter bar becomes one toolbar row (tabs, years,
+  a Filters popover with films, money, story, studio and genre mode, search,
+  Reset, About) and a strip with the genre chips and, only when something is
+  selected, the selection tokens. Panel titles name what the chart shows and
+  lose the design-sheet letters A to G. The map's share mode uses a ramp in
+  the selected genre's colour instead of Blues.
+- **Why**: Štefan picked proposal A of three (the others were a sidebar
+  layout and question-first workspaces). It keeps the PR #30 look and gives
+  the charts back about 70 px. Blue was both the control accent and the map
+  scale; now blue means a control.
+- **Not chosen**: B (sidebar and inspector), a larger change that needs a mobile
+  sheet; C (question headlines), not picked for now.
+
 ### D36. IMDb titles fill the early years of the genre timeline (2026-11-17)
 
 - **What**: a new source, the IMDb non-commercial dataset `title.basics`
