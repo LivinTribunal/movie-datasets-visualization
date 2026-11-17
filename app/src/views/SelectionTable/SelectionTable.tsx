@@ -5,8 +5,9 @@ import { loadText, useLazy } from '../../lib/data'
 import { fmtInt } from '../../lib/format'
 import { useSize } from '../../lib/hooks'
 import { MEASURE_KEYS, MEASURES, measureColumn, type MeasureKey } from '../../lib/measures'
+import { foldAll } from '../../lib/search'
 import { brushedRows, scatterRows } from '../../lib/scatter'
-import { columnMax, maskRows, sortRows, sortRowsByTitle, visibleWindow } from '../../lib/table'
+import { columnMax, filterByTitle, maskRows, sortRows, sortRowsByTitle, visibleWindow } from '../../lib/table'
 import type { AppData } from '../../lib/types'
 import { useFilmMask } from '../../state/selectors'
 import { useStore } from '../../state/store'
@@ -35,6 +36,7 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   const titles = useLazy(loadText)?.title ?? null
   const [ref, { width, height }] = useSize<HTMLDivElement>()
   const [scrollTop, setScrollTop] = useState(0)
+  const [query, setQuery] = useState('')
   const scroller = useRef<HTMLDivElement | null>(null)
   const frame = useRef(0)
   const menu = useRef<HTMLDetailsElement | null>(null)
@@ -52,9 +54,13 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
       ? sortRowsByTitle(base, titles, sort.desc)
       : base
 
+  const folded = titles ? foldAll(titles) : null
+  const shown = folded ? filterByTitle(rows, folded, query) : rows
+  const q = query.trim()
+
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = 0
-  }, [rows])
+  }, [shown])
 
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
 
@@ -74,7 +80,7 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
   }, [])
 
   const cols = columns.map((k) => measureColumn(data.films, k, money))
-  const maxima = columns.map((k, i) => (k === 'budget' || k === 'revenue' ? columnMax(cols[i], rows) : 0))
+  const maxima = columns.map((k, i) => (k === 'budget' || k === 'revenue' ? columnMax(cols[i], shown) : 0))
   const template = `minmax(200px, 2fr) repeat(${columns.length}, minmax(92px, 1fr))`
 
   const onScroll = () => {
@@ -93,27 +99,43 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
     if (next.length > 0) setColumns(next)
   }
 
-  const note = `${fmtInt(rows.length)} films ${brush ? 'inside the scatter brush' : 'pass the filters'} · bars share one scale per column`
+  const note = q
+    ? `${fmtInt(shown.length)} of ${fmtInt(rows.length)} films match "${q}" · bars share one scale per column`
+    : `${fmtInt(rows.length)} films ${brush ? 'inside the scatter brush' : 'pass the filters'} · bars share one scale per column`
 
   const tools = (
-    <details ref={menu} className="columns-menu">
-      <summary>columns</summary>
-      <div className="columns-list">
-        {MEASURE_KEYS.map((k) => (
-          <label key={k}>
-            <input type="checkbox" checked={columns.includes(k)} onChange={() => toggleColumn(k)} />
-            {MEASURES[k].label}
-          </label>
-        ))}
-      </div>
-    </details>
+    <>
+      <input
+        type="search"
+        className="table-search"
+        aria-label="Find a film in the table"
+        placeholder="find a film…"
+        disabled={!titles}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && query) setQuery('')
+        }}
+      />
+      <details ref={menu} className="columns-menu">
+        <summary>columns</summary>
+        <div className="columns-list">
+          {MEASURE_KEYS.map((k) => (
+            <label key={k}>
+              <input type="checkbox" checked={columns.includes(k)} onChange={() => toggleColumn(k)} />
+              {MEASURES[k].label}
+            </label>
+          ))}
+        </div>
+      </details>
+    </>
   )
 
   const showUnit = (k: MeasureKey) => {
     const unit = headerUnit(k, money)
     return unit !== '' && unit.toLowerCase() !== MEASURES[k].short.toLowerCase()
   }
-  const [start, end] = visibleWindow(scrollTop, height, ROW_H, rows.length)
+  const [start, end] = visibleWindow(scrollTop, height, ROW_H, shown.length)
   const ariaSort = (key: MeasureKey | 'title') =>
     sort.key === key ? (sort.desc ? 'descending' : 'ascending') : undefined
   const arrow = (key: MeasureKey | 'title') => (sort.key === key ? (sort.desc ? '▼' : '▲') : '')
@@ -141,13 +163,13 @@ export const SelectionTable: FC<{ data: AppData }> = ({ data }) => {
                   ))}
                 </div>
               </div>
-              {rows.length === 0 ? (
-                <p className="stub">No films match. Clear the brush or widen the filters.</p>
+              {shown.length === 0 ? (
+                <p className="stub">{q ? `No film title matches "${q}".` : 'No films match. Clear the brush or widen the filters.'}</p>
               ) : (
-                <div className="table-spacer" style={{ height: rows.length * ROW_H }}>
+                <div className="table-spacer" style={{ height: shown.length * ROW_H }}>
                   <div className="table-window" style={{ top: start * ROW_H }}>
                     <Rows
-                      rows={rows} start={start} end={end} columns={columns} cols={cols} maxima={maxima}
+                      rows={shown} start={start} end={end} columns={columns} cols={cols} maxima={maxima}
                       titles={titles} data={data} pinned={pinned} template={template}
                     />
                   </div>

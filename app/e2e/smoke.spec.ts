@@ -51,6 +51,11 @@ test('the app loads, filters, brushes, pins and restores from the hash', async (
 
   await page.getByRole('tab', { name: 'Money & ratings' }).click()
   await expect(page.locator('.area-c canvas')).toHaveCount(1)
+
+  await page.getByLabel('Find a film in the table').fill('matrix')
+  await expect(page.locator('.area-e .panel-note')).toContainText('match "matrix"')
+  await expect(page.locator('.area-e [role="row"]').nth(1)).toContainText('Matrix')
+  await page.getByLabel('Find a film in the table').fill('')
   for (const area of ['e', 'g']) {
     await expect(page.locator(`.area-${area}`)).toBeVisible()
   }
