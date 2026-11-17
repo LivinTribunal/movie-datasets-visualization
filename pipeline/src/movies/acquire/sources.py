@@ -75,6 +75,13 @@ REGISTRY: tuple[Source, ...] = (
         browser_ua=True,
     ),
     Source(
+        name="imdb",
+        description="IMDb non-commercial datasets: every title's type, year and genres",
+        kind="http",
+        urls=(("title.basics.tsv.gz", "https://datasets.imdbws.com/title.basics.tsv.gz"),),
+        version="live",
+    ),
+    Source(
         name="cpi",
         description="FRED CPIAUCNS (US CPI-U, not seasonally adjusted, from 1913)",
         kind="http",

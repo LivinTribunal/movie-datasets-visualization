@@ -80,6 +80,18 @@ export interface FilmsText {
   director: (string | null)[]
 }
 
+export interface ImdbGenreYear {
+  rows: number
+  year: Uint16Array
+  /** Index into Films.genres. */
+  genre: Uint8Array
+  score: Float64Array
+  /** Films behind the year, repeated on each row of the year. */
+  entries: Float64Array
+  /** Short films among them; 0 from 1920 on. */
+  shorts: Float64Array
+}
+
 export interface CountryGenre {
   rows: number
   source: DictColumn
@@ -151,6 +163,7 @@ export interface AppData {
   films: Films
   countryGenre: CountryGenre
   countryYear: CountryYear
+  imdbGenreYear: ImdbGenreYear
   franchises: Franchises
   countries: Country[]
   countryByIso2: Map<string, Country>

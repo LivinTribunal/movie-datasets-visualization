@@ -32,6 +32,17 @@
     "url": "https://api.worldbank.org/v2/country/all/indicator/PA.NUS.FCRF",
     "version": "live"
   },
+  "imdb": {
+    "downloaded_at": "2026-11-17T09:15:47Z",
+    "files": {
+      "raw/imdb/title.basics.tsv.gz": {
+        "bytes": 230517773,
+        "sha256": "88fc3790d92c567b2f7cb5a795ad0cd7250db7d882490ce64fdd60128aeca257"
+      }
+    },
+    "url": "https://datasets.imdbws.com/title.basics.tsv.gz",
+    "version": "live"
+  },
   "netflix": {
     "downloaded_at": "2026-10-09T10:55:27Z",
     "files": {

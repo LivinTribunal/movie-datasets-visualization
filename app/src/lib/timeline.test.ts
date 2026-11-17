@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { CountryGenre, CountryYear, Films } from './types'
-import { familyAt, timelineFromFilms, timelineFromNetflix } from './timeline'
+import type { CountryGenre, CountryYear, Films, ImdbGenreYear } from './types'
+import { familyAt, timelineFromFilms, timelineFromImdb, timelineFromNetflix } from './timeline'
 
 // Genres 0,1 -> family 0; genre 2 -> family 1. Years 1900.. so row year 1901 is index 1.
 const genreFamily = Uint8Array.from([0, 0, 1])
@@ -94,5 +94,36 @@ describe('familyAt', () => {
     expect(familyAt(t, 0, 1)).toBe(1)
     expect(familyAt(t, 0, 1.2)).toBe(-1)
     expect(familyAt(t, 5, 0.5)).toBe(-1)
+  })
+})
+
+describe('timelineFromImdb', () => {
+  // 1900: genres 0 and 2 (entries 4, repeated); 1901: genre 1; 1850 and 2030 are out of range.
+  const imdb = {
+    rows: 5,
+    year: Uint16Array.from([1900, 1900, 1901, 1850, 2030]),
+    genre: Uint8Array.from([0, 2, 1, 0, 0]),
+    score: Float64Array.from([1, 1, 3, 9, 9]),
+    entries: Float64Array.from([4, 4, 3, 9, 9]),
+    shorts: Float64Array.from([1, 1, 0, 0, 0]),
+  } as unknown as ImdbGenreYear
+  const t = timelineFromImdb(imdb, genreFamily, 2)
+  it('sums shares to 1 in a year with rows', () => {
+    expect(t.shares[0][0]).toBeCloseTo(0.5)
+    expect(t.shares[1][0]).toBeCloseTo(0.5)
+    expect(t.shares[0][1]).toBe(1)
+  })
+  it('takes films from entries, not entries times rows', () => {
+    expect(t.films[0]).toBe(4)
+    expect(t.films[1]).toBe(3)
+  })
+  it('leaves a year without rows empty', () => {
+    expect(t.totals[5]).toBe(0)
+    expect(t.films[5]).toBe(0)
+  })
+  it('ignores years outside 1900-2026', () => {
+    expect(t.years[0]).toBe(1900)
+    expect(t.years[t.years.length - 1]).toBe(2026)
+    expect(t.totals.reduce((a, b) => a + b, 0)).toBe(5)
   })
 })

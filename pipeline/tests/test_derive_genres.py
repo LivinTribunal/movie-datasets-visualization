@@ -6,6 +6,7 @@ import pytest
 from movies.derive.genres import (
     LUMIERE_MIN_FILMS,
     film_genres,
+    imdb_genre_year,
     lumiere_country_genre,
     netflix_country_genre,
     production_country_genre,
@@ -281,3 +282,68 @@ def test_us_cinema_fuzzy_share_and_coverage():
     assert out["fuzzy_share"].to_list() == [pytest.approx(0.2)] * 2
     assert out["estimated_share"].to_list() == [0.0] * 2
     assert out["entries"].to_list() == [2] * 2
+
+
+MAPPING = pl.DataFrame(
+    {
+        "imdb_genre": ["Drama", "Crime", "Film-Noir", "Sport", "Short", "News"],
+        "genre": ["Drama", "Crime", "Crime", None, None, None],
+    },
+    schema={"imdb_genre": pl.String, "genre": pl.String},
+)
+IMDB_FAMILIES = pl.DataFrame({"genre": ["Drama", "Crime"], "family": ["Drama", "Crime"]})
+
+
+def _titles(rows: list[tuple]) -> pl.DataFrame:
+    return pl.DataFrame(
+        rows,
+        schema={
+            "imdb_id": pl.String,
+            "title_type": pl.String,
+            "year": pl.Int16,
+            "genres": pl.List(pl.String),
+        },
+        orient="row",
+    )
+
+
+def test_imdb_shorts_count_only_before_1920():
+    titles = _titles(
+        [
+            ("tt1", "short", 1915, ["Drama"]),
+            ("tt2", "short", 1925, ["Drama"]),
+            ("tt3", "movie", 1915, ["Drama"]),
+        ]
+    )
+    out = imdb_genre_year(titles, MAPPING, IMDB_FAMILIES)
+    assert out.select("year", "entries", "shorts").rows() == [(1915, 2, 1)]
+
+
+def test_imdb_mapped_duplicates_and_dropped_genres_weigh_one():
+    titles = _titles(
+        [
+            ("tt1", "movie", 2000, ["Film-Noir", "Crime"]),
+            ("tt2", "movie", 2000, ["Sport", "Drama"]),
+            ("tt3", "movie", 2000, ["Short", "News"]),
+        ]
+    )
+    out = imdb_genre_year(titles, MAPPING, IMDB_FAMILIES)
+    assert dict(out.select("genre", "score").iter_rows()) == {"Crime": 1.0, "Drama": 1.0}
+    assert out["entries"].to_list() == [2, 2]
+    assert out["share"].sum() == pytest.approx(1.0)
+
+
+def test_imdb_shares_sum_to_one_per_year():
+    titles = _titles(
+        [("tt1", "movie", 2000, ["Drama", "Crime"]), ("tt2", "movie", 2001, ["Drama"])]
+    )
+    out = imdb_genre_year(titles, MAPPING, IMDB_FAMILIES)
+    assert out.group_by("year").agg(pl.col("share").sum()).sort("year")["share"].to_list() == [
+        1.0,
+        1.0,
+    ]
+
+
+def test_imdb_unknown_genre_raises():
+    with pytest.raises(ValueError, match="Mime"):
+        imdb_genre_year(_titles([("tt1", "movie", 2000, ["Mime"])]), MAPPING, IMDB_FAMILIES)
