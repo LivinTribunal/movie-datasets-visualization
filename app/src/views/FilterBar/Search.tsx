@@ -10,8 +10,6 @@ type Item =
   | { kind: 'franchise'; key: string; label: string; id: number }
   | { kind: 'film'; key: string; label: string; sub: string; row: number }
 
-const KBD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'
-
 export const Search: FC<{ data: AppData }> = ({ data }) => {
   const toggleCountry = useStore((s) => s.toggleCountry)
   const setFranchise = useStore((s) => s.setFranchise)
@@ -22,7 +20,6 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const box = useRef<HTMLDivElement>(null)
-  const input = useRef<HTMLInputElement>(null)
 
   const folded = useMemo(() => (text ? foldAll(text.title) : null), [text])
   const result = useMemo(
@@ -50,18 +47,6 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
-  }, [])
-
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        input.current?.focus()
-        input.current?.select()
-      }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
   }, [])
 
   const show = open && query.trim().length >= 2
@@ -122,7 +107,6 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
   return (
     <div className="search-box" ref={box}>
       <input
-        ref={input}
         className="search"
         type="text"
         role="combobox"
@@ -131,7 +115,7 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
         aria-controls="search-list"
         aria-activedescendant={show && items[active] ? optionId(active) : undefined}
         aria-autocomplete="list"
-        placeholder="Jump to country, film, franchise"
+        placeholder="country, film or franchise…"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value)
@@ -141,7 +125,6 @@ export const Search: FC<{ data: AppData }> = ({ data }) => {
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
       />
-      <kbd className="search-kbd">{KBD}</kbd>
       {show && (
         <ul id="search-list" role="listbox" className="search-list">
           {renderGroup('country', 'countries')}
