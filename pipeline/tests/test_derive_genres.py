@@ -7,6 +7,7 @@ from movies.derive.genres import (
     LUMIERE_MIN_FILMS,
     film_genres,
     imdb_genre_year,
+    kobis_as_lumiere,
     lumiere_country_genre,
     netflix_country_genre,
     production_country_genre,
@@ -347,3 +348,33 @@ def test_imdb_shares_sum_to_one_per_year():
 def test_imdb_unknown_genre_raises():
     with pytest.raises(ValueError, match="Mime"):
         imdb_genre_year(_titles([("tt1", "movie", 2000, ["Mime"])]), MAPPING, IMDB_FAMILIES)
+
+
+def test_kobis_as_lumiere_matches_the_lumiere_schema():
+    kobis = pl.DataFrame(
+        [("tt1", 2020, 5)],
+        schema={"imdb_id": pl.String, "year": pl.Int16, "admissions": pl.Int64},
+        orient="row",
+    ).with_columns(kobis_code=pl.lit("1"), title_ko=pl.lit("x"))
+    out = kobis_as_lumiere(kobis)
+    expected = _lumiere([]).with_columns(lumiere_id=pl.lit(None, dtype=pl.String)).columns
+    assert set(out.columns) == set(expected)
+    assert out.schema["lumiere_id"] == pl.String
+    assert out.schema["year"] == pl.Int16 and out.schema["admissions"] == pl.Int64
+    assert out["market"].to_list() == ["KR"] and out["estimated"].to_list() == [False]
+
+
+def test_kr_coverage_counts_unmatched_and_other_films_admissions():
+    genres = film_genres(_films([("tt1", ["Drama"])]), FAMILIES)
+    # 20 distinct films without genres (matched but ungenred), the remainder row (null id)
+    rows = [("tt1", 2020, 30), (None, 2020, 10)]
+    rows += [(f"tt9{i}", 2020, 10) for i in range(19)] + [("tt1", 2021, 5)]
+    kobis = pl.DataFrame(
+        rows,
+        schema={"imdb_id": pl.String, "year": pl.Int16, "admissions": pl.Int64},
+        orient="row",
+    )
+    out = lumiere_country_genre(kobis_as_lumiere(kobis), genres, {"KR"})
+    assert out["year"].unique().to_list() == [2020]  # 2021 has too few films
+    assert out["coverage"].to_list() == [pytest.approx(30 / 230)]
+    assert out["share"].to_list() == [1.0]

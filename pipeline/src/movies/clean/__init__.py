@@ -6,7 +6,7 @@ Each `movies.clean.<source>` module has pure functions from raw frames to a tidy
 
 from importlib import import_module
 
-SOURCES = ("tmdb", "rt_clapper", "numbers", "netflix", "imdb", "cpi", "fx")
+SOURCES = ("tmdb", "rt_clapper", "numbers", "netflix", "imdb", "cpi", "fx", "unesco")
 
 
 def run(names: list[str]) -> None:

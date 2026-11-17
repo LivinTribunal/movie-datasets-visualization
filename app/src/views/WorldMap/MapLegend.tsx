@@ -55,12 +55,14 @@ export const MapLegend: FC<MapLegendProps> = ({ mode, ramp, lo, hi, unit, famili
         </svg>
         no data
       </span>
-      <span className="key">
-        <svg width="14" height="10" aria-hidden="true">
-          <rect width="14" height="10" fill="var(--panel)" stroke="var(--ink)" strokeDasharray="2 2" />
-        </svg>
-        under {THIN} entries
-      </span>
+      {mode !== 'domestic' && (
+        <span className="key">
+          <svg width="14" height="10" aria-hidden="true">
+            <rect width="14" height="10" fill="var(--panel)" stroke="var(--ink)" strokeDasharray="2 2" />
+          </svg>
+          under {THIN} entries
+        </span>
+      )}
     </div>
   </div>
 )

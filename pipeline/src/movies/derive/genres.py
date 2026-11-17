@@ -85,6 +85,18 @@ def netflix_country_genre(
     )
 
 
+def kobis_as_lumiere(kobis: pl.DataFrame) -> pl.DataFrame:
+    """KOBIS rows in the LUMIERE long shape: market KR, no lumiere_id, never estimated."""
+    return kobis.select(
+        "imdb_id",
+        lumiere_id=pl.lit(None, dtype=pl.String),
+        market=pl.lit("KR"),
+        year=pl.col("year").cast(pl.Int16),
+        admissions=pl.col("admissions").cast(pl.Int64),
+        estimated=pl.lit(False),
+    )
+
+
 def lumiere_country_genre(
     lumiere: pl.DataFrame, film_genres_df: pl.DataFrame, iso2: set[str] | list[str]
 ) -> pl.DataFrame:
@@ -299,11 +311,17 @@ def run() -> None:
     out.write_parquet(paths.INTERIM / "country_genre_netflix.parquet")
 
     lumiere_path = paths.SCRAPED / "lumiere.parquet"
-    if lumiere_path.exists():
+    kobis_path = paths.SCRAPED / "kobis.parquet"
+    if lumiere_path.exists() or kobis_path.exists():
         countries = pl.read_csv(
             paths.REFERENCE / "countries.csv", schema_overrides={"iso_numeric": pl.String}
         )
-        cinema = lumiere_country_genre(pl.read_parquet(lumiere_path), genres, countries["iso2"])
+        parts = []
+        if lumiere_path.exists():
+            parts.append(pl.read_parquet(lumiere_path))
+        if kobis_path.exists():
+            parts.append(kobis_as_lumiere(pl.read_parquet(kobis_path)))
+        cinema = lumiere_country_genre(pl.concat(parts), genres, countries["iso2"])
         cinema.write_parquet(paths.INTERIM / "country_genre_lumiere.parquet")
         print(
             f"country_genre_lumiere: {cinema.height} rows, "
@@ -311,7 +329,7 @@ def run() -> None:
             f"years {cinema['year'].min()}-{cinema['year'].max()}"
         )
     else:
-        print("lumiere.parquet not found; no cinema genre shares")
+        print("lumiere.parquet and kobis.parquet not found; no cinema genre shares")
 
     for name, table in (
         ("production", production_country_genre(films, genres)),

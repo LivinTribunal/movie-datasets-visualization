@@ -89,6 +89,20 @@ REGISTRY: tuple[Source, ...] = (
         version="live",
     ),
     Source(
+        name="unesco",
+        description="UNESCO UIS Feature Films via DBnomics: cinema admissions, total and"
+        " national films",
+        kind="http",
+        urls=(
+            (
+                "film.json",
+                "https://api.db.nomics.world/v22/series/UNESCO/FILM?dimensions="
+                "%7B%22indicator%22%3A%5B%22220063%22%2C%22220223%22%5D%7D&observations=1&limit=1000",
+            ),
+        ),
+        version="dbnomics-2022-04-04",
+    ),
+    Source(
         name="fx",
         description="World Bank PA.NUS.FCRF: local currency units per USD, yearly",
         kind="fx",

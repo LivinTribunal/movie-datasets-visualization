@@ -102,6 +102,15 @@ export interface CountryGenre {
   score: Float64Array
 }
 
+/** country_domestic.pack: UNESCO admissions per country-year, total and to domestic films. */
+export interface CountryDomestic {
+  rows: number
+  country: DictColumn
+  year: Uint16Array
+  admissions: Float64Array
+  national: Float64Array
+}
+
 export interface CountryYear {
   rows: number
   source: DictColumn
@@ -163,6 +172,7 @@ export interface AppData {
   films: Films
   countryGenre: CountryGenre
   countryYear: CountryYear
+  countryDomestic: CountryDomestic
   imdbGenreYear: ImdbGenreYear
   franchises: Franchises
   countries: Country[]

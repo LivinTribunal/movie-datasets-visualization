@@ -575,3 +575,38 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - **Snapshot**: IMDb's files are replaced daily and old versions are not
   kept, so this source is dated 2026-11-17, not the 2026-10-01 TMDB+IMDb
   snapshot. The film table still uses only the 2026-10-01 data.
+
+### D37. Domestic films' share of admissions, from UNESCO (2026-11-17)
+
+- **What**: a fourth map mode, "domestic films", colours each country by
+  the share of its cinema admissions that went to films it produced,
+  summed over the selected years (Σ national / Σ total, not a mean of yearly
+  shares). The data is the UNESCO UIS feature film survey, read from the
+  DBnomics mirror (dataset indexed 2022-04-04): 81 countries, 2005–2017.
+  The scale is fixed at 0–100 % and grey, because it is not a genre.
+- **Why**: T1 asks about taste per country, and the genre maps cannot show
+  whether people watch their own country's films. This survey is the only
+  open source that has domestic admissions for many countries.
+- **Rules**: a total of 0 admissions (Burundi, Marshall Islands) is a
+  placeholder, so it is recoded to null. "Domestic" is whatever each
+  country reported (national and majority co-productions). Outside
+  2005–2017 the mode shows no data and says so.
+
+### D38. South Korea from KOBIS; CNC and BFI not scraped (2026-11-17)
+
+- **What**: South Korea joins the cinema markets. The scraper reads the
+  Korean Film Council's yearly box office (KOBIS, robots.txt allows it):
+  the top 50 films of each year 2004–2025 with their KOBIS code and
+  admissions, and the year's total from the full yearly list. The
+  admissions of the other films are kept as one unmatched row, so
+  `coverage` is measured against the real total. Films are matched to IMDb
+  through Wikidata's KOBIS film id (P8921), or else by exact Korean label
+  plus a release year within one year.
+- **Why**: Netflix has Korea, so Korea in cinema data gives one more
+  country for the cinema-versus-streaming comparison (X2). The top 50 hold
+  72–90 % of a year's admissions.
+- **Not done**: CNC (France) and BFI (UK) publish open spreadsheets, but
+  their robots.txt disallows the download paths (`/documents/` on cnc.fr,
+  everything on core-cms.bfi.org.uk). The scraping rules forbid automated
+  downloads there, so these files are only used if someone downloads them
+  by hand.

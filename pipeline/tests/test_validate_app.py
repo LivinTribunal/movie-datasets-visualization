@@ -14,6 +14,7 @@ from movies.export.app import (
     to_columns,
     write_country_tables,
     write_detail,
+    write_domestic,
     write_films,
     write_franchises,
 )
@@ -63,6 +64,15 @@ IMDB = pl.DataFrame(
     }
 )
 
+DOMESTIC = pl.DataFrame(
+    {
+        "country_iso2": ["CZ", "CZ"],
+        "year": [2010, 2011],
+        "admissions": [1000.0, 2000.0],
+        "admissions_national": [100.0, 500.0],
+    }
+)
+
 
 def _films() -> pl.DataFrame:
     return films_table(FILMS, MONEY, RATINGS, FILM_GENRES, FRANCHISES, EXTRAS)
@@ -96,6 +106,7 @@ def _write(
     families: pl.DataFrame = FAMILY_TABLE,
     meta: dict | None = None,
     imdb: pl.DataFrame | None = None,
+    domestic: pl.DataFrame | None = None,
 ) -> None:
     films = _films() if films is None else films
     write_films(
@@ -124,6 +135,8 @@ def _write(
     imdb = IMDB if imdb is None else imdb
     cols = [num(c, imdb[c], t) for c, t in validate_app.PACKS["imdb_genre_year.pack"].items()]
     write_pack(path / "imdb_genre_year.pack", imdb.height, {"genres": GENRES}, cols)
+    domestic = DOMESTIC if domestic is None else domestic
+    write_domestic(domestic, COUNTRY_CODES, path / "country_domestic.pack")
     (path / "countries.json").write_text(json.dumps({"columns": to_columns(countries)}))
     (path / "genre_families.json").write_text(json.dumps({"columns": to_columns(families)}))
     (path / "countries.topo.json").write_text("{}")
@@ -488,3 +501,13 @@ def test_imdb_shorts_exceed_entries(tmp_path):
 def test_imdb_genre_beyond_list(tmp_path):
     bad = IMDB.with_columns(genre=pl.Series([0, 1, 5]))
     assert _has(_errors(tmp_path, imdb=bad), "imdb_genre_year.pack", "genre beyond")
+
+
+def test_domestic_national_above_admissions(tmp_path):
+    bad = DOMESTIC.with_columns(admissions_national=pl.Series([100.0, 2500.0]))
+    assert _has(_errors(tmp_path, domestic=bad), "country_domestic.pack", "national outside")
+
+
+def test_domestic_duplicate_country_year(tmp_path):
+    bad = DOMESTIC.with_columns(year=pl.Series([2010, 2010]))
+    assert _has(_errors(tmp_path, domestic=bad), "country_domestic.pack", "duplicate key")

@@ -34,6 +34,9 @@ NOTES = [
     " dataset, 2026-11-17), and short films before 1920; IMDb genres are mapped to TMDB genres"
     " (Sci-Fi → Science Fiction, Musical → Music, Film-Noir → Crime, Biography → History),"
     " Sport, News and Short are dropped.",
+    "Domestic films' share of admissions comes from the UNESCO UIS feature film survey"
+    " (2005–2017, 81 countries); 'domestic' means films the country produced or majority"
+    " co-produced, as each country reports it.",
     "Scores are on 0–100: IMDb, TMDB and Metacritic users ×10, Letterboxd ×20. "
     "The Metacritic user score is null under 10 user ratings.",
 ]
@@ -50,6 +53,9 @@ EXTRA_NOTES = [
 CINEMA_NOTES = [
     "Cinema genre shares come from LUMIERE admissions of notable films only; UK and Ireland "
     "admissions are LUMIERE estimates, and the combined UK+Ireland market counts as the UK.",
+    "South Korea comes from the Korean Film Council (KOBIS): the top 50 films of each year, matched"
+    " to IMDb through Wikidata's KOBIS id or the Korean title and year; the rest counts as"
+    " unmatched in the coverage.",
 ]
 ATTRIBUTION = [
     "This product uses the TMDB API but is not endorsed or certified by TMDB.",
@@ -58,14 +64,17 @@ ATTRIBUTION = [
     "Information courtesy of IMDb (https://www.imdb.com). Used with permission.",
     "Wikidata (CC0), Wikipedia (CC BY-SA 4.0), World Bank (CC BY 4.0), Natural Earth (public"
     " domain), FRED / BLS (public domain), Netflix Top 10, Rotten Tomatoes, Metacritic,"
-    " Letterboxd, The Numbers, LUMIERE (European Audiovisual Observatory).",
+    " Letterboxd, The Numbers, LUMIERE (European Audiovisual Observatory), KOBIS (Korean Film"
+    " Council).",
+    "UNESCO Institute for Statistics (UIS), Feature Films dataset, via DBnomics.",
 ]
 SOURCES = {
     "netflix": "Netflix Top 10 chart scores for 94 countries, 2021 to 2026, counted only for"
     " titles matched to a film; it says nothing about what people watch outside Netflix.",
     "cinema": "Cinema admissions for 36 European markets from LUMIERE (1996 to 2025, notable"
-    " films only) and The Numbers domestic gross for the US (1980 to 2024); it leaves out every"
-    " other market, and a market-year needs at least 20 films to be shown.",
+    " films only), The Numbers domestic gross for the US (1980 to 2024) and KOBIS admissions for"
+    " South Korea (2004 to 2025, the top 50 films of each year); it leaves out every other"
+    " market, and a market-year needs at least 20 films to be shown.",
     "production": "Genre weight of each film made in a country, 1900 to 2026, for films with"
     " at least 1,000 IMDb votes; it shows what a country makes, not what its audience watches,"
     " and a co-production counts in each of its countries.",
@@ -357,6 +366,18 @@ def write_country_tables(
     write_pack(year_path, country_year.height, {}, cols)
 
 
+def write_domestic(df: pl.DataFrame, countries: list[str], path: Path) -> None:
+    """Write country_domestic.pack from the country-years that have both admissions values."""
+    codes = sorted(countries)
+    cols = [
+        dict_col("country", df["country_iso2"], codes, width=1 if len(codes) <= 256 else 2),
+        num("year", df["year"], "u16"),
+        num("admissions", df["admissions"], "f32"),
+        num("national", df["admissions_national"], "f32"),
+    ]
+    write_pack(path, df.height, {}, cols)
+
+
 def franchises_table(
     franchises: pl.DataFrame,
     films_out: pl.DataFrame,
@@ -496,6 +517,16 @@ def run() -> None:
     else:
         print("imdb_genre_year skipped: file not found, run `movies derive`")
 
+    unesco_path = interim / "unesco.parquet"
+    domestic = None
+    if unesco_path.exists():
+        domestic = pl.read_parquet(unesco_path).drop_nulls()
+        out = paths.APP_DATA / "country_domestic.pack"
+        write_domestic(domestic, countries["iso2"].to_list(), out)
+    else:
+        print("unesco skipped: file not found, run `movies clean --source unesco`")
+
+    n_domestic = domestic["country_iso2"].n_unique() if domestic is not None else 0
     notable = int(films_out["notable"].sum())
     detail = films_out.select("imdb_id").join(
         extras.select("imdb_id", *DETAIL_COLUMNS), on="imdb_id", how="left"
@@ -514,6 +545,7 @@ def run() -> None:
         "country_year.pack",
         "franchises.pack",
         "imdb_genre_year.pack",
+        "country_domestic.pack",
     ):
         if not (paths.APP_DATA / name).exists():
             continue
@@ -530,7 +562,8 @@ def run() -> None:
     _write(
         paths.APP_DATA / "meta.json",
         {
-            "snapshots": {"tmdb_imdb": "2026-10-01", "netflix": "2026-09-27", "imdb": "2026-11-17"},
+            "snapshots": {"tmdb_imdb": "2026-10-01", "netflix": "2026-09-27", "imdb": "2026-11-17"}
+            | ({"unesco": "2022-04-04"} if domestic is not None else {}),
             "base_year": 2025,
             "counts": {
                 "films": films_out.height,
@@ -544,6 +577,7 @@ def run() -> None:
                 "netflix_countries": n_countries("netflix"),
                 "cinema_markets": n_countries("cinema"),
                 "production_countries": n_countries("production"),
+                "domestic_countries": n_domestic,
                 "franchises": franchises_out["collection_id"].n_unique(),
                 "imdb_films": int(per_year["entries"].sum()) if imdb is not None else 0,
                 "imdb_shorts": int(per_year["shorts"].sum()) if imdb is not None else 0,
