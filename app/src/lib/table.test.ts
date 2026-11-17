@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cellKind, columnMax, maskRows, sortRows, sortRowsByTitle, visibleWindow } from './table'
+import { cellKind, columnMax, filterByTitle, maskRows, sortRows, sortRowsByTitle, visibleWindow } from './table'
 
 const u32 = (...n: number[]) => Uint32Array.from(n)
 
@@ -74,5 +74,23 @@ describe('cellKind', () => {
     expect(cellKind('roi')).toBe('plain')
     expect(cellKind('votes')).toBe('plain')
     expect(cellKind('year')).toBe('plain')
+  })
+})
+
+describe('filterByTitle', () => {
+  const folded = ['amelie', 'the matrix', 'matrix reloaded', 'heat']
+  const rows = u32(0, 1, 2, 3)
+  it('returns the same array for an empty or blank query', () => {
+    expect(filterByTitle(rows, folded, '')).toBe(rows)
+    expect(filterByTitle(rows, folded, '   ')).toBe(rows)
+  })
+  it('folds case and diacritics', () => {
+    expect(Array.from(filterByTitle(rows, folded, 'AMÉLIE'))).toEqual([0])
+  })
+  it('keeps input order', () => {
+    expect(Array.from(filterByTitle(u32(2, 1), folded, 'matrix'))).toEqual([2, 1])
+  })
+  it('returns nothing when no title matches', () => {
+    expect(filterByTitle(rows, folded, 'zzz')).toHaveLength(0)
   })
 })

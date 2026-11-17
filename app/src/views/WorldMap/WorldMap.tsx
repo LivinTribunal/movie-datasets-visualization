@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type MouseEvent } from 'react'
 import {
-  geoEqualEarth, geoPath, interpolateBlues, interpolatePuOr, scaleDiverging, scaleSequential, select, zoom,
+  color, geoEqualEarth, geoPath, interpolateLab, interpolatePuOr, scaleDiverging, scaleSequential, select, zoom,
   zoomIdentity, type ZoomBehavior,
 } from 'd3'
 import { feature } from 'topojson-client'
@@ -36,6 +36,9 @@ interface Hover { iso2: string; x: number; y: number }
 
 const ZOOM_STEP = 1.6
 const RAMP_STEPS = 7
+
+const shareScale = (colour: string, max: number) =>
+  scaleSequential(interpolateLab('#f4f4f6', color(colour)?.darker(0.8).formatHex() ?? colour)).domain([0, max])
 const ANTARCTICA = '010'
 
 function sourceLabel(stat: CountryStat, source: string): string {
@@ -154,11 +157,11 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
       }
       const v = values.get(iso2)
       if (v === undefined) return null
-      return mapMode === 'share' ? scaleSequential(interpolateBlues).domain([0, max])(v) : diffScale(max)(v)
+      return mapMode === 'share' ? shareScale(data.families[family].colour, max)(v) : diffScale(max)(v)
     }
     const ramp = Array.from({ length: RAMP_STEPS }, (_, i) => {
       const t = i / (RAMP_STEPS - 1)
-      return mapMode === 'diff' ? diffScale(max)(-max + 2 * max * t) : scaleSequential(interpolateBlues).domain([0, max])(max * t)
+      return mapMode === 'diff' ? diffScale(max)(-max + 2 * max * t) : shareScale(data.families[family].colour, max)(max * t)
     })
     return { colour, ramp, max, clipped }
   }, [mapMode, stats, diffs, family, data.families])
@@ -262,8 +265,11 @@ export const WorldMap: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      letter="A"
-      title="World map"
+      title={
+        mapMode === 'share' ? `Share of ${data.families[family].name}`
+          : mapMode === 'top' ? 'Top genre'
+            : 'Cinema − Netflix share'
+      }
       className="area-a"
       note={note}
       tools={
