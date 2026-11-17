@@ -4,7 +4,15 @@ import { Panel } from '../../components/Panel'
 import { Tooltip } from '../../components/Tooltip'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { useSize } from '../../lib/hooks'
-import { familyAt, THIN, timelineFromFilms, timelineFromNetflix, type Timeline } from '../../lib/timeline'
+import {
+  familyAt,
+  SHORTS_UNTIL,
+  THIN,
+  timelineFromFilms,
+  timelineFromImdb,
+  timelineFromNetflix,
+  type Timeline,
+} from '../../lib/timeline'
 import type { AppData } from '../../lib/types'
 import { useFilmMaskAllYears } from '../../state/selectors'
 import { useStore, YEAR_MAX, YEAR_MIN, type TimelineMeasure } from '../../state/store'
@@ -21,6 +29,7 @@ const OPTIONS: { value: TimelineMeasure; label: string; yLabel: string; of: stri
     of: 'of Netflix chart score',
     unit: 'chart entries',
   },
+  { value: 'imdb', label: 'all IMDb films', yLabel: 'share of IMDb films (%)', of: 'of IMDb films', unit: 'films' },
 ]
 
 const MARGIN = { top: 8, right: 12, bottom: 22, left: 46 }
@@ -62,7 +71,9 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
   const timeline: Timeline =
     measure === 'netflix'
       ? timelineFromNetflix(data.countryGenre, data.countryYear, data.genreFamily, nFamilies, countries)
-      : timelineFromFilms(data.films, mask, measure, money, data.genreFamily, nFamilies)
+      : measure === 'imdb'
+        ? timelineFromImdb(data.imdbGenreYear, data.genreFamily, nFamilies)
+        : timelineFromFilms(data.films, mask, measure, money, data.genreFamily, nFamilies)
 
   const iw = Math.max(0, width - MARGIN.left - MARGIN.right)
   const ih = Math.max(0, height - MARGIN.top - MARGIN.bottom)
@@ -201,6 +212,8 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
         <>
           Each film counts 1/n in each of its n genres.
           {measure === 'votes' && ' Votes show popularity, not rating.'}
+          {measure === 'imdb' &&
+            ' Every film on IMDb; the filters above do not apply. Short films count before 1920, features only after.'}
           {` Hatched: under ${THIN} films.`}
         </>
       }
@@ -246,6 +259,17 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
                       pointerEvents="none"
                     />
                   ) : null,
+                )}
+                {measure === 'imdb' && (
+                  <g pointerEvents="none">
+                    <line className="tl-break" x1={x(SHORTS_UNTIL)} x2={x(SHORTS_UNTIL)} y1={0} y2={ih} />
+                    <text className="tl-break-label" x={x(SHORTS_UNTIL) - 4} y={10} textAnchor="end">
+                      with shorts
+                    </text>
+                    <text className="tl-break-label" x={x(SHORTS_UNTIL) + 4} y={10}>
+                      features only
+                    </text>
+                  </g>
                 )}
                 {bands[family] && (
                   <path d={bands[family] ?? undefined} fill="none" stroke="var(--ink)" strokeWidth={1.25} strokeLinejoin="round" pointerEvents="none" />

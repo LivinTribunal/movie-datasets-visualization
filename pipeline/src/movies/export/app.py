@@ -30,6 +30,10 @@ NOTES = [
     "Rotten Tomatoes scores of films from 2023 on come from the RT pages (October 2026), older"
     " ones from the April 2023 Clapper dump; newer audience scores are often RT's verified score.",
     "Netflix shares cover only matched titles; see the coverage column.",
+    "The IMDb series on the genre timeline counts every feature film on IMDb (non-commercial"
+    " dataset, 2026-11-17), and short films before 1920; IMDb genres are mapped to TMDB genres"
+    " (Sci-Fi → Science Fiction, Musical → Music, Film-Noir → Crime, Biography → History),"
+    " Sport, News and Short are dropped.",
     "Scores are on 0–100: IMDb, TMDB and Metacritic users ×10, Letterboxd ×20. "
     "The Metacritic user score is null under 10 user ratings.",
 ]
@@ -41,7 +45,7 @@ EXTRA_NOTES = [
     " (story_source_src); a film with neither has none.",
     "Studio is the group of the first production company that is one of eight major groups,"
     " else independent.",
-    "Oscar nominations and wins are counted from Wikidata (distinct categories).",
+    "Oscar nominations and wins are counted from Wikidata award statements, one per nomination.",
 ]
 CINEMA_NOTES = [
     "Cinema genre shares come from LUMIERE admissions of notable films only; UK and Ireland "
@@ -51,6 +55,7 @@ ATTRIBUTION = [
     "This product uses the TMDB API but is not endorsed or certified by TMDB.",
     "IMDb ratings and votes come from IMDb data via the TMDB+IMDb Kaggle dataset;"
     " non-commercial use.",
+    "Information courtesy of IMDb (https://www.imdb.com). Used with permission.",
     "Wikidata (CC0), Wikipedia (CC BY-SA 4.0), World Bank (CC BY 4.0), Natural Earth (public"
     " domain), FRED / BLS (public domain), Netflix Top 10, Rotten Tomatoes, Metacritic,"
     " Letterboxd, The Numbers, LUMIERE (European Audiovisual Observatory).",
@@ -468,6 +473,29 @@ def run() -> None:
         paths.APP_DATA / "country_year.pack",
     )
 
+    imdb_path = interim / "imdb_genre_year.parquet"
+    imdb = pl.read_parquet(imdb_path) if imdb_path.exists() else None
+    if imdb is not None:
+        per_year = imdb.unique("year")
+        write_pack(
+            paths.APP_DATA / "imdb_genre_year.pack",
+            imdb.height,
+            {"genres": genres},
+            [
+                num("year", imdb["year"], "u16"),
+                num(
+                    "genre",
+                    imdb["genre"].replace_strict(genres, range(len(genres)), return_dtype=pl.UInt8),
+                    "u8",
+                ),
+                num("score", imdb["score"], "f32"),
+                num("entries", imdb["entries"], "u32"),
+                num("shorts", imdb["shorts"], "u32"),
+            ],
+        )
+    else:
+        print("imdb_genre_year skipped: file not found, run `movies derive`")
+
     notable = int(films_out["notable"].sum())
     detail = films_out.select("imdb_id").join(
         extras.select("imdb_id", *DETAIL_COLUMNS), on="imdb_id", how="left"
@@ -485,7 +513,10 @@ def run() -> None:
         "country_genre.pack",
         "country_year.pack",
         "franchises.pack",
+        "imdb_genre_year.pack",
     ):
+        if not (paths.APP_DATA / name).exists():
+            continue
         print(f"{name}: {(paths.APP_DATA / name).stat().st_size / 1e6:.2f} MB")
 
     shutil.copyfile(
@@ -499,7 +530,7 @@ def run() -> None:
     _write(
         paths.APP_DATA / "meta.json",
         {
-            "snapshots": {"tmdb_imdb": "2026-10-01", "netflix": "2026-09-27"},
+            "snapshots": {"tmdb_imdb": "2026-10-01", "netflix": "2026-09-27", "imdb": "2026-11-17"},
             "base_year": 2025,
             "counts": {
                 "films": films_out.height,
@@ -514,6 +545,8 @@ def run() -> None:
                 "cinema_markets": n_countries("cinema"),
                 "production_countries": n_countries("production"),
                 "franchises": franchises_out["collection_id"].n_unique(),
+                "imdb_films": int(per_year["entries"].sum()) if imdb is not None else 0,
+                "imdb_shorts": int(per_year["shorts"].sum()) if imdb is not None else 0,
             },
             "detail": {"shard_size": DETAIL_SHARD, "shards": shards},
             "notes": NOTES + EXTRA_NOTES + (CINEMA_NOTES if has_cinema else []),

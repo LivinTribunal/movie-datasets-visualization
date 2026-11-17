@@ -536,3 +536,27 @@ robots.txt checked on 2026-10-11 with our User-Agent:
 - **Why**: a personal e-mail address hard-coded in a public repo is sent with
   every request whoever runs the code. The repository URL still lets a site
   owner reach us, which is what the scraping rules ask for.
+
+### D36. IMDb titles fill the early years of the genre timeline (2026-11-17)
+
+- **What**: a new source, the IMDb non-commercial dataset `title.basics`
+  (downloaded 2026-11-17), feeds one new series on the genre timeline, "all
+  IMDb films". It counts every feature film IMDb lists, plus short films
+  before 1920, with no vote minimum. IMDb genres are mapped to the TMDB
+  names in `data/reference/imdb_genres.csv`; Sport, News, Short, Adult and
+  the TV-show genres have no TMDB match and are dropped. The other series
+  and every other view keep the working subset (≥ 1,000 IMDb votes).
+- **Why**: the working subset has 2 to 41 films a year before 1920, because
+  few silent films reach 1,000 votes, so those years were hatched. TMDB has
+  300 to 1,900 films a year there, IMDb more. Before about 1915 nearly
+  every film was a short (IMDb lists 24 features for 1900–1904 and almost
+  10,000 shorts), so a features-only series would still leave the 1900s
+  empty. From 1920 on, shorts are left out, because there are hundreds of
+  thousands of modern shorts and they would change what the series means.
+  The chart marks the 1920 break.
+- **Not chosen**: lowering the vote minimum of the working subset (it would
+  change every view and the money tasks); shorts with ≥ 10 votes in every
+  year (shorts would be a third of modern films).
+- **Snapshot**: IMDb's files are replaced daily and old versions are not
+  kept, so this source is dated 2026-11-17, not the 2026-10-01 TMDB+IMDb
+  snapshot. The film table still uses only the 2026-10-01 data.

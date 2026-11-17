@@ -1,6 +1,6 @@
 import { memoLast } from './memo'
 import type { Money } from './measures'
-import type { CountryGenre, CountryYear, Films } from './types'
+import type { CountryGenre, CountryYear, Films, ImdbGenreYear } from './types'
 
 export type FilmMeasure = 'films' | 'votes' | 'revenue'
 
@@ -14,6 +14,8 @@ export interface Timeline {
 }
 
 export const THIN = 30
+/** Short films are counted before this year, features only from it on. */
+export const SHORTS_UNTIL = 1920
 const FIRST_YEAR = 1900
 const LAST_YEAR = 2026
 
@@ -101,6 +103,21 @@ export const timelineFromNetflix = memoLast(
       const yi = at.get(countryYear.year[i])
       if (yi === undefined || Number.isNaN(countryYear.entries[i])) continue
       entries[yi] += countryYear.entries[i]
+    }
+    return toTimeline(years, sums, entries)
+  },
+)
+
+export const timelineFromImdb = memoLast(
+  (t: ImdbGenreYear, genreFamily: Uint8Array, nFamilies: number): Timeline => {
+    const years = Array.from({ length: LAST_YEAR - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i)
+    const sums = emptySums(years.length, nFamilies)
+    const entries = new Float64Array(years.length)
+    for (let i = 0; i < t.rows; i++) {
+      const yi = t.year[i] - FIRST_YEAR
+      if (!(yi >= 0 && yi < years.length)) continue
+      sums[genreFamily[t.genre[i]]][yi] += t.score[i]
+      entries[yi] = t.entries[i]
     }
     return toTimeline(years, sums, entries)
   },
