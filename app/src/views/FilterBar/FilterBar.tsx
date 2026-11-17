@@ -4,7 +4,7 @@ import { ChipGroup } from '../../components/ChipGroup'
 import { loadText, useLazy } from '../../lib/data'
 import { fmtImdb } from '../../lib/format'
 import type { AppData } from '../../lib/types'
-import { useStore } from '../../state/store'
+import { defaults, useStore } from '../../state/store'
 import { Search } from './Search'
 import { YearSlider } from './YearSlider'
 
@@ -29,6 +29,7 @@ const STORY = [
   ['any', 'any story'], ['original', 'original'], ['book', 'book'], ['comic', 'comic'],
   ['true_story', 'true story'], ['stage', 'stage'], ['screen', 'film/TV'], ['other', 'other'],
 ] as const
+const SKIP = new Set(['tab', 'hoverFilm', 'about'])
 const TABS = [
   { value: 'taste', label: 'Taste by country' },
   { value: 'ratings', label: 'Money & ratings' },
@@ -67,7 +68,7 @@ const FiltersMenu: FC = () => {
   return (
     <details ref={menu} className="filters-menu">
       <summary className="btn">
-        Filters
+        More filters
         {n > 0 && <span className="badge">{n}</span>}
       </summary>
       <div className="filters-list">
@@ -121,6 +122,11 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
   const setAbout = useStore((s) => s.setAbout)
   const reset = useStore((s) => s.reset)
   const text = useLazy(loadText)
+  const changed = useStore((s) => {
+    const d = defaults() as unknown as Record<string, unknown>
+    const cur = s as unknown as Record<string, unknown>
+    return Object.keys(d).some((k) => !SKIP.has(k) && JSON.stringify(cur[k]) !== JSON.stringify(d[k]))
+  })
   const hasSelection = countries.length > 0 || franchise !== null || film !== null || brush !== null
 
   return (
@@ -138,66 +144,77 @@ export const FilterBar: FC<{ data: AppData }> = ({ data }) => {
           ))}
         </div>
         <div className="toolbar-spacer" />
-        <YearSlider />
-        <FiltersMenu />
         <Search data={data} />
-        <button type="button" className="btn" onClick={reset}>
-          Reset
-        </button>
-        <button type="button" className="btn" onClick={() => setAbout(true)}>
-          About
+        <button type="button" className="btn icon-btn" aria-label="About" title="About this app" onClick={() => setAbout(true)}>
+          ?
         </button>
       </div>
       <div className="legend-strip">
-        <ChipGroup
-          label="Genre family"
-          value={family}
-          onChange={setFamily}
-          options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
-        />
-        {hasSelection && (
-          <div className="selection">
-            {countries.map((iso2) => {
-              const name = data.countryByIso2.get(iso2)?.name ?? iso2
-              return (
-                <span key={iso2} className="country-chip">
-                  <span title={name}>{name}</span>
-                  <button type="button" aria-label={`Remove ${name}`} onClick={() => toggleCountry(iso2)}>
+        <div className="strip-group">
+          <span className="group-label">Years</span>
+          <YearSlider />
+        </div>
+        <span className="strip-divider" aria-hidden="true" />
+        <div className="strip-group">
+          <span className="group-label">Genre</span>
+          <ChipGroup
+            label="Genre family"
+            value={family}
+            onChange={setFamily}
+            options={data.families.map((f, i) => ({ value: i, label: f.name, colour: f.colour }))}
+          />
+        </div>
+        <FiltersMenu />
+        <div className="strip-end">
+          {hasSelection && (
+            <div className="selection">
+              {countries.map((iso2) => {
+                const name = data.countryByIso2.get(iso2)?.name ?? iso2
+                return (
+                  <span key={iso2} className="country-chip">
+                    <span title={name}>{name}</span>
+                    <button type="button" aria-label={`Remove ${name}`} onClick={() => toggleCountry(iso2)}>
+                      ×
+                    </button>
+                  </span>
+                )
+              })}
+              {franchise !== null && (
+                <span className="country-chip">
+                  <button type="button" className="chip-name" onClick={() => setTab('franchises')}>
+                    {data.franchises.collections.get(franchise) ?? 'franchise'}
+                  </button>
+                  <button type="button" aria-label="Clear franchise" onClick={() => setFranchise(null)}>
                     ×
                   </button>
                 </span>
-              )
-            })}
-            {franchise !== null && (
-              <span className="country-chip">
-                <button type="button" className="chip-name" onClick={() => setTab('franchises')}>
-                  {data.franchises.collections.get(franchise) ?? 'franchise'}
-                </button>
-                <button type="button" aria-label="Clear franchise" onClick={() => setFranchise(null)}>
-                  ×
-                </button>
-              </span>
-            )}
-            {film !== null && (
-              <span className="country-chip">
-                <button type="button" className="chip-name" onClick={() => setTab('ratings')}>
-                  {text?.title[film] ?? fmtImdb(data.films.imdb[film])}
-                </button>
-                <button type="button" aria-label="Unpin film" onClick={() => setFilm(null)}>
-                  ×
-                </button>
-              </span>
-            )}
-            {brush !== null && (
-              <span className="country-chip">
-                <span>scatter brush</span>
-                <button type="button" aria-label="Clear brush" onClick={() => setBrush(null)}>
-                  ×
-                </button>
-              </span>
-            )}
-          </div>
-        )}
+              )}
+              {film !== null && (
+                <span className="country-chip">
+                  <button type="button" className="chip-name" onClick={() => setTab('ratings')}>
+                    {text?.title[film] ?? fmtImdb(data.films.imdb[film])}
+                  </button>
+                  <button type="button" aria-label="Unpin film" onClick={() => setFilm(null)}>
+                    ×
+                  </button>
+                </span>
+              )}
+              {brush !== null && (
+                <span className="country-chip">
+                  <span>scatter brush</span>
+                  <button type="button" aria-label="Clear brush" onClick={() => setBrush(null)}>
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+          {changed && (
+            <button type="button" className="btn-text" onClick={reset}>
+              Reset
+            </button>
+          )}
+        </div>
       </div>
     </header>
   )
