@@ -177,8 +177,7 @@ export const GenreTimeline: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      letter="B"
-      title="Genre timeline"
+      title="Genre share over time"
       className="area-b"
       tools={
         <select

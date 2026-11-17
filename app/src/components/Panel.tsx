@@ -1,7 +1,6 @@
 import type { FC, ReactNode } from 'react'
 
 interface PanelProps {
-  letter: string
   title: string
   tools?: ReactNode
   note?: ReactNode
@@ -9,11 +8,10 @@ interface PanelProps {
   children?: ReactNode
 }
 
-export const Panel: FC<PanelProps> = ({ letter, title, tools, note, className, children }) => (
+export const Panel: FC<PanelProps> = ({ title, tools, note, className, children }) => (
   <section className={className ? `panel ${className}` : 'panel'} aria-label={title}>
     <header className="panel-head">
       <h2>{title}</h2>
-      <span className="letter">{letter}</span>
       {tools && <div className="panel-tools">{tools}</div>}
     </header>
     <div className="panel-body">{children}</div>

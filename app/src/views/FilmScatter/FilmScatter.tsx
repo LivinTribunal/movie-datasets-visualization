@@ -83,8 +83,7 @@ export const FilmScatter: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      letter="C"
-      title="Film scatter"
+      title={`${MEASURES[x].short} vs ${MEASURES[y].short}`}
       className="area-c"
       tools={tools}
       note={hiddenNote(rows.length, missingX, missingY, x, y)}

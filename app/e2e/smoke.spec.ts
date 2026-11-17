@@ -18,6 +18,17 @@ test('the app loads, filters, brushes, pins and restores from the hash', async (
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/')
 
+  await page.locator('.filters-menu summary').click()
+  await page.getByRole('radio', { name: 'all', exact: true }).click()
+  await expect(page.locator('.filters-menu .badge')).toHaveText('1')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.filters-list')).toBeHidden()
+  await page.locator('.filters-menu summary').click()
+  await page.getByRole('radio', { name: 'notable', exact: true }).click()
+  // d3-zoom swallows mousedown on the map, so the menu must close on pointerdown
+  await page.locator('.area-a .worldmap > svg').click({ position: { x: 5, y: 5 } })
+  await expect(page.locator('.filters-list')).toBeHidden()
+
   await expect(page.getByRole('tab', { name: 'Taste by country' })).toHaveAttribute('aria-selected', 'true')
   for (const area of ['a', 'b', 'e']) {
     await expect(page.locator(`.area-${area}`)).toBeVisible()

@@ -110,8 +110,7 @@ export const Franchise: FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <Panel
-      letter="D"
-      title="Franchise lines"
+      title={y === 'rating' ? 'Sequel rating vs the first film' : 'Sequel box office vs the first film'}
       className="area-d"
       tools={<ChipGroup label="Y axis" options={Y_OPTIONS} value={y} onChange={setFranchiseY} />}
       note={note}

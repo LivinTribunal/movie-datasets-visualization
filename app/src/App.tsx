@@ -26,12 +26,14 @@ export default function App() {
   if (!data) {
     return (
       <div className="app">
-        <header className="panel filter-bar area-f">
-          <h1>
-          <img src="favicon.svg" alt="" width="24" height="24" />
-          Movie Explorer
-        </h1>
-          <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
+        <header className="filter-bar area-f">
+          <div className="toolbar">
+            <h1>
+              <img src="favicon.svg" alt="" width="24" height="24" />
+              Movie Explorer
+            </h1>
+            <p className="status">{error ? `Error: ${error}` : 'Loading data…'}</p>
+          </div>
         </header>
       </div>
     )
